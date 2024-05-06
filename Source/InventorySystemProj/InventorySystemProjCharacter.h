@@ -7,6 +7,8 @@
 #include "Logging/LogMacros.h"
 #include "InventorySystemProjCharacter.generated.h"
 
+class UInteractor;
+class UInventory;
 class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
@@ -44,6 +46,13 @@ class AInventorySystemProjCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* LookAction;
 
+	/** Inventory obj reference */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Inventory, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UInventory> InventoryController;
+
+	/** Interactor obj reference */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Inventory, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UInteractor> Interactor;
 public:
 	AInventorySystemProjCharacter();
 	
@@ -69,5 +78,10 @@ public:
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+
+	/** Returns Inventory subobject **/
+	FORCEINLINE class UInventory* GetInventory() const { return InventoryController; }
+	/** Returns Interactor subobject **/
+	FORCEINLINE class UInteractor* GetInteractor() const { return Interactor; }
 };
 
