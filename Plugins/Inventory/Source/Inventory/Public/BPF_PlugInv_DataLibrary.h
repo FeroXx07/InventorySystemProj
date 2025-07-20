@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
-#include "BPF_DataLibrary.generated.h"
+#include "BPF_PlugInv_DataLibrary.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class INVENTORY_API UBPF_DataLibrary : public UBlueprintFunctionLibrary
+class INVENTORY_API UPlugInv_DataLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 };
