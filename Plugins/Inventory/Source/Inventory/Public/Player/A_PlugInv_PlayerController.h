@@ -10,7 +10,7 @@
  * 
  */
 
-class UPlugInv_Inventory;
+class UPlugInv_InventoryComponent;
 class UInputMappingContext;
 class UInputAction;
 class UPlugInv_HUDWidget;
@@ -36,7 +36,7 @@ protected:
 private:
 
 	// Since it is added through blueprint it doesn't deal with GB.
-	TWeakObjectPtr<UPlugInv_Inventory> InventoryComponent;
+	TWeakObjectPtr<UPlugInv_InventoryComponent> InventoryComponent;
 
 	// Multiple Input Mapping Contexts required from UE 5.6 onwards.
 	UPROPERTY(EditDefaultsOnly, Category = "Inventory")
@@ -46,6 +46,7 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Inventory")
 	TObjectPtr<UInputAction> PrimaryInteractIA;
 
+	// IA for toggling inventory. 
 	UPROPERTY(EditDefaultsOnly, Category = "Inventory")
 	TObjectPtr<UInputAction> ToggleInventoryIA;
 
@@ -57,13 +58,18 @@ private:
 	UPROPERTY()
 	TObjectPtr<UPlugInv_HUDWidget> HUDWidget;
 
+	// Max distance for interaction.
 	UPROPERTY(EditDefaultsOnly, Category = "Inventory")
 	double TraceLength;
 
+	// Trace channel enabled for interactions
 	UPROPERTY(EditDefaultsOnly, Category = "Inventory")
 	TEnumAsByte<ECollisionChannel> ItemTraceChannel;
 
+	// The Actor currently in trace line.
 	TWeakObjectPtr<AActor> CurrentTraceActor;
+
+	// The last Actor different to current Actor in trace line.
 	TWeakObjectPtr<AActor> PreviousTraceActor;
 
 	// Callback function for IA interaction.

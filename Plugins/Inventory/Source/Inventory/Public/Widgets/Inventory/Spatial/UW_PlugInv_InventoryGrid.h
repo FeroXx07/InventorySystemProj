@@ -9,6 +9,7 @@
 
 #include "UW_PlugInv_InventoryGrid.generated.h"
 
+class UPlugInv_InventoryComponent;
 class UCanvasPanel;
 class UPlugInv_GridSlot;
 
@@ -21,14 +22,18 @@ class INVENTORY_API UPlugInv_InventoryGrid : public UUserWidget
 	GENERATED_BODY()
 
 public:
+	UFUNCTION()
 	virtual void NativeOnInitialized() override;
 	
-	EPlugInv_ItemCategory GetItemCategory() const {return this->ItemCategory;}
-
+	// Item category of the grid
+	EPlugInv_ItemCategory GetItemCategory() const
+	{
+		return this->ItemCategory;
+	}
+	
 private:
-
-	// Function to construct the actual grid.
-	void ConstructGrid();
+	// Weak ref to the inventory component.
+	TWeakObjectPtr<UPlugInv_InventoryComponent> InventoryComponent;
 
 	// Type of the items that can be stored in this particular grid.
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Inventory")
@@ -58,4 +63,13 @@ private:
 	// Size of the tiles in the grid.
 	UPROPERTY(EditAnywhere, Category = "Inventory")
 	int32 TileSize;
+	
+	// Function to construct the actual grid.
+	void ConstructGrid();
+
+	UFUNCTION()
+	void AddItem(UPlugInv_InventoryItem* Item);
+
+	// Check if the category of the inventory and the item matches.
+	bool MatchesCategory(const UPlugInv_InventoryItem* Item) const;
 };

@@ -2,12 +2,14 @@
 
 #include "Player/A_PlugInv_PlayerController.h"
 
+#include "BPF_PlugInv_DoubleLogger.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Inventory.h"
 #include "Interaction/I_PlugInv_Highlightable.h"
-#include "InventoryManagment/AC_PlugInv_Inventory.h"
-#include "Items/Components/AC_PlugInv_Item.h"
+#include "InventoryManagment/Components/AC_PlugInv_InventoryComponent.h"
+#include "Items/O_PlugInv_InventoryItem.h"
+#include "Items/Components/AC_PlugInv_ItemComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Widgets/HUD/UW_PlugInv_HUDWidget.h"
 
@@ -38,7 +40,7 @@ void APlugInv_PlayerController::BeginPlay()
 
 	UE_LOG(LogInventory, Log, TEXT("BeginPlay for PlugInv_PlayerController"));
 
-	InventoryComponent = FindComponentByClass<UPlugInv_Inventory>();
+	InventoryComponent = FindComponentByClass<UPlugInv_InventoryComponent>();
 
 	CreateHUDWidget();
 }
@@ -70,7 +72,16 @@ void APlugInv_PlayerController::SetupInputComponent()
 
 void APlugInv_PlayerController::PrimaryInteract()
 {
-	UE_LOG(LogTemp, Log, TEXT("PrimaryInteract for PlugInv_PlayerController"));
+	UPlugInv_DoubleLogger::Log("Primary interact for APlugInv_PlayerController");
+
+	if (!CurrentTraceActor.IsValid())
+		return;
+
+	UPlugInv_ItemComponent* ItemComponent = CurrentTraceActor->FindComponentByClass<UPlugInv_ItemComponent>();
+	if (!IsValid(ItemComponent) || !InventoryComponent.IsValid())
+		return;
+
+	InventoryComponent->TryAddItem(ItemComponent);
 }
 
 void APlugInv_PlayerController::CreateHUDWidget()
@@ -121,7 +132,7 @@ void APlugInv_PlayerController::TraceForItem()
 		}
 		
 		// UE_LOG(LogTemp, Warning, TEXT("Started tracing a new actor"))
-		UPlugInv_Item* ItemComponent = CurrentTraceActor->FindComponentByClass<UPlugInv_Item>();
+		UPlugInv_ItemComponent* ItemComponent = CurrentTraceActor->FindComponentByClass<UPlugInv_ItemComponent>();
 		if (!IsValid(ItemComponent)) return;
 
 		if (IsValid(HUDWidget)) HUDWidget->ShowPickupMessage(ItemComponent->GetPickupMessage());

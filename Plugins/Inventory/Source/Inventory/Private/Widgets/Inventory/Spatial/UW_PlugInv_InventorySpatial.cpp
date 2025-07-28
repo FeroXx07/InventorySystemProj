@@ -18,6 +18,13 @@ void UPlugInv_InventorySpatial::NativeOnInitialized()
 	ShowEquippables();
 }
 
+FPlugInv_SlotAvailabilityResult UPlugInv_InventorySpatial::HasRoomForItem(TObjectPtr<UPlugInv_ItemComponent> ItemComponent) const
+{
+	FPlugInv_SlotAvailabilityResult Result;
+	Result.TotalRoomToFill = 1;
+	return Result;
+}
+
 void UPlugInv_InventorySpatial::ShowEquippables()
 {
 	SetActiveGrid(Grid_Equippables, Button_Equippables);

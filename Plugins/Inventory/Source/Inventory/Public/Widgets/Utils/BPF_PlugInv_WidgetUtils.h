@@ -16,5 +16,6 @@ class INVENTORY_API UPlugInv_WidgetUtils : public UBlueprintFunctionLibrary
 
 public:
 
+	// Util function to get a one-dimensional position from a two-dimensional position (ex: grid).
 	static int32 GetIndexFromPosition(const FIntPoint& Position, const int32 Columns);
 };

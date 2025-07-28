@@ -4,10 +4,12 @@
 #include "Widgets/Inventory/Spatial/UW_PlugInv_InventoryGrid.h"
 
 #include "BPF_PlugInv_DoubleLogger.h"
-#include "Inventory.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
+#include "InventoryManagment/Components/AC_PlugInv_InventoryComponent.h"
+#include "InventoryManagment/Utils/BPF_PlugInv_InventoryStatics.h"
+#include "Items/O_PlugInv_InventoryItem.h"
 #include "Widgets/Utils/BPF_PlugInv_WidgetUtils.h"
 
 void UPlugInv_InventoryGrid::NativeOnInitialized()
@@ -15,6 +17,9 @@ void UPlugInv_InventoryGrid::NativeOnInitialized()
 	Super::NativeOnInitialized();
 
 	ConstructGrid();
+
+	InventoryComponent = UPlugInv_InventoryStatics::GetInventoryComponent(GetOwningPlayer());
+	InventoryComponent->OnItemAdded.AddDynamic(this, &ThisClass::AddItem);
 }
 
 void UPlugInv_InventoryGrid::ConstructGrid()
@@ -48,4 +53,19 @@ void UPlugInv_InventoryGrid::ConstructGrid()
 			GridSlots.Add(GridSlot);
 		}
 	}
+}
+
+void UPlugInv_InventoryGrid::AddItem(UPlugInv_InventoryItem* Item)
+{
+	if (!MatchesCategory(Item))
+	{
+		return;
+	}
+
+	UPlugInv_DoubleLogger::Log("UPlugInv_InventoryGrid::AddItem()");
+}
+
+bool UPlugInv_InventoryGrid::MatchesCategory(const UPlugInv_InventoryItem* Item) const
+{
+	return this->ItemCategory == Item->GetItemManifest().GetItemCategory();
 }

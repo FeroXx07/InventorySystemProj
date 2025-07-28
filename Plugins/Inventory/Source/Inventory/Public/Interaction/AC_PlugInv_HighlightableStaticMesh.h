@@ -16,7 +16,10 @@ class INVENTORY_API UPlugInv_HighlightableStaticMesh : public UStaticMeshCompone
 	GENERATED_BODY()
 
 public:
+	// Sets the overlay material to the highlight material.
 	virtual void Highlight_Implementation() override;
+	
+	// Sets the overlay material to nullptr.
 	virtual void UnHighlight_Implementation() override;
 
 private:

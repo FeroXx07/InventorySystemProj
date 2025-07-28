@@ -3,9 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "BPF_PlugInv_DataLibrary.h"
 #include "Blueprint/UserWidget.h"
 #include "UW_PlugInv_InventoryBase.generated.h"
 
+class UPlugInv_ItemComponent;
 /**
  * 
  */
@@ -13,4 +15,11 @@ UCLASS()
 class INVENTORY_API UPlugInv_InventoryBase : public UUserWidget
 {
 	GENERATED_BODY()
+
+public:
+	// Virtual base function to get slots availability data.
+	virtual FPlugInv_SlotAvailabilityResult HasRoomForItem(TObjectPtr<UPlugInv_ItemComponent> ItemComponent) const
+	{
+		return FPlugInv_SlotAvailabilityResult();
+	}
 };
