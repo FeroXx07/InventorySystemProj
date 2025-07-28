@@ -13,6 +13,8 @@
  * The Item Manifest contains all the necessary data for creating a new Inventory Item.
  */
 
+struct FPlugInv_ItemFragment;
+
 USTRUCT(BlueprintType)
 struct INVENTORY_API FPlugInv_ItemManifest
 {
@@ -42,12 +44,17 @@ private:
 	// Item tags.
 	UPROPERTY(EditAnywhere, Category = "Inventory")
 	FGameplayTagContainer ItemTypesTags;
+
+	// TInstanced struct is a type safe wrapper of FInstancedStruct. This way ensures that it can be only of type FPlugInv_ItemFragment and children.
+	// With ExcludeBaseStruct we also ensure that it can't be only FPlugInv_ItemFragment but child structs.
+	UPROPERTY(EditAnywhere, Category = "Inventory", meta = (ExcludeBaseStruct))
+	TArray<TInstancedStruct<FPlugInv_ItemFragment>> Fragments;
 };
 
 /*
 *  Introduced in Unreal Engine 5.0 is the StructUtils plugin that brings with it the concept of Instanced Structs.
-*  They do exactly what their name suggests; provides the same features as instanced objects but embodied as USTRUCTs.
-*  This comes with several advantages, the most prominent of which is their light weight nature as compared to their counter parts in instanced UObject*s.
+*  They do exactly what their name suggests; provides the same features as instanced objects but embodied as USTRUCTTs.
+*  This comes with several advantages, the most prominent of which is their lightweight nature as compared to their counter-parts in instanced UObject*s.
 *  Instanced Structs are also fully polymorphic and serialized across the network.
 *  Meaning they support replicated, effectively arbitrary data. It is up to the receiver to interpret that data appropriately.
 *  https://www.reddit.com/r/unrealengine/comments/1f7o1co/what_is_the_difference_between_a_struct_and_an/
