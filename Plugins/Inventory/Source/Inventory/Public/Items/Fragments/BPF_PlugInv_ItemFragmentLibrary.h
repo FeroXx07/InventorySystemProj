@@ -4,8 +4,17 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "Kismet/BlueprintFunctionLibrary.h"
+#include "BPF_PlugInv_ItemFragmentLibrary.generated.h"
 
-#include "F_PlugInv_ItemFragment.generated.h"
+/**
+ * 
+ */
+UCLASS()
+class INVENTORY_API UPlugInv_ItemFragmentLibrary : public UBlueprintFunctionLibrary
+{
+	GENERATED_BODY()
+};
 
 /**
  * Any trait of an Item can be defined as what is known in game dev as Item Fragment.
@@ -14,7 +23,6 @@ USTRUCT(BlueprintType)
 struct INVENTORY_API FPlugInv_ItemFragment
 {
 	GENERATED_BODY()
-public:
 	
 	// Since inheritance is key to Item Fragments and structs are also key due to their lightweight,
 	// when destroying child structs manage correctly polymorphic destruction.
@@ -49,15 +57,6 @@ struct FPlugInv_GridFragment : public FPlugInv_ItemFragment
 {
 	GENERATED_BODY()
 
-private:
-
-	UPROPERTY(EditAnywhere, Category = "Inventory")
-	FIntPoint GridSize{1, 1};
-
-	UPROPERTY(EditAnywhere, Category = "Inventory")
-	float GridPadding{0.0f};
-
-public:
 	const FIntPoint& GetGridSize() const
 	{
 		return GridSize;
@@ -77,4 +76,33 @@ public:
 	{
 		this->GridPadding = GridPadding_;
 	}
+
+private:
+
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	FIntPoint GridSize{1, 1};
+
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	float GridPadding{0.0f};
+
+
+};
+
+USTRUCT(BlueprintType)
+struct FPlugInv_ImageFragment : public FPlugInv_ItemFragment
+{
+	GENERATED_BODY()
+	
+	const TObjectPtr<UTexture2D>& GetIcon() const
+	{
+		return IconTexture;
+	}
+
+private:
+
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	TObjectPtr<UTexture2D> IconTexture{nullptr};
+
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	FVector2D IconDimensions{44.f, 44.f};
 };
