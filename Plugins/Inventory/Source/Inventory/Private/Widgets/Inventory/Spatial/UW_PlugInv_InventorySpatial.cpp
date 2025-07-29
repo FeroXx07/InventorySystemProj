@@ -3,8 +3,10 @@
 
 #include "Widgets/Inventory/Spatial/UW_PlugInv_InventorySpatial.h"
 
+#include "BPF_PlugInv_DoubleLogger.h"
 #include "Components/Button.h"
 #include "Components/WidgetSwitcher.h"
+#include "InventoryManagment/Utils/BPF_PlugInv_InventoryStatics.h"
 #include "Widgets/Inventory/Spatial/UW_PlugInv_InventoryGrid.h"
 
 void UPlugInv_InventorySpatial::NativeOnInitialized()
@@ -20,6 +22,35 @@ void UPlugInv_InventorySpatial::NativeOnInitialized()
 
 FPlugInv_SlotAvailabilityResult UPlugInv_InventorySpatial::HasRoomForItem(TObjectPtr<UPlugInv_ItemComponent> ItemComponent) const
 {
+	EPlugInv_ItemCategory ItemCategory = UPlugInv_InventoryStatics::GetItemCategoryFromItemComponent(ItemComponent);
+
+	switch (ItemCategory)
+	{
+	case EPlugInv_ItemCategory::None:
+		break;
+	case EPlugInv_ItemCategory::Equippable:
+		{
+			return Grid_Equippables->HasRoomForItem(ItemComponent);
+		}
+		break;
+	case EPlugInv_ItemCategory::Consumable:
+		{
+			return Grid_Consumables->HasRoomForItem(ItemComponent);
+		}
+		break;
+	case EPlugInv_ItemCategory::Craftable:
+		{
+			return Grid_Craftables->HasRoomForItem(ItemComponent);
+		}
+		break;
+	default:
+		{
+			UPlugInv_DoubleLogger::LogError("UPlugInv_InventorySpatial::HasRoomForItem : ItemComponent doesn't have a valid item Category");
+			checkNoEntry();
+			return FPlugInv_SlotAvailabilityResult();
+		}
+	}
+
 	FPlugInv_SlotAvailabilityResult Result;
 	Result.TotalRoomToFill = 1;
 	return Result;

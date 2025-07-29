@@ -18,4 +18,10 @@ public:
 
 	// Util function to get a one-dimensional position from a two-dimensional position (ex: grid).
 	static int32 GetIndexFromPosition(const FIntPoint& Position, const int32 Columns);
+
+	// Util function to get a two-dimensional position from a one-dimensional position (ex: index).
+	static FIntPoint GetPositionFromIndex(const int32 Index, const int32 Columns);
+	
 };
+
+

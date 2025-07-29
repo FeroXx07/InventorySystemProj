@@ -35,6 +35,9 @@ struct INVENTORY_API FPlugInv_ItemManifest
 		return ItemTypesTags.First();
 	}
 
+	template<typename T> requires std::derived_from<T, FPlugInv_ItemFragment>
+	const T* GetFragmentOfTypeByTag(const FGameplayTag& FragmentTag) const;
+
 private:
 
 	// Item category.
@@ -59,3 +62,19 @@ private:
 *  Meaning they support replicated, effectively arbitrary data. It is up to the receiver to interpret that data appropriately.
 *  https://www.reddit.com/r/unrealengine/comments/1f7o1co/what_is_the_difference_between_a_struct_and_an/
  */
+
+template <typename T> requires std::derived_from<T, FPlugInv_ItemFragment>
+const T* FPlugInv_ItemManifest::GetFragmentOfTypeByTag(const FGameplayTag& FragmentTag) const
+{
+	for (const TInstancedStruct<FPlugInv_ItemFragment>& Fragment : Fragments)
+	{
+		if (const T* FragmentPtr = Fragment.GetPtr<T>())
+		{
+			if (!FragmentPtr->GetFragmentTag().MatchesTagExact(FragmentTag))
+				continue;
+			
+			return FragmentPtr;
+		}
+	}
+	return nullptr;
+}

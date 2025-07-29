@@ -7,3 +7,8 @@ int32 UPlugInv_WidgetUtils::GetIndexFromPosition(const FIntPoint& Position, cons
 {
 	return Position.X + Position.Y * Columns;
 }
+
+FIntPoint UPlugInv_WidgetUtils::GetPositionFromIndex(const int32 Index, const int32 Columns)
+{
+	return FIntPoint(Index % Columns, Index / Columns);
+}
