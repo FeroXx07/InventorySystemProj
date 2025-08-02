@@ -5,7 +5,9 @@
 
 #include "BPF_PlugInv_DoubleLogger.h"
 #include "Blueprint/UserWidget.h"
+#include "Items/Components/AC_PlugInv_ItemComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "Items/O_PlugInv_InventoryItem.h"
 
 #include "Widgets/Inventory/InventoryBase/UW_PlugInv_InventoryBase.h"
 
@@ -28,6 +30,9 @@ void UPlugInv_InventoryComponent::TryAddItem(UPlugInv_ItemComponent* ItemCompone
 	UPlugInv_DoubleLogger::Log("Try add item for InventoryComponent + OnNoRoomInInventory.Broadcast()");
 	FPlugInv_SlotAvailabilityResult Result = InventoryMenu->HasRoomForItem(ItemComponent);
 
+	UPlugInv_InventoryItem* FoundItem = InventoryList.FindFirstItemByType(ItemComponent->GetItemManifest().GetItemType());
+	Result.Item = FoundItem;
+	
 	// Scenario 3: Inventory is full, no room for new items and stackable items count reached max.
 	if (Result.TotalRoomToFill == 0)
 	{

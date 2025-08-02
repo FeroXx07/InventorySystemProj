@@ -76,6 +76,14 @@ private:
 	// Slotted image helper function
 	void SetSlottedImage(const FPlugInv_GridFragment* GridFragment, const FPlugInv_ImageFragment* ImageFragment,const UPlugInv_SlottedItem* SlottedItem) const;
 
+	bool IsIndexClaimed(const TSet<int32>& CheckedIndices, const TObjectPtr<UPlugInv_GridSlot>& GridSlot);
+	bool IsInGridBounds(int32 StartIndex, const FIntPoint& ItemDimensions) const;
+	bool DoesItemTypeMatch(TWeakObjectPtr<UPlugInv_InventoryItem> SubItem, const FGameplayTag& ItemTypeTag) const;
+	bool CheckSlotConstraints(const FPlugInv_ItemManifest& ItemManifest, const UPlugInv_GridSlot* GridSlot, const UPlugInv_GridSlot* SubGridSlot, const
+	                          TSet<int32>& CheckedIndices, TSet<int32>
+	                          & OutTentativelyClaimedIndices) const;
+	int32 GetSlotStackAmount(const TObjectPtr<UPlugInv_GridSlot>& GridSlot);
+	
 	// Weak ref to the inventory component.
 	TWeakObjectPtr<UPlugInv_InventoryComponent> InventoryComponent;
 

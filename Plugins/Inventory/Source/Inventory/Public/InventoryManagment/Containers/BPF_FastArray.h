@@ -8,6 +8,7 @@
 
 #include "BPF_FastArray.generated.h"
 
+struct FGameplayTag;
 class UPlugInv_InventoryComponent;
 class UPlugInv_InventoryItem;
 class UPlugInv_ItemComponent;
@@ -79,6 +80,9 @@ struct FPlugInv_InventoryFastArray : public FFastArraySerializer
 
 	// Removes an entry from the container.
 	void RemoveEntry(TObjectPtr<UPlugInv_InventoryItem> Item);
+
+	// Return the first Item by type
+	TObjectPtr<UPlugInv_InventoryItem> FindFirstItemByType(const FGameplayTag& ItemType);
 private:
 	friend UPlugInv_InventoryComponent;
 

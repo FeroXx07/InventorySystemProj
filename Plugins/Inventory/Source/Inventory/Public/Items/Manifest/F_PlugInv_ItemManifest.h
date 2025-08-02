@@ -38,6 +38,8 @@ struct INVENTORY_API FPlugInv_ItemManifest
 	template<typename T> requires std::derived_from<T, FPlugInv_ItemFragment>
 	const T* GetFragmentOfTypeByTag(const FGameplayTag& FragmentTag) const;
 
+	template<typename T> requires std::derived_from<T, FPlugInv_ItemFragment>
+	const T* GetFragmentOfType() const;
 private:
 
 	// Item category.
@@ -73,6 +75,19 @@ const T* FPlugInv_ItemManifest::GetFragmentOfTypeByTag(const FGameplayTag& Fragm
 			if (!FragmentPtr->GetFragmentTag().MatchesTagExact(FragmentTag))
 				continue;
 			
+			return FragmentPtr;
+		}
+	}
+	return nullptr;
+}
+
+template <typename T> requires std::derived_from<T, FPlugInv_ItemFragment>
+const T* FPlugInv_ItemManifest::GetFragmentOfType() const
+{
+	for (const TInstancedStruct<FPlugInv_ItemFragment>& Fragment : Fragments)
+	{
+		if (const T* FragmentPtr = Fragment.GetPtr<T>())
+		{
 			return FragmentPtr;
 		}
 	}

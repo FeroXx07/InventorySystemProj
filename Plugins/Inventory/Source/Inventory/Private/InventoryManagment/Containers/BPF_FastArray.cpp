@@ -106,3 +106,12 @@ void FPlugInv_InventoryFastArray::RemoveEntry(TObjectPtr<UPlugInv_InventoryItem>
 		}
 	}
 }
+
+TObjectPtr<UPlugInv_InventoryItem> FPlugInv_InventoryFastArray::FindFirstItemByType(const FGameplayTag& ItemType)
+{
+	FPlugInv_InventoryItemEntry* FoundItem = Entries.FindByPredicate([Type = ItemType](const FPlugInv_InventoryItemEntry& Entry)
+	{
+		return IsValid(Entry.Item) && Entry.Item->GetItemManifest().GetItemType().MatchesTagExact(Type);
+	});
+	return FoundItem ? FoundItem->Item : nullptr;
+}
