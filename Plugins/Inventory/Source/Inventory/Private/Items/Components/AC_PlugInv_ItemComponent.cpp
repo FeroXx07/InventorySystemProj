@@ -23,4 +23,9 @@ void UPlugInv_ItemComponent::GetLifetimeReplicatedProps(TArray<class FLifetimePr
 	DOREPLIFETIME(ThisClass, ItemManifest);
 }
 
+void UPlugInv_ItemComponent::PickUp()
+{
+	GetOwner()->Destroy();
+}
+
 

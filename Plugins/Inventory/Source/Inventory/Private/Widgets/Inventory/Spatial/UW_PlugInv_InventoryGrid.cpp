@@ -24,6 +24,7 @@ void UPlugInv_InventoryGrid::NativeOnInitialized()
 
 	InventoryComponent = UPlugInv_InventoryStatics::GetInventoryComponent(GetOwningPlayer());
 	InventoryComponent->OnItemAdded.AddDynamic(this, &ThisClass::AddItem);
+	InventoryComponent->OnStackChange.AddDynamic(this, &ThisClass::AddStacks);
 }
 
 void UPlugInv_InventoryGrid::ConstructGrid()
@@ -367,7 +368,7 @@ bool UPlugInv_InventoryGrid::CheckSlotConstraints(const FPlugInv_ItemManifest& I
 
 	// Is this a stackable item?
 	const TWeakObjectPtr<UPlugInv_InventoryItem> SubItem = SubGridSlot->GetInventoryItem().Get();
-	const FPlugInv_StackableFragment* StackableFragment = SubItem->GetItemManifest().GetFragmentOfType<FPlugInv_StackableFragment>();
+	const FPlugInv_StackableFragment* StackableFragment = SubItem->GetItemManifestMutable().GetFragmentOfType<FPlugInv_StackableFragment>();
 	if (StackableFragment == nullptr)
 	{
 		return false;
@@ -392,7 +393,7 @@ bool UPlugInv_InventoryGrid::CheckSlotConstraints(const FPlugInv_ItemManifest& I
 bool UPlugInv_InventoryGrid::DoesItemTypeMatch(const TWeakObjectPtr<UPlugInv_InventoryItem> SubItem,
 	const FGameplayTag& ItemTypeTag) const
 {
-	return SubItem->GetItemManifest().GetItemType().MatchesTagExact(ItemTypeTag);
+	return SubItem->GetItemManifestMutable().GetItemType().MatchesTagExact(ItemTypeTag);
 }
 
 int32 UPlugInv_InventoryGrid::GetSlotStackAmount(const TObjectPtr<UPlugInv_GridSlot>& GridSlot)
@@ -406,6 +407,30 @@ int32 UPlugInv_InventoryGrid::GetSlotStackAmount(const TObjectPtr<UPlugInv_GridS
 		CurrentSlotStackCount = UpperLeftGridSlot->GetStackCount();
 	}
 	return CurrentSlotStackCount;
+}
+
+void UPlugInv_InventoryGrid::AddStacks(const FPlugInv_SlotAvailabilityResult& Result)
+{
+	if (!MatchesCategory(Result.Item.Get()))
+	{
+		return;
+	}
+	
+	for (const FPlugInv_SlotAvailability& SlotAvailability : Result.SlotAvailabilities)
+	{
+		if (SlotAvailability.bItemAtIndex)
+		{
+			UPlugInv_GridSlot* GridSlot = GridSlots[SlotAvailability.Index];
+			const UPlugInv_SlottedItem* SlottedItem = SlottedItemMap.FindChecked(SlotAvailability.Index);
+			SlottedItem->UpdateStackAmount(GridSlot->GetStackCount() + SlotAvailability.AmountToFill);
+			GridSlot->SetStackCount(GridSlot->GetStackCount() + SlotAvailability.AmountToFill);
+		}
+		else
+		{
+			AddItemToIndex(Result.Item.Get(), SlotAvailability.Index, Result.bStackable, SlotAvailability.AmountToFill);
+			UpdateGridSlots(Result.Item.Get(), SlotAvailability.Index, Result.bStackable, SlotAvailability.AmountToFill);
+		}
+	}
 }
 
 

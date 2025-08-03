@@ -30,7 +30,11 @@ public:
 	{
 		return PickupMessage;
 	}
-	
+
+	void PickUp();
+protected:
+	UFUNCTION(BlueprintImplementableEvent, Category = "Inventory")
+	void OnPickUp();
 private:
 
 	// The Manifest type to create Inventory Items.

@@ -12,6 +12,7 @@ class UPlugInv_InventoryBase;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryItemChange, UPlugInv_InventoryItem*, Item);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FNoRoomInInventory);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FStackChange, const FPlugInv_SlotAvailabilityResult&, Result);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent), Blueprintable)
 class INVENTORY_API UPlugInv_InventoryComponent : public UActorComponent
@@ -45,12 +46,14 @@ public:
 	FInventoryItemChange OnItemRemoved;
 	FInventoryItemChange OnItemChanged;
 	FNoRoomInInventory OnNoRoomInInventory;
+	FStackChange OnStackChange;
 	
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+
 
 private:
 	// Flag for inventory visibility.

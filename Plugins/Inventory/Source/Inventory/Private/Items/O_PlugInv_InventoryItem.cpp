@@ -10,6 +10,7 @@ void UPlugInv_InventoryItem::GetLifetimeReplicatedProps(TArray<class FLifetimePr
 	UObject::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ThisClass, ItemManifest);
+	DOREPLIFETIME(ThisClass, TotalStackCount);
 }
 
 void UPlugInv_InventoryItem::SetItemManifest(const FPlugInv_ItemManifest& Manifest)

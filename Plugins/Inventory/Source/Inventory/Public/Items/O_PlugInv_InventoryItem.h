@@ -17,6 +17,7 @@ class INVENTORY_API UPlugInv_InventoryItem : public UObject
 	GENERATED_BODY()
 
 public:
+	// Replication with UObjects needs to call GetLifetimeReplicatedProps()
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
 	// So that it can be a registered sub object lists.
@@ -24,26 +25,22 @@ public:
 	{
 		return true;
 	}
-
-	// Item Manifest Setter.
+	
 	void SetItemManifest(const FPlugInv_ItemManifest& Manifest);
+	const FPlugInv_ItemManifest& GetItemManifest() const{ return ItemManifest.Get<FPlugInv_ItemManifest>(); }
+	FPlugInv_ItemManifest& GetItemManifestMutable(){ return ItemManifest.GetMutable<FPlugInv_ItemManifest>(); }
 
-	// Item Manifest Getter const.
-	const FPlugInv_ItemManifest& GetItemManifest() const
-	{
-		return ItemManifest.Get<FPlugInv_ItemManifest>();
-	}
+	int32 GetTotalStackCount() const{ return TotalStackCount; }
+	void SetTotalStackCount(const int32 Value){this->TotalStackCount = Value; }
 
-	// Item Manifest Getter mutable.
-	FPlugInv_ItemManifest& GetItemManifest()
-	{
-		return ItemManifest.GetMutable<FPlugInv_ItemManifest>();
-	}
 private:
 
 	// Constraint its inheritance capabilities to only FPlugInv_ItemManifest.
 	UPROPERTY(VisibleAnywhere, meta = (BaseStruct = "/Script/Inventory.FPlugInv_ItemManifest"), Replicated)
 	FInstancedStruct ItemManifest;
+
+	UPROPERTY(Replicated)
+	int32 TotalStackCount{0};
 };
 
 template <typename FragmentType>

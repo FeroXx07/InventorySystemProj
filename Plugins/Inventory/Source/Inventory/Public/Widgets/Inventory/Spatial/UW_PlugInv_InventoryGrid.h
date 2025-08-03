@@ -83,6 +83,9 @@ private:
 	                          TSet<int32>& CheckedIndices, TSet<int32>
 	                          & OutTentativelyClaimedIndices) const;
 	int32 GetSlotStackAmount(const TObjectPtr<UPlugInv_GridSlot>& GridSlot);
+
+	UFUNCTION()
+	void AddStacks(const FPlugInv_SlotAvailabilityResult& Result);
 	
 	// Weak ref to the inventory component.
 	TWeakObjectPtr<UPlugInv_InventoryComponent> InventoryComponent;

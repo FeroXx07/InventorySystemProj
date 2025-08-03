@@ -8,6 +8,7 @@
 #include "Items/Components/AC_PlugInv_ItemComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "Items/O_PlugInv_InventoryItem.h"
+#include "Items/Fragments/BPF_PlugInv_ItemFragmentLibrary.h"
 
 #include "Widgets/Inventory/InventoryBase/UW_PlugInv_InventoryBase.h"
 
@@ -46,6 +47,7 @@ void UPlugInv_InventoryComponent::TryAddItem(UPlugInv_ItemComponent* ItemCompone
 	{
 		UPlugInv_DoubleLogger::Log("InventoryComponent::TryAddItem() : Scenario 1: Item already exists in inventory.");
 		// Add stacks to an item that already exists in the inventory. Update the stack count and not create a new item of this type.
+		OnStackChange.Broadcast(Result);
 		Server_AddStacksToItem_Implementation(ItemComponent, Result.TotalRoomToFill, Result.Remainder);
 	}
 	else if (Result.TotalRoomToFill > 0) // Scenario 2: New item type.
@@ -61,7 +63,8 @@ void UPlugInv_InventoryComponent::TryAddItem(UPlugInv_ItemComponent* ItemCompone
 void UPlugInv_InventoryComponent::Server_AddNewItem_Implementation(UPlugInv_ItemComponent* ItemComponent, int32 StackCount)
 {
 	UPlugInv_InventoryItem* NewInventoryItem = InventoryList.AddEntry(ItemComponent);
-
+	NewInventoryItem->SetTotalStackCount(StackCount);
+	
 	// Maybe the current player is playing/acting on a listen server (local player who is a host or standalone)
 	if (GetOwner()->GetNetMode() == ENetMode::NM_ListenServer || GetOwner()->GetNetMode() == ENetMode::NM_Standalone)
 	{
@@ -74,11 +77,30 @@ void UPlugInv_InventoryComponent::Server_AddNewItem_Implementation(UPlugInv_Item
 	}
 	
 	// TODO: Tell the inventory component to destroy its owning actor.
+	ItemComponent->PickUp();
 }
 
-void UPlugInv_InventoryComponent::Server_AddStacksToItem_Implementation(UPlugInv_ItemComponent* ItemComponent, int32 StackCount,
+void UPlugInv_InventoryComponent::Server_AddStacksToItem_Implementation(UPlugInv_ItemComponent* ItemComponent, const int32 StackCount,
 	int32 Remainder)
 {
+	const FGameplayTag& ItemType = IsValid(ItemComponent) ? ItemComponent->GetItemManifest().GetItemType() : FGameplayTag::EmptyTag;
+	UPlugInv_InventoryItem* Item = InventoryList.FindFirstItemByType(ItemType);
+	if (!IsValid(Item))
+	{
+		return;
+	}
+	Item->SetTotalStackCount(Item->GetTotalStackCount() + StackCount);
+
+	// Destroy the item if remainder is 0 and flag bDestroyOnPickUp
+	if (Remainder == 0)
+	{
+		ItemComponent->PickUp();
+	}
+	else if (FPlugInv_StackableFragment* StackableFragment = ItemComponent->GetItemManifest().GetFragmentOfTypeMutable<FPlugInv_StackableFragment>())
+	{
+		// Otherwise, update the stack count for the item pickup
+		StackableFragment->SetStackCount(Remainder);
+	}
 }
 
 // Called when the game starts

@@ -40,6 +40,12 @@ struct INVENTORY_API FPlugInv_ItemManifest
 
 	template<typename T> requires std::derived_from<T, FPlugInv_ItemFragment>
 	const T* GetFragmentOfType() const;
+
+	template<typename T> requires std::derived_from<T, FPlugInv_ItemFragment>
+	T* GetFragmentOfTypeByTagMutable(const FGameplayTag& FragmentTag);
+	
+	template<typename T> requires std::derived_from<T, FPlugInv_ItemFragment>
+	T* GetFragmentOfTypeMutable();
 private:
 
 	// Item category.
@@ -87,6 +93,35 @@ const T* FPlugInv_ItemManifest::GetFragmentOfType() const
 	for (const TInstancedStruct<FPlugInv_ItemFragment>& Fragment : Fragments)
 	{
 		if (const T* FragmentPtr = Fragment.GetPtr<T>())
+		{
+			return FragmentPtr;
+		}
+	}
+	return nullptr;
+}
+
+template <typename T> requires std::derived_from<T, FPlugInv_ItemFragment>
+T* FPlugInv_ItemManifest::GetFragmentOfTypeByTagMutable(const FGameplayTag& FragmentTag)
+{
+	for (TInstancedStruct<FPlugInv_ItemFragment>& Fragment : Fragments)
+	{
+		if (T* FragmentPtr = Fragment.GetMutablePtr<T>())
+		{
+			if (!FragmentPtr->GetFragmentTag().MatchesTagExact(FragmentTag))
+				continue;
+			
+			return FragmentPtr;
+		}
+	}
+	return nullptr;
+}
+
+template <typename T> requires std::derived_from<T, FPlugInv_ItemFragment>
+T* FPlugInv_ItemManifest::GetFragmentOfTypeMutable()
+{
+	for (TInstancedStruct<FPlugInv_ItemFragment>& Fragment : Fragments)
+	{
+		if (T* FragmentPtr = Fragment.GetMutablePtr<T>())
 		{
 			return FragmentPtr;
 		}

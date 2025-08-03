@@ -111,7 +111,7 @@ TObjectPtr<UPlugInv_InventoryItem> FPlugInv_InventoryFastArray::FindFirstItemByT
 {
 	FPlugInv_InventoryItemEntry* FoundItem = Entries.FindByPredicate([Type = ItemType](const FPlugInv_InventoryItemEntry& Entry)
 	{
-		return IsValid(Entry.Item) && Entry.Item->GetItemManifest().GetItemType().MatchesTagExact(Type);
+		return IsValid(Entry.Item) && Entry.Item->GetItemManifestMutable().GetItemType().MatchesTagExact(Type);
 	});
 	return FoundItem ? FoundItem->Item : nullptr;
 }
