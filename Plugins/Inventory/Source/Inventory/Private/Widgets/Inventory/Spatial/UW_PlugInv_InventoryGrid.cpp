@@ -13,6 +13,7 @@
 #include "Items/Components/AC_PlugInv_ItemComponent.h"
 #include "Items/Fragments/BPF_PlugInv_ItemFragmentLibrary.h"
 #include "Items/Fragments/PlugInv_FragmentTags.h"
+#include "Widgets/Inventory/HoverItem/UW_PlugInv_HoverItem.h"
 #include "Widgets/Inventory/SlottedItems/UW_PlugInv_SlottedItem.h"
 #include "Widgets/Utils/BPF_PlugInv_WidgetUtils.h"
 
@@ -25,6 +26,22 @@ void UPlugInv_InventoryGrid::NativeOnInitialized()
 	InventoryComponent = UPlugInv_InventoryStatics::GetInventoryComponent(GetOwningPlayer());
 	InventoryComponent->OnItemAdded.AddDynamic(this, &ThisClass::AddItem);
 	InventoryComponent->OnStackChange.AddDynamic(this, &ThisClass::AddStacks);
+}
+
+void UPlugInv_InventoryGrid::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
+{
+	Super::NativeTick(MyGeometry, InDeltaTime);
+
+	// Mouse pos relative to the canvas panel
+	const FVector2D CanvasPosition = UPlugInv_WidgetUtils::GetWidgetPosition(CanvasPanel);
+	const FVector2D MousePosition = UWidgetLayoutLibrary::GetMousePositionOnViewport(GetOwningPlayer());
+
+	if (CursorExitedCanvas(CanvasPosition, UPlugInv_WidgetUtils::GetWidgetSize(CanvasPanel), MousePosition))
+	{
+		return;
+	}
+	
+	UpdateTileParameters(CanvasPosition, MousePosition);
 }
 
 void UPlugInv_InventoryGrid::ConstructGrid()
@@ -56,6 +73,9 @@ void UPlugInv_InventoryGrid::ConstructGrid()
 
 			// Adding grid slot to the container array
 			GridSlots.Add(GridSlot);
+			GridSlot->OnGridSlotHovered.AddDynamic(this, &ThisClass::UPlugInv_InventoryGrid::OnGridSlotHovered);
+			GridSlot->OnGridSlotUnhovered.AddDynamic(this, &ThisClass::UPlugInv_InventoryGrid::OnGridSlotUnhovered);
+			GridSlot->OnGridSlotClicked.AddDynamic(this, &ThisClass::UPlugInv_InventoryGrid::UPlugInv_InventoryGrid::OnGridSlotClicked);
 		}
 	}
 }
@@ -93,7 +113,7 @@ void UPlugInv_InventoryGrid::AddItemToIndices(const FPlugInv_SlotAvailabilityRes
 
 void UPlugInv_InventoryGrid::AddItemToIndex(UPlugInv_InventoryItem* NewItem, const int32 Index, const bool bStackable, const int32 StackAmount)
 {
-	LOG_DOUBLE_S("Adding Item with index: {0}, isStackable: {1}", Index, bStackable);
+	LOG_DOUBLE_S(FColor::Orange,"InventoryGrid::AddItemToIndex : Adding Item with index: {0}, isStackable: {1}", Index, bStackable);
 	
 	// Get Grid Fragment
 	const FPlugInv_GridFragment* GridFragment = GetFragment<FPlugInv_GridFragment>(NewItem, FragmentTags::GridFragment);
@@ -130,7 +150,7 @@ UPlugInv_SlottedItem* UPlugInv_InventoryGrid::CreateSlottedItem(UPlugInv_Invento
 	SlottedItem->SetIsStackable(bStackable);
 	const int32 StackUpdateAmount = bStackable ? StackAmount : 0;
 	SlottedItem->UpdateStackAmount(StackUpdateAmount);
-	
+	SlottedItem->OnSlottedItemClicked.AddDynamic(this, &ThisClass::UPlugInv_InventoryGrid::OnSlottedItemClicked);
 	return SlottedItem;
 }
 
@@ -147,7 +167,7 @@ void UPlugInv_InventoryGrid::AddSlottedItemToCanvas(const int32 Index, const FPl
 	const FVector2D DrawPosWithPadding = DrawPos + FVector2D(GridFragment->GetGridPadding());
 	CanvasPanelSlot->SetPosition(DrawPosWithPadding);
 
-	LOG_DOUBLE_S("InventoryGrid::AddSlottedItemToCanvas : DrawSize.X: {0}, DrawPos: {1}, DrawPosWithPadding: {2}, TileSize: {3}", DrawSize, DrawPos, DrawPosWithPadding, TileSize);
+	LOG_DOUBLE_S(FColor::Orange, "InventoryGrid::AddSlottedItemToCanvas : DrawSize.X: {0}, DrawPos: {1}, DrawPosWithPadding: {2}, TileSize: {3}", DrawSize, DrawPos, DrawPosWithPadding, TileSize);
 
 }
 
@@ -199,6 +219,18 @@ bool UPlugInv_InventoryGrid::MatchesCategory(const UPlugInv_InventoryItem* Item)
 FPlugInv_SlotAvailabilityResult UPlugInv_InventoryGrid::HasRoomForItem(const UPlugInv_ItemComponent* ItemComponent)
 {
 	return HasRoomForItem(ItemComponent->GetItemManifest());
+}
+
+void UPlugInv_InventoryGrid::ShowCursor()
+{
+	if (!IsValid(GetOwningPlayer())) return;
+	GetOwningPlayer()->SetMouseCursorWidget(EMouseCursor::Default, GetVisibleCursorWidget());
+}
+
+void UPlugInv_InventoryGrid::HideCursor()
+{
+	if (!IsValid(GetOwningPlayer())) return;
+	GetOwningPlayer()->SetMouseCursorWidget(EMouseCursor::Default, GetHiddenCursorWidget());
 }
 
 FPlugInv_SlotAvailabilityResult UPlugInv_InventoryGrid::HasRoomForItem(const UPlugInv_InventoryItem* InventoryItem)
@@ -326,7 +358,7 @@ FPlugInv_SlotAvailabilityResult UPlugInv_InventoryGrid::HasRoomForItem(const FPl
 		}
 	}
 	
-	LOG_DOUBLE_S("InventoryGrid::HasRoomForItem: TotalRoomToFill: {0}, Remainder: {1}, bStackable: {2}", Result.TotalRoomToFill, Result.Remainder, Result.bStackable);
+	LOG_DOUBLE_S(FColor::Orange, "InventoryGrid::HasRoomForItem: TotalRoomToFill: {0}, Remainder: {1}, bStackable: {2}", Result.TotalRoomToFill, Result.Remainder, Result.bStackable);
 	return Result;	
 }
 
@@ -432,6 +464,529 @@ void UPlugInv_InventoryGrid::AddStacks(const FPlugInv_SlotAvailabilityResult& Re
 		}
 	}
 }
+
+bool UPlugInv_InventoryGrid::IsRightClick(const FPointerEvent& MouseEvent) const
+{
+	return MouseEvent.GetEffectingButton() == EKeys::RightMouseButton;
+}
+
+bool UPlugInv_InventoryGrid::IsLeftClick(const FPointerEvent& MouseEvent) const
+{
+	return MouseEvent.GetEffectingButton() == EKeys::LeftMouseButton;
+}
+
+void UPlugInv_InventoryGrid::OnSlottedItemClicked(int32 GridIndex, const FPointerEvent& MouseEvent)
+{
+	LOG_DOUBLE_S(FColor::Orange, "InventoryGrid::OnSlottedItemClicked : Clicked on item at index {0}", GridIndex);
+	check(GridSlots.IsValidIndex(GridIndex));
+	UPlugInv_InventoryItem* ClickedInventoryItem = GridSlots[GridIndex]->GetInventoryItem().Get();
+
+	if (IsValid(HoverItem) == false && IsLeftClick(MouseEvent))
+	{
+		// Pick Up, Assign the hover item, and remove the slotted item from the grid
+		PickUp(ClickedInventoryItem, GridIndex);
+		return;
+	}
+	
+	// Do the hovered item and the clicked inventory item share a type, and are they stackable?
+	if (IsHoverAndClickedSameTypeAndStackable(ClickedInventoryItem))
+	{
+		const int32 ClickedStackCount = GridSlots[GridIndex]->GetStackCount();
+		const FPlugInv_StackableFragment* StackableFragment = ClickedInventoryItem->GetItemManifest().GetFragmentOfType<FPlugInv_StackableFragment>();
+		const int32 MaxStackSize = StackableFragment->GetMaxStackSize();
+		const int32 RoomInClickedSlot = MaxStackSize - ClickedStackCount;
+		const int32 HoveredStackCount = HoverItem->GetStackCount();
+
+		// Should we swap their stack counts? (Room in the clicked slot == 0 && HoveredStackCount < MaxStackSize)
+		if (ShouldSwapStackCounts(RoomInClickedSlot, HoveredStackCount, MaxStackSize))
+		{
+			SwapStackCounts(ClickedStackCount, HoveredStackCount, GridIndex);
+			return;
+		}
+		
+		// Should we consume the hover item's stacks? (Room in the clicked slot >= HoveredStackCount)
+		if (ShouldConsumeHoverItemStacks(HoveredStackCount, RoomInClickedSlot))
+		{
+			ConsumeHoverItemStacks(ClickedStackCount, HoveredStackCount, GridIndex);
+			return;
+		}
+		
+		// Should we fill in the stacks of the clicked item? (and not consume the hover item)
+		if (ShouldFillInStack(RoomInClickedSlot, HoveredStackCount))
+		{
+			FillInStack(RoomInClickedSlot, HoveredStackCount - RoomInClickedSlot, GridIndex);
+			return;
+		}
+		
+		// Clicked slot Full.
+		if (RoomInClickedSlot == 0)
+		{
+			return;
+		}
+	}
+		
+	// Swap with the hover item.
+	SwapClickedWithHoverItem(ClickedInventoryItem, GridIndex);
+}
+
+void UPlugInv_InventoryGrid::OnGridSlotClicked(int32 GridIndex, const FPointerEvent& MouseEvent)
+{
+	if (!IsValid(HoverItem)) return;
+	if (!GridSlots.IsValidIndex(ItemDropIndex)) return;
+
+	if (CurrentQueryResult.ValidItem.IsValid() && GridSlots.IsValidIndex(CurrentQueryResult.UpperLeftIndex))
+	{
+		// Clicked on a location that has a slotted event.
+		OnSlottedItemClicked(CurrentQueryResult.UpperLeftIndex, MouseEvent);
+		return;
+	}
+
+	TObjectPtr<UPlugInv_GridSlot> GridSlot = GridSlots[GridIndex];
+	if (!GridSlot->GetInventoryItem().IsValid())
+	{
+		// Clicked on an empty location
+		PutDownOnIndex(ItemDropIndex);
+	}
+}
+
+void UPlugInv_InventoryGrid::OnGridSlotHovered(int32 GridIndex, const FPointerEvent& MouseEvent)
+{
+	// Already doing a 2d range hover with the hover item, no need of this.
+	if (IsValid(HoverItem)) return;
+
+	UPlugInv_GridSlot* GridSlot = GridSlots[GridIndex];
+	if (GridSlot->IsAvailable())
+	{
+		GridSlot->SetStateAndBrushTexture(EPlugInv_GridSlotState::Occupied);
+	}
+}
+
+void UPlugInv_InventoryGrid::OnGridSlotUnhovered(int32 GridIndex, const FPointerEvent& MouseEvent)
+{
+	// Already doing a 2d range hover with the hover item, no need of this.
+	if (IsValid(HoverItem)) return;
+	UPlugInv_GridSlot* GridSlot = GridSlots[GridIndex];
+	if (GridSlot->IsAvailable())
+	{
+		GridSlot->SetStateAndBrushTexture(EPlugInv_GridSlotState:: Unoccupied);
+	}
+}
+
+void UPlugInv_InventoryGrid::PickUp(UPlugInv_InventoryItem* ClickedInventoryItem, const int32 GridIndex)
+{
+	AssignHoverItem(ClickedInventoryItem, GridIndex, GridIndex);
+	// Remove clicked item from the grid
+	RemoveItemFromGrid(ClickedInventoryItem, GridIndex);
+}
+
+void UPlugInv_InventoryGrid::AssignHoverItem(UPlugInv_InventoryItem* InventoryItem)
+{
+	if (!IsValid(HoverItem))
+	{
+		HoverItem = CreateWidget<UPlugInv_HoverItem>(GetOwningPlayer(), HoverItemClass);
+	}
+	
+	const FPlugInv_GridFragment* GridFragment = GetFragment<FPlugInv_GridFragment>(InventoryItem, FragmentTags::GridFragment);
+	const FPlugInv_ImageFragment* ImageFragment = GetFragment<FPlugInv_ImageFragment>(InventoryItem, FragmentTags::IconFragment);
+	if (!GridFragment || !ImageFragment) return;
+	
+
+	const FVector2D DrawSize = GetDrawSize(GridFragment);
+	FSlateBrush IconBrush;
+	IconBrush.SetResourceObject(ImageFragment->GetIcon());
+	IconBrush.DrawAs = ESlateBrushDrawType::Image;
+	IconBrush.ImageSize = DrawSize * UWidgetLayoutLibrary::GetViewportScale(this);
+
+	HoverItem->SetImageBrush(IconBrush);
+	HoverItem->SetGridDimensions(GridFragment->GetGridSize());
+	HoverItem->SetInventoryItem(InventoryItem);
+	HoverItem->SetIsStackable(InventoryItem->IsStackable());
+
+	// Instead of adding it to the viewport, set it as the mouse cursor widget
+	GetOwningPlayer()->SetMouseCursorWidget(EMouseCursor::Default, HoverItem);
+}
+
+void UPlugInv_InventoryGrid::AssignHoverItem(UPlugInv_InventoryItem* InventoryItem, const int32 GridIndex,
+	const int32 PreviousGridIndex)
+{
+	AssignHoverItem(InventoryItem);
+
+	HoverItem->SetPreviousGridIndex(PreviousGridIndex);
+	HoverItem->UpdateStackCount(InventoryItem->IsStackable() ? GridSlots[GridIndex]->GetStackCount() : 0);
+}
+
+void UPlugInv_InventoryGrid::RemoveItemFromGrid(UPlugInv_InventoryItem* InventoryItem, const int32 GridIndex)
+{
+	LOG_DOUBLE_S(FColor::Orange, "InventoryGrid::RemoveItemFromGrid : Removed item at index {0}", GridIndex);
+
+	const FPlugInv_GridFragment* GridFragment = GetFragment<FPlugInv_GridFragment>(InventoryItem, FragmentTags::GridFragment);
+	if (!GridFragment) return;
+
+	UPlugInv_InventoryStatics::ForEach2D(GridSlots, GridIndex, GridFragment->GetGridSize(), Columns, [&](UPlugInv_GridSlot* GridSlot)
+	{
+		GridSlot->SetInventoryItem(nullptr);
+		GridSlot->SetUpperLeftIndex(INDEX_NONE);
+		GridSlot->SetStateAndBrushTexture(EPlugInv_GridSlotState::Unoccupied);
+		GridSlot->SetAvailable(true);
+		GridSlot->SetStackCount(0);
+	});
+
+	if (SlottedItemMap.Contains(GridIndex))
+	{
+		TObjectPtr<UPlugInv_SlottedItem> FoundSlottedItem;
+		SlottedItemMap.RemoveAndCopyValue(GridIndex, FoundSlottedItem);
+		FoundSlottedItem->RemoveFromParent();
+	}
+}
+
+void UPlugInv_InventoryGrid::UpdateTileParameters(const FVector2D& CanvasPosition, const FVector2D& MousePosition)
+{
+	// if mouse not in canvas panel, return.
+	if (!bCurrentMouseWithinCanvas)
+	{
+		return;
+	}
+	
+	// Calculate the tile quadrant
+	const FIntPoint HoveredTileCoordinates = CalculateHoveredCoordinates(CanvasPosition, MousePosition);
+	LastTileParameters = TileParameters;
+
+	TileParameters.TileCoordinates = HoveredTileCoordinates;
+	TileParameters.TileIndex = UPlugInv_WidgetUtils::GetIndexFromPosition(HoveredTileCoordinates, Columns);
+	TileParameters.TileQuadrant = CalculateTileQuadrant(CanvasPosition, MousePosition);
+
+	LOG_DOUBLE_S(FColor::Orange, "InventoryGrid::UpdateTileParameters : Parameters.TileIndex: {0}, Parameters.TileQuadrant: {1}, Parameters.TileCoordinates: {2}, ", TileParameters.TileIndex, UEnum::GetDisplayValueAsText(TileParameters.TileQuadrant).ToString(), TileParameters.TileCoordinates);
+	
+	// Handle highlight/unhighlight of the grid slots
+	OnTileParametersUpdated(TileParameters);
+}
+
+FIntPoint UPlugInv_InventoryGrid::CalculateHoveredCoordinates(const FVector2D& CanvasPosition,
+	const FVector2D& MousePosition) const
+{
+	// Calculate relative position inside canvas and floor it
+	return FIntPoint{
+		static_cast<int32>(FMath::FloorToInt((MousePosition.X - CanvasPosition.X) / TileSize)),
+		static_cast<int32>(FMath::FloorToInt((MousePosition.Y - CanvasPosition.Y) / TileSize))
+	};
+}
+
+EPlugInv_TileQuadrant UPlugInv_InventoryGrid::CalculateTileQuadrant(const FVector2D& CanvasPosition,
+	const FVector2D& MousePosition) const
+{
+	// Calculate relative position within the current tile, with the remainder -> Fmod()
+	const float TileLocalX = FMath::Fmod(MousePosition.X - CanvasPosition.X, TileSize);
+	const float TileLocalY = FMath::Fmod(MousePosition.Y - CanvasPosition.Y, TileSize);
+
+	// Determine which quadrant the mouse is in
+	const bool bIsTop = TileLocalY < TileSize / 2.f; // Top if Y is in the upper half
+	const bool bIsLeft = TileLocalX < TileSize / 2.f; // Left if X is in the left half
+
+	EPlugInv_TileQuadrant HoveredTileQuadrant{EPlugInv_TileQuadrant::None};
+	if (bIsTop && bIsLeft) HoveredTileQuadrant = EPlugInv_TileQuadrant::TopLeft;
+	else if (bIsTop && !bIsLeft) HoveredTileQuadrant = EPlugInv_TileQuadrant::TopRight;
+	else if (!bIsTop && bIsLeft) HoveredTileQuadrant = EPlugInv_TileQuadrant::BottomLeft;
+	else if (!bIsTop && !bIsLeft) HoveredTileQuadrant = EPlugInv_TileQuadrant::BottomRight;
+	
+	return HoveredTileQuadrant;
+}
+
+void UPlugInv_InventoryGrid::OnTileParametersUpdated(const FPlugInv_TileParameters& Parameters)
+{
+	if (!IsValid(HoverItem)) return;
+
+
+	// Get Hover Item's dimensions
+	const FIntPoint Dimensions = HoverItem->GetGridDimensions();
+
+	// calculate the starting coordinate for highlighting and ItemDropIndex setting
+	const FIntPoint StartingCoordinate = CalculateStartingCoordinate(Parameters.TileCoordinates, Dimensions, Parameters.TileQuadrant);
+	ItemDropIndex = UPlugInv_WidgetUtils::GetIndexFromPosition(StartingCoordinate, Columns);
+	
+	// check hover position
+	CurrentQueryResult = CheckHoverPosition(StartingCoordinate, Dimensions);
+
+	LOG_DOUBLE_S(FColor::Orange, "InventoryGrid::OnTileParametersUpdated : ItemDropIndex = {0}, QuerybHasSpace? = {1}, QueryHasItem = {2}, QueryUpperLeftIndex = {3}"
+		, ItemDropIndex, CurrentQueryResult.bHasSpace, CurrentQueryResult.ValidItem.IsValid(), CurrentQueryResult.UpperLeftIndex);
+
+	// in the grid bounds?
+	if (CurrentQueryResult.bHasSpace)
+	{
+		HighlightSlots(ItemDropIndex, Dimensions);
+		return;
+	}
+	
+	UnHighlightSlots(LastHighlightedIndex, LastHighlightedDimensions);
+
+	if (CurrentQueryResult.ValidItem.IsValid() && GridSlots.IsValidIndex(CurrentQueryResult.UpperLeftIndex))
+	{
+		// TODO: There's a single item in this space. We can swap or add stacks.
+		const FPlugInv_GridFragment* GridFragment = GetFragment<FPlugInv_GridFragment>(CurrentQueryResult.ValidItem.Get(), FragmentTags::GridFragment);
+		if (!GridFragment) return;
+		ChangeHoverType(CurrentQueryResult.UpperLeftIndex, GridFragment->GetGridSize(), EPlugInv_GridSlotState::GrayedOut);
+	}
+
+	// any items in the way?
+
+
+	// if so, is there only one item in the way? (can we swap?)
+}
+
+FIntPoint UPlugInv_InventoryGrid::CalculateStartingCoordinate(const FIntPoint& Coordinates, const FIntPoint& Dimensions,
+	const EPlugInv_TileQuadrant Quadrant) const
+{
+	// Are dimensions properties width, height even or odd
+	const int32 HasEvenWidth = Dimensions.X % 2 == 0 ? 1 : 0;
+	const int32 HasEvenHeight = Dimensions.Y % 2 == 0 ? 1 : 0;
+
+	// If even just change highlighting based on the quadrant in
+	// if odd just change highlighting based on the tile in
+	FIntPoint StartingCoord;
+	switch (Quadrant)
+	{
+	case EPlugInv_TileQuadrant::TopLeft:
+		StartingCoord.X = Coordinates.X - FMath::FloorToInt(0.5f * Dimensions.X);
+		StartingCoord.Y = Coordinates.Y - FMath::FloorToInt(0.5f * Dimensions.Y);
+		break;
+	case EPlugInv_TileQuadrant::TopRight:
+		StartingCoord.X = Coordinates.X - FMath::FloorToInt(0.5f * Dimensions.X) + HasEvenWidth;
+		StartingCoord.Y = Coordinates.Y - FMath::FloorToInt(0.5f * Dimensions.Y);
+		break;
+	case EPlugInv_TileQuadrant::BottomLeft:
+		StartingCoord.X = Coordinates.X - FMath::FloorToInt(0.5f * Dimensions.X);
+		StartingCoord.Y = Coordinates.Y - FMath::FloorToInt(0.5f * Dimensions.Y) + HasEvenHeight;
+		break;
+	case EPlugInv_TileQuadrant::BottomRight:
+		StartingCoord.X = Coordinates.X - FMath::FloorToInt(0.5f * Dimensions.X) + HasEvenWidth;
+		StartingCoord.Y = Coordinates.Y - FMath::FloorToInt(0.5f * Dimensions.Y) + HasEvenHeight;
+		break;
+	default:
+		LOG_DOUBLE_ERROR_S("Invalid quadrant");
+		return FIntPoint(-1, -1);
+	}
+	return StartingCoord;
+}
+
+FInv_SpaceQueryResult UPlugInv_InventoryGrid::CheckHoverPosition(const FIntPoint& Position,
+	const FIntPoint& Dimensions)
+{
+	FInv_SpaceQueryResult Result; // Default false constructor
+	
+	// In the grid bounds?
+	int32 StartingIndex = UPlugInv_WidgetUtils::GetIndexFromPosition(Position, Columns);
+	if (IsInGridBounds(StartingIndex, Dimensions) == false)
+	{
+		return Result; 
+	}
+	
+	// If more than one of the indices is occupied with the same item, we need to se if they all have the same upper left index.
+	// Container of unique values unlike arrays.
+	TSet<int32> OccupiedUpperLeftIndices;
+
+	UPlugInv_InventoryStatics::ForEach2D(GridSlots, UPlugInv_WidgetUtils::GetIndexFromPosition(Position, Columns), Dimensions, Columns, [&](const UPlugInv_GridSlot* GridSlot)
+	{
+		if (GridSlot->GetInventoryItem().IsValid())
+		{
+			OccupiedUpperLeftIndices.Add(GridSlot->GetUpperLeftIndex());
+			Result.bHasSpace = false;
+		}
+	});
+
+	if (OccupiedUpperLeftIndices.IsEmpty())
+	{
+		Result.bHasSpace = true;
+	}
+	
+	// if so, is there only one item in the way? (can we swap?)
+
+	if (OccupiedUpperLeftIndices.Num() == 1) // single item at position - it's valid for swapping/combining
+	{
+		const int32 Index = *OccupiedUpperLeftIndices.CreateConstIterator();
+		Result.ValidItem = GridSlots[Index]->GetInventoryItem();
+		Result.UpperLeftIndex = GridSlots[Index]->GetUpperLeftIndex();
+	}
+	return Result;
+}
+
+bool UPlugInv_InventoryGrid::CursorExitedCanvas(const FVector2D& BoundaryPos, const FVector2D& BoundarySize,
+	const FVector2D& Location)
+{
+	bLastMouseWithinCanvas = bCurrentMouseWithinCanvas;
+	bCurrentMouseWithinCanvas = UPlugInv_WidgetUtils::IsWithinBounds(BoundaryPos, BoundarySize, Location);
+	if (bCurrentMouseWithinCanvas == false && bLastMouseWithinCanvas)
+	{
+		UnHighlightSlots(LastHighlightedIndex, LastHighlightedDimensions);
+		return true;
+		
+	}
+	return false;
+}
+
+void UPlugInv_InventoryGrid::HighlightSlots(const int32 Index, const FIntPoint& Dimensions)
+{
+	if (!bCurrentMouseWithinCanvas) return;
+	
+	UnHighlightSlots(LastHighlightedIndex, LastHighlightedDimensions);
+	UPlugInv_InventoryStatics::ForEach2D(GridSlots, Index, Dimensions, Columns, [&](UPlugInv_GridSlot* GridSlot)
+	{
+		GridSlot->SetStateAndBrushTexture(EPlugInv_GridSlotState::Occupied);
+	});
+	
+	LastHighlightedDimensions = Dimensions;
+	LastHighlightedIndex = Index;
+}
+
+void UPlugInv_InventoryGrid::UnHighlightSlots(const int32 Index, const FIntPoint& Dimensions)
+{
+	UPlugInv_InventoryStatics::ForEach2D(GridSlots, Index, Dimensions, Columns, [&](UPlugInv_GridSlot* GridSlot)
+	{
+		if (GridSlot->IsAvailable())
+		{
+			GridSlot->SetStateAndBrushTexture(EPlugInv_GridSlotState::Unoccupied);
+		}
+		else
+		{
+			GridSlot->SetStateAndBrushTexture(EPlugInv_GridSlotState::Occupied);
+		}
+	});
+}
+
+void UPlugInv_InventoryGrid::ChangeHoverType(const int32 Index, const FIntPoint& Dimensions,
+	EPlugInv_GridSlotState GridSlotState)
+{
+	UnHighlightSlots(LastHighlightedIndex, LastHighlightedDimensions);
+	UPlugInv_InventoryStatics::ForEach2D(GridSlots, Index, Dimensions, Columns, [State = GridSlotState](UPlugInv_GridSlot* GridSlot)
+	{
+		GridSlot->SetStateAndBrushTexture(State);
+	});
+	
+	LastHighlightedIndex = Index;
+	LastHighlightedDimensions = Dimensions;
+}
+
+void UPlugInv_InventoryGrid::PutDownOnIndex(const int32 Index)
+{
+	check(HoverItem);
+	
+	AddItemToIndex(HoverItem->GetInventoryItem(), Index, HoverItem->IsStackable(), HoverItem->GetStackCount());
+	UpdateGridSlots(HoverItem->GetInventoryItem(), Index, HoverItem->IsStackable(), HoverItem->GetStackCount());
+	ClearHoverItem();
+}
+
+void UPlugInv_InventoryGrid::ClearHoverItem()
+{
+	if (!IsValid(HoverItem)) return;
+
+	HoverItem->SetInventoryItem(nullptr);
+	HoverItem->SetIsStackable(false);
+	HoverItem->SetPreviousGridIndex(INDEX_NONE);
+	HoverItem->UpdateStackCount(0);
+	HoverItem->SetImageBrush(FSlateNoResource());
+	HoverItem->RemoveFromParent();
+	HoverItem = nullptr;
+
+	ShowCursor();
+}
+
+UUserWidget* UPlugInv_InventoryGrid::GetVisibleCursorWidget()
+{
+	if (!IsValid(GetOwningPlayer())) return nullptr;
+	if (!IsValid(VisibleCursorWidget))
+	{
+		VisibleCursorWidget = CreateWidget<UUserWidget>(GetOwningPlayer(), VisibleCursorWidgetClass);
+	}
+	return VisibleCursorWidget;
+}
+
+UUserWidget* UPlugInv_InventoryGrid::GetHiddenCursorWidget()
+{
+	if (!IsValid(GetOwningPlayer())) return nullptr;
+	if (!IsValid(HiddenCursorWidget))
+	{
+		HiddenCursorWidget = CreateWidget<UUserWidget>(GetOwningPlayer(), HiddenCursorWidgetClass);
+	}
+	return HiddenCursorWidget;
+}
+
+bool UPlugInv_InventoryGrid::IsHoverAndClickedSameTypeAndStackable(
+	const UPlugInv_InventoryItem* ClickedInventoryItem) const
+{
+	const bool bIsSameItem = ClickedInventoryItem == HoverItem->GetInventoryItem();
+	const bool bIsStackable = ClickedInventoryItem->IsStackable();
+	return bIsSameItem && bIsStackable && HoverItem->GetItemType().MatchesTagExact(ClickedInventoryItem->GetItemManifest().GetItemType());
+}
+
+void UPlugInv_InventoryGrid::SwapClickedWithHoverItem(UPlugInv_InventoryItem* ClickedInventoryItem,
+	const int32 GridIndex)
+{
+	if (!IsValid(HoverItem)) return;
+	
+	UPlugInv_InventoryItem* TempInventoryItem = HoverItem->GetInventoryItem();
+	const int32 TempStackCount = HoverItem->GetStackCount();
+	const bool bTempIsStackable = HoverItem->IsStackable();
+	
+	// Keep the same previous grid index
+	AssignHoverItem(ClickedInventoryItem, GridIndex, HoverItem->GetPreviousGridIndex());
+	RemoveItemFromGrid(ClickedInventoryItem, GridIndex);
+	AddItemToIndex(TempInventoryItem, ItemDropIndex, bTempIsStackable, TempStackCount);
+	UpdateGridSlots(TempInventoryItem, ItemDropIndex, bTempIsStackable, TempStackCount);
+}
+
+bool UPlugInv_InventoryGrid::ShouldSwapStackCounts(const int32 RoomInClickedSlot, const int32 HoveredStackCount,
+	const int32 MaxStackSize) const
+{
+	return RoomInClickedSlot == 0 && HoveredStackCount < MaxStackSize;
+}
+
+void UPlugInv_InventoryGrid::SwapStackCounts(const int32 ClickedStackCount, const int32 HoveredStackCount,
+	const int32 Index)
+{
+	UPlugInv_GridSlot* GridSlot = GridSlots[Index];
+	GridSlot->SetStackCount(HoveredStackCount);
+	const UPlugInv_SlottedItem* ClickedSlottedItem = SlottedItemMap.FindChecked(Index);
+	ClickedSlottedItem->UpdateStackAmount(HoveredStackCount);
+	HoverItem->UpdateStackCount(ClickedStackCount);
+}
+
+bool UPlugInv_InventoryGrid::ShouldConsumeHoverItemStacks(const int32 HoveredStackCount,
+	const int32 RoomInClickedSlot) const
+{
+	return RoomInClickedSlot >= HoveredStackCount;
+}
+
+void UPlugInv_InventoryGrid::ConsumeHoverItemStacks(const int32 ClickedStackCount, const int32 HoveredStackCount,
+	const int32 Index)
+{
+	const int32 AmountToTransfer = HoveredStackCount;
+	const int32 NewClickedStackCount = ClickedStackCount + AmountToTransfer;
+	
+	GridSlots[Index]->SetStackCount(NewClickedStackCount);
+	SlottedItemMap.FindChecked(Index)->UpdateStackAmount(NewClickedStackCount);
+	
+	ClearHoverItem();
+	ShowCursor();
+	
+	const FPlugInv_GridFragment* GridFragment = GridSlots[Index]->GetInventoryItem()->GetItemManifest().GetFragmentOfType<FPlugInv_GridFragment>();
+	const FIntPoint Dimensions = GridFragment ? GridFragment->GetGridSize() : FIntPoint(1, 1);
+	HighlightSlots(Index, Dimensions);
+}
+
+bool UPlugInv_InventoryGrid::ShouldFillInStack(const int32 RoomInClickedSlot, const int32 HoveredStackCount) const
+{
+	return RoomInClickedSlot < HoveredStackCount;
+}
+
+void UPlugInv_InventoryGrid::FillInStack(const int32 FillAmount, const int32 Remainder, const int32 Index)
+{
+	UPlugInv_GridSlot* GridSlot = GridSlots[Index];
+	const int32 NewStackCount = GridSlot->GetStackCount() + FillAmount;
+	GridSlot->SetStackCount(NewStackCount);
+	UPlugInv_SlottedItem* ClickedSlottedItem = SlottedItemMap.FindChecked(Index);
+	ClickedSlottedItem->UpdateStackAmount(NewStackCount);
+	HoverItem->UpdateStackCount(Remainder);
+}
+
+
 
 
 

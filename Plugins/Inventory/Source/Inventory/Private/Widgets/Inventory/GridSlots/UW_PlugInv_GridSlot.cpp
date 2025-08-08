@@ -11,6 +11,24 @@ void UPlugInv_GridSlot::NativeOnInitialized()
 	Super::NativeOnInitialized();
 }
 
+void UPlugInv_GridSlot::NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+	Super::NativeOnMouseEnter(InGeometry, InMouseEvent);
+	OnGridSlotHovered.Broadcast(TileIndex, InMouseEvent);
+}
+
+void UPlugInv_GridSlot::NativeOnMouseLeave(const FPointerEvent& InMouseEvent)
+{
+	Super::NativeOnMouseLeave(InMouseEvent);
+	OnGridSlotUnhovered.Broadcast(TileIndex, InMouseEvent);
+}
+
+FReply UPlugInv_GridSlot::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+	OnGridSlotClicked.Broadcast(TileIndex, InMouseEvent);
+	return Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
+}
+
 void UPlugInv_GridSlot::SetStateAndBrushTexture(const EPlugInv_GridSlotState SlotState)
 {
 	GridSlotState = SlotState;

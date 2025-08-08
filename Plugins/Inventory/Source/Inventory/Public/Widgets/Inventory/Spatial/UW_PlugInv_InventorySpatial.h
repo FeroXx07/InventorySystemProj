@@ -44,6 +44,9 @@ private:
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UWidgetSwitcher> Switcher;
 
+	UPROPERTY(VisibleAnywhere)
+	TWeakObjectPtr<UPlugInv_InventoryGrid> ActiveGrid;
+
 	// Button widgets to set active inventory grids.
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UButton> Button_Equippables;
@@ -72,5 +75,5 @@ private:
 	void DisableButton(const TObjectPtr<UButton>& Button) const;
 
 	// Function to set the active inventory grid.
-	void SetActiveGrid(const TObjectPtr<UPlugInv_InventoryGrid>& Grid, const TObjectPtr<UButton>& Button) const;
+	void SetActiveGrid(const TObjectPtr<UPlugInv_InventoryGrid>& Grid, const TObjectPtr<UButton>& Button);
 };

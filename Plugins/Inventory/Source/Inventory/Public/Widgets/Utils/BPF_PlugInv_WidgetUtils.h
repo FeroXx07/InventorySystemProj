@@ -6,6 +6,7 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "BPF_PlugInv_WidgetUtils.generated.h"
 
+class UWidget;
 /**
  * 
  */
@@ -21,7 +22,16 @@ public:
 
 	// Util function to get a two-dimensional position from a one-dimensional position (ex: index).
 	static FIntPoint GetPositionFromIndex(const int32 Index, const int32 Columns);
+
+	// Util function to get a widget's position
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	static FVector2D GetWidgetPosition(UWidget* Widget);
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	static FVector2D GetWidgetSize(UWidget* Widget);
 	
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	static bool IsWithinBounds(const FVector2D& BoundaryPos, const FVector2D& WidgetSize, const FVector2D& MousePos);
 };
 
 

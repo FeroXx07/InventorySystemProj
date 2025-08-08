@@ -18,6 +18,7 @@ enum class EPlugInv_GridSlotState : uint8
 };
 
 class UImage;
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FGridSlotEvent, int32, GridIndex, const FPointerEvent&, MouseEvent);
 /**
  * 
  */
@@ -29,6 +30,9 @@ class INVENTORY_API UPlugInv_GridSlot : public UUserWidget
 public:
 
 	virtual void NativeOnInitialized() override;
+	virtual void NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+	virtual void NativeOnMouseLeave(const FPointerEvent& InMouseEvent) override;
+	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 	
 	void SetTileIndex(const int32 Index) {TileIndex = Index;}
 	int32 GetTileIndex() const {return TileIndex;}
@@ -44,19 +48,22 @@ public:
 	bool IsAvailable() const;
 	void SetAvailable(const bool bAvailable);
 
+	FGridSlotEvent OnGridSlotClicked;
+	FGridSlotEvent OnGridSlotHovered;
+	FGridSlotEvent OnGridSlotUnhovered;
 private:
 
 	UPROPERTY(VisibleAnywhere, Category = "Inventory")
-	int32 TileIndex;
+	int32 TileIndex{INDEX_NONE};
 
 	UPROPERTY(VisibleAnywhere, Category = "Inventory")
-	int32 StackCount;
+	int32 StackCount{0};
 
 	UPROPERTY(VisibleAnywhere, Category = "Inventory")
 	int32 UpperLeftIndex{INDEX_NONE};
 
 	UPROPERTY(VisibleAnywhere, Category = "Inventory")
-	bool bAvailable;
+	bool bAvailable{true};
 
 	TWeakObjectPtr<UPlugInv_InventoryItem> InventoryItem;
 	
@@ -68,4 +75,5 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = "Inventory")
 	EPlugInv_GridSlotState GridSlotState;
+	
 };

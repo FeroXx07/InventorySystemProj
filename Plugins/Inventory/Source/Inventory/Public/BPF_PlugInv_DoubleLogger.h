@@ -9,10 +9,10 @@
 
 #define DrawLogScreenTime 20.f
 
-#define LOG_DOUBLE_S(FormatStr, ...) \
+#define LOG_DOUBLE_S(Color, FormatStr, ...) \
 do { \
 FString ScreenStr = UPlugInv_DoubleLogger::FormatText(TEXT(FormatStr), ##__VA_ARGS__); \
-UPlugInv_DoubleLogger::DrawToScreen(ScreenStr, FColor::Purple, DrawLogScreenTime); \
+UPlugInv_DoubleLogger::DrawToScreen(ScreenStr, Color, DrawLogScreenTime); \
 UE_LOG(LogInventory, Display, TEXT("%s"), *ScreenStr); \
 } while (0)
 

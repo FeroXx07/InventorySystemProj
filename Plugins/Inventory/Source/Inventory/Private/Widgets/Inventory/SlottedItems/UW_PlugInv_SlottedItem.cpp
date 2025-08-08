@@ -7,6 +7,12 @@
 #include "Components/TextBlock.h"
 #include "Items/O_PlugInv_InventoryItem.h"
 
+FReply UPlugInv_SlottedItem::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+	OnSlottedItemClicked.Broadcast(GridIndex, InMouseEvent);
+	return Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
+}
+
 void UPlugInv_SlottedItem::SetInventoryItem(UPlugInv_InventoryItem* Item)
 {
 	InventoryItem = Item; 

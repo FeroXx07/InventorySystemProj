@@ -3,6 +3,9 @@
 
 #include "Widgets/Utils/BPF_PlugInv_WidgetUtils.h"
 
+#include "Blueprint/SlateBlueprintLibrary.h"
+#include "Components/Widget.h"
+
 int32 UPlugInv_WidgetUtils::GetIndexFromPosition(const FIntPoint& Position, const int32 Columns)
 {
 	return Position.X + Position.Y * Columns;
@@ -11,4 +14,29 @@ int32 UPlugInv_WidgetUtils::GetIndexFromPosition(const FIntPoint& Position, cons
 FIntPoint UPlugInv_WidgetUtils::GetPositionFromIndex(const int32 Index, const int32 Columns)
 {
 	return FIntPoint(Index % Columns, Index / Columns);
+}
+
+FVector2D UPlugInv_WidgetUtils::GetWidgetPosition(UWidget* Widget)
+{
+	// FGeometry has info
+	const FGeometry Geometry = Widget->GetCachedGeometry();
+	FVector2D PixelPosition;
+	// From the geometry get the viewport space location of its top left corner
+	FVector2D ViewportPosition;
+	const FVector2D LocalTopLeft = USlateBlueprintLibrary::GetLocalTopLeft(Geometry);
+	USlateBlueprintLibrary::LocalToViewport(Widget, Geometry, LocalTopLeft, PixelPosition, ViewportPosition);
+	return ViewportPosition;
+}
+
+FVector2D UPlugInv_WidgetUtils::GetWidgetSize(UWidget* Widget)
+{
+	const FGeometry Geometry = Widget->GetCachedGeometry();
+	return Geometry.GetLocalSize();
+}
+
+bool UPlugInv_WidgetUtils::IsWithinBounds(const FVector2D& BoundaryPos, const FVector2D& WidgetSize,
+	const FVector2D& MousePos)
+{
+	return MousePos.X >= BoundaryPos.X && MousePos.X <= (BoundaryPos.X + WidgetSize.X) &&
+		MousePos.Y >= BoundaryPos.Y && MousePos.Y <= (BoundaryPos.Y + WidgetSize.Y);
 }

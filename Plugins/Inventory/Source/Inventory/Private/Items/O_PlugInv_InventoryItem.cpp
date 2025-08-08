@@ -3,6 +3,8 @@
 
 #include "Items/O_PlugInv_InventoryItem.h"
 
+#include "Items/Fragments/BPF_PlugInv_ItemFragmentLibrary.h"
+#include "Items/Fragments/PlugInv_FragmentTags.h"
 #include "Net/UnrealNetwork.h"
 
 void UPlugInv_InventoryItem::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -16,4 +18,10 @@ void UPlugInv_InventoryItem::GetLifetimeReplicatedProps(TArray<class FLifetimePr
 void UPlugInv_InventoryItem::SetItemManifest(const FPlugInv_ItemManifest& Manifest)
 {
 	ItemManifest = FInstancedStruct::Make<FPlugInv_ItemManifest>(Manifest);
+}
+
+bool UPlugInv_InventoryItem::IsStackable() const
+{
+	const FPlugInv_StackableFragment* Stackable = GetFragment<FPlugInv_StackableFragment>(this, FragmentTags::StackableFragment);
+	return Stackable != nullptr;
 }

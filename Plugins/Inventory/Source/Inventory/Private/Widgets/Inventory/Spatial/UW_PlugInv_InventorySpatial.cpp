@@ -79,8 +79,20 @@ void UPlugInv_InventorySpatial::DisableButton(const TObjectPtr<UButton>& Button)
 	Button->SetIsEnabled(false);
 }
 
-void UPlugInv_InventorySpatial::SetActiveGrid(const TObjectPtr<UPlugInv_InventoryGrid>& Grid, const TObjectPtr<UButton>& Button) const
+void UPlugInv_InventorySpatial::SetActiveGrid(const TObjectPtr<UPlugInv_InventoryGrid>& Grid, const TObjectPtr<UButton>& Button)
 {
+	if (ActiveGrid.IsValid())
+	{
+		ActiveGrid->HideCursor();
+	}
+	
+	ActiveGrid = Grid;
+	
+	if (ActiveGrid.IsValid())
+	{
+		ActiveGrid->ShowCursor();
+	}
+	
 	if (IsValid(Button) == false || IsValid(Grid) == false)
 		return;
 	
