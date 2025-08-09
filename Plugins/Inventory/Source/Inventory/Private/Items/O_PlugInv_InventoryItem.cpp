@@ -25,3 +25,8 @@ bool UPlugInv_InventoryItem::IsStackable() const
 	const FPlugInv_StackableFragment* Stackable = GetFragment<FPlugInv_StackableFragment>(this, FragmentTags::StackableFragment);
 	return Stackable != nullptr;
 }
+
+bool UPlugInv_InventoryItem::IsConsumable() const
+{
+	return GetItemManifest().GetItemCategory() == EPlugInv_ItemCategory::Consumable;
+}

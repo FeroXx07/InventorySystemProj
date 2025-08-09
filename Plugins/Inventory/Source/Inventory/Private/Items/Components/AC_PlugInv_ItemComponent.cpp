@@ -13,6 +13,7 @@ UPlugInv_ItemComponent::UPlugInv_ItemComponent()
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = false;
 	PickupMessage = TEXT("E - Pick Up");
+	SetIsReplicatedByDefault(true);
 	// ...
 }
 
@@ -21,6 +22,11 @@ void UPlugInv_ItemComponent::GetLifetimeReplicatedProps(TArray<class FLifetimePr
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ThisClass, ItemManifest);
+}
+
+void UPlugInv_ItemComponent::InitItemManifest(FPlugInv_ItemManifest CopyOfManifest)
+{
+	ItemManifest = CopyOfManifest;
 }
 
 void UPlugInv_ItemComponent::PickUp()

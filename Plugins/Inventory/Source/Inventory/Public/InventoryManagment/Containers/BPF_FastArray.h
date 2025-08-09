@@ -87,11 +87,11 @@ private:
 	friend UPlugInv_InventoryComponent;
 
 	// Container of entries.
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere, Category = "Inventory")
 	TArray<FPlugInv_InventoryItemEntry> Entries;
 
 	// Reference to the owner component, doesn't need to be replicated.
-	UPROPERTY(NotReplicated)
+	UPROPERTY(VisibleAnywhere, NotReplicated, Category = "Inventory")
 	TObjectPtr<UActorComponent> OwnerComponent;
 };
 

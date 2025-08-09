@@ -35,11 +35,21 @@ public:
 	UFUNCTION(Server, Reliable, Category = "Inventory")
 	void Server_AddStacksToItem(UPlugInv_ItemComponent* ItemComponent, int32 StackCount, int32 Remainder);
 
+	// Server RPC (Client->Server).
+	UFUNCTION(Server, Reliable, Category = "Inventory")
+	void Server_DropItem(UPlugInv_InventoryItem* Item, int32 StackCount);
+
+	// Server RPC (Client->Server).
+	UFUNCTION(Server, Reliable, Category = "Inventory")
+	void Server_ConsumeItem(UPlugInv_InventoryItem* Item);
+	
 	// Adds Unreal SubObjects to replication.
 	void AddSubObjToReplication(UObject* SubObject);
 	
 	// Manage inventory widget visibility.
 	void ToggleInventoryMenu();
+
+	void SpawnDroppedItem(UPlugInv_InventoryItem* Item, int32 StackCount) const;
 
 	// CRUD Events.
 	FInventoryItemChange OnItemAdded;
@@ -54,13 +64,12 @@ protected:
 
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
-
 private:
 	// Flag for inventory visibility.
 	bool bInventoryMenuOpen;
 
 	// Fast array container.
-	UPROPERTY(Replicated)
+	UPROPERTY(VisibleAnywhere, Replicated, Category = "Inventory")
 	FPlugInv_InventoryFastArray InventoryList;
 	
 	// Weak ptr holding a ref back to player without affecting GB (Garbage Collection).
@@ -80,4 +89,19 @@ private:
 	
 	// Creates the inventory widget.
 	void ConstructInventory();
+
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	float DropSpawnAngleMin = -85.f;
+	
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	float DropSpawnAngleMax = 85.f;
+
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	float DropSpawnDistMin = 10.f;
+	
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	float DropSpawnDistMax = 50.f;
+
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	float RelativeSpawnZOffset = -70.f;
 };

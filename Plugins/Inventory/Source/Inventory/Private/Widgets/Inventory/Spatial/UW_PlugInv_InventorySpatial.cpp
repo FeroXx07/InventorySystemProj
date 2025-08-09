@@ -17,7 +17,17 @@ void UPlugInv_InventorySpatial::NativeOnInitialized()
 	Button_Consumables->OnClicked.AddDynamic(this, &ThisClass::ShowConsumables);
 	Button_Craftables->OnClicked.AddDynamic(this, &ThisClass::ShowCraftables);
 
+	Grid_Equippables->SetOwningCanvas(CanvasPanel_Root);
+	Grid_Consumables->SetOwningCanvas(CanvasPanel_Root);
+	Grid_Craftables->SetOwningCanvas(CanvasPanel_Root);
+	
 	ShowEquippables();
+}
+
+FReply UPlugInv_InventorySpatial::NativeOnMouseButtonDown(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
+{
+	//ActiveGrid->DropItem();
+	return Super::NativeOnMouseButtonDown(MyGeometry, MouseEvent);
 }
 
 FPlugInv_SlotAvailabilityResult UPlugInv_InventorySpatial::HasRoomForItem(TObjectPtr<UPlugInv_ItemComponent> ItemComponent) const

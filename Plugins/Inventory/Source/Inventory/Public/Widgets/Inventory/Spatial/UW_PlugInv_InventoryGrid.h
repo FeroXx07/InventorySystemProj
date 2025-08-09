@@ -10,6 +10,7 @@
 
 #include "UW_PlugInv_InventoryGrid.generated.h"
 
+class UPlugInv_ItemPopUp;
 class UPlugInv_HoverItem;
 struct FPlugInv_GridFragment;
 class UPlugInv_SlottedItem;
@@ -51,6 +52,8 @@ public:
 
 	void ShowCursor();
 	void HideCursor();
+	void SetOwningCanvas(UCanvasPanel* OwningCanvas);
+	void DropItem();
 	
 private:
 	// Function to construct the actual grid.
@@ -120,6 +123,7 @@ private:
 	void ConsumeHoverItemStacks(const int32 ClickedStackCount, const int32 HoveredStackCount, const int32 Index);
 	bool ShouldFillInStack(const int32 RoomInClickedSlot, const int32 HoveredStackCount) const;
 	void FillInStack(const int32 FillAmount, const int32 Remainder, const int32 Index);
+	void CreateItemPopUp(const int32 GridIndex);
 	
 	UFUNCTION()
 	void AddStacks(const FPlugInv_SlotAvailabilityResult& Result);
@@ -135,9 +139,21 @@ private:
 
 	UFUNCTION()
 	void OnGridSlotUnhovered(int32 GridIndex, const FPointerEvent& MouseEvent);
+
+	UFUNCTION()
+	void OnPopUpMenuSplit(int32 SplitAmount, int32 Index);
+	
+	UFUNCTION()
+	void OnPopUpMenuDrop(int32 Index);
+
+	UFUNCTION()
+	void OnPopUpMenuConsume(int32 Index);
 	
 	// Weak ref to the inventory component.
 	TWeakObjectPtr<UPlugInv_InventoryComponent> InventoryComponent;
+
+	// Weak ref to the canvas.
+	TWeakObjectPtr<UCanvasPanel> OwningCanvasPanel;
 
 	// Type of the items that can be stored in this particular grid.
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Inventory")
@@ -193,6 +209,15 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<UUserWidget> HiddenCursorWidget;
+
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	TSubclassOf<UPlugInv_ItemPopUp> ItemPopUpClass;
+	
+	UPROPERTY(VisibleAnywhere, Category = "Inventory")
+	TObjectPtr<UPlugInv_ItemPopUp> ItemPopUp;
+
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	FVector2D ItemPopUpOffset;
 
 	FPlugInv_TileParameters TileParameters;
 	FPlugInv_TileParameters LastTileParameters;

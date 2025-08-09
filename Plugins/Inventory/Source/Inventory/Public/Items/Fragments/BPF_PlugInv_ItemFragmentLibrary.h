@@ -7,6 +7,7 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "BPF_PlugInv_ItemFragmentLibrary.generated.h"
 
+class APlayerController;
 /**
  * 
  */
@@ -48,7 +49,7 @@ struct INVENTORY_API FPlugInv_ItemFragment
 
 private:
 
-	UPROPERTY(EditAnywhere, Category = "Inventory")
+	UPROPERTY(EditAnywhere, Category = "Inventory", meta = (Categories="FragmentTags"))
 	FGameplayTag FragmentTag = FGameplayTag::EmptyTag;
 };
 
@@ -139,4 +140,34 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Inventory")
 	int32 StackCount{1};
+};
+
+USTRUCT(BlueprintType)
+struct FPlugInv_ConsumableFragment : public FPlugInv_ItemFragment
+{
+	GENERATED_BODY()
+
+	virtual void OnConsume(APlayerController* PC) {}
+};
+
+USTRUCT(BlueprintType)
+struct FPlugInv_HealthPotionFragment : public FPlugInv_ConsumableFragment
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	float HealAmount = 20.f;
+
+	virtual void OnConsume(APlayerController* PC) override;
+};
+
+USTRUCT(BlueprintType)
+struct FPlugInv_ManaPotionFragment : public FPlugInv_ConsumableFragment
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	float ManaAmount = 20.f;
+
+	virtual void OnConsume(APlayerController* PC) override;
 };

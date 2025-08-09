@@ -6,6 +6,7 @@
 #include "Widgets/Inventory/InventoryBase/UW_PlugInv_InventoryBase.h"
 #include "UW_PlugInv_InventorySpatial.generated.h"
 
+class UCanvasPanel;
 class UWidgetSwitcher;
 class UPlugInv_InventoryGrid;
 class UButton;
@@ -20,7 +21,8 @@ class INVENTORY_API UPlugInv_InventorySpatial : public UPlugInv_InventoryBase
 
 public:
 	virtual void NativeOnInitialized() override;
-
+	virtual FReply NativeOnMouseButtonDown(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
+	
 	virtual FPlugInv_SlotAvailabilityResult HasRoomForItem(TObjectPtr<UPlugInv_ItemComponent> ItemComponent) const override;
 	
 private:
@@ -28,6 +30,9 @@ private:
 	// https://unreal-garden.com/tutorials/ui-bindwidget/
 	// These can be a List<UPlugInv_InventoryGrid> but for simplicity for now lets hold vars like this.
 
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UCanvasPanel> CanvasPanel_Root;
+	
 	// Reference to an inventory grid widget.
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UPlugInv_InventoryGrid> Grid_Equippables;

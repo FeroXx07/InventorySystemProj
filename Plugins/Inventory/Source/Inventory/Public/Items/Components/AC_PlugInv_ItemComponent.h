@@ -19,6 +19,7 @@ public:
 
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
+	void InitItemManifest(FPlugInv_ItemManifest CopyOfManifest);
 	// Manifest Getter.
 	FPlugInv_ItemManifest GetItemManifest() const
 	{

@@ -31,6 +31,8 @@ public:
 	FPlugInv_ItemManifest& GetItemManifestMutable(){ return ItemManifest.GetMutable<FPlugInv_ItemManifest>(); }
 
 	bool IsStackable() const;
+	bool IsConsumable() const;
+	
 	int32 GetTotalStackCount() const{ return TotalStackCount; }
 	void SetTotalStackCount(const int32 Value){this->TotalStackCount = Value; }
 

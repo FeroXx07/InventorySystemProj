@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "UW_PlugInv_GridSlot.generated.h"
 
+class UPlugInv_ItemPopUp;
 class UPlugInv_InventoryItem;
 
 UENUM(BlueprintType)
@@ -47,7 +48,9 @@ public:
 	void SetInventoryItem(UPlugInv_InventoryItem* InventoryItem);
 	bool IsAvailable() const;
 	void SetAvailable(const bool bAvailable);
-
+	void SetItemPopUp(UPlugInv_ItemPopUp* ItemPopUp);
+	TWeakObjectPtr<UPlugInv_ItemPopUp> GetItemPopUp() const;
+	
 	FGridSlotEvent OnGridSlotClicked;
 	FGridSlotEvent OnGridSlotHovered;
 	FGridSlotEvent OnGridSlotUnhovered;
@@ -66,6 +69,7 @@ private:
 	bool bAvailable{true};
 
 	TWeakObjectPtr<UPlugInv_InventoryItem> InventoryItem;
+	TWeakObjectPtr<UPlugInv_ItemPopUp> ItemPopUp;
 	
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UImage> Image_GridSlot;
@@ -75,5 +79,7 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = "Inventory")
 	EPlugInv_GridSlotState GridSlotState;
-	
+
+	UFUNCTION()
+	void OnItemPopUpDestruct(UUserWidget* Menu);
 };

@@ -13,12 +13,12 @@
 #include "Widgets/Inventory/InventoryBase/UW_PlugInv_InventoryBase.h"
 
 // Sets default values for this component's properties
-UPlugInv_InventoryComponent::UPlugInv_InventoryComponent() : InventoryList(this)
+UPlugInv_InventoryComponent::UPlugInv_InventoryComponent()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = false;
-
+	InventoryList = FPlugInv_InventoryFastArray(this);
 	// ...
 	SetIsReplicatedByDefault(true);
 	bReplicateUsingRegisteredSubObjectList = true;
@@ -118,6 +118,40 @@ void UPlugInv_InventoryComponent::GetLifetimeReplicatedProps(TArray<class FLifet
 	DOREPLIFETIME(ThisClass, InventoryList);
 }
 
+void UPlugInv_InventoryComponent::Server_DropItem_Implementation(UPlugInv_InventoryItem* Item, int32 StackCount)
+{
+	const int32 NewStackCount = Item->GetTotalStackCount() - StackCount;
+	if (NewStackCount <= 0)
+	{
+		InventoryList.RemoveEntry(Item);
+	}
+	else
+	{
+		Item->SetTotalStackCount(NewStackCount);
+	}
+	
+	SpawnDroppedItem(Item, StackCount);
+}
+
+void UPlugInv_InventoryComponent::Server_ConsumeItem_Implementation(UPlugInv_InventoryItem* Item)
+{
+	const int32 NewStackCount = Item->GetTotalStackCount() - 1;
+	
+	if (NewStackCount <= 0)
+	{
+		InventoryList.RemoveEntry(Item);
+	}
+	else
+	{
+		Item->SetTotalStackCount(NewStackCount);
+	}
+	
+	if (FPlugInv_ConsumableFragment* ConsumableFragment = Item->GetItemManifestMutable().GetFragmentOfTypeMutable<FPlugInv_ConsumableFragment>())
+	{
+		ConsumableFragment->OnConsume(OwningPlayerController.Get());
+	}
+}
+
 void UPlugInv_InventoryComponent::AddSubObjToReplication(UObject* SubObject)
 {
 	if (IsUsingRegisteredSubObjectList() && IsReadyForReplication() && IsValid(SubObject))
@@ -136,6 +170,24 @@ void UPlugInv_InventoryComponent::ToggleInventoryMenu()
 	{
 		OpenInventoryMenu();
 	}
+}
+
+void UPlugInv_InventoryComponent::SpawnDroppedItem(UPlugInv_InventoryItem* Item, const int32 StackCount) const
+{
+	const APawn* OwningPawn = OwningPlayerController->GetPawn();
+	const FVector ForwardVec = OwningPawn->GetActorForwardVector();
+	const FVector RotatedForwardVec = ForwardVec.RotateAngleAxis(FMath::FRandRange(DropSpawnAngleMin, DropSpawnAngleMax), FVector::UpVector);
+	FVector SpawnLocation = OwningPawn->GetActorLocation() + RotatedForwardVec * FMath::FRandRange(DropSpawnDistMin, DropSpawnDistMax);
+	SpawnLocation.Z += RelativeSpawnZOffset;
+	const FRotator SpawnRotation = FRotator::ZeroRotator;
+
+	FPlugInv_ItemManifest& ItemManifest = Item->GetItemManifestMutable();
+	if (FPlugInv_StackableFragment* StackableFragment = ItemManifest.GetFragmentOfTypeMutable<FPlugInv_StackableFragment>())
+	{
+		StackableFragment->SetStackCount(StackCount);
+	}
+	
+	ItemManifest.SpawnPickupActor(this, SpawnLocation, SpawnRotation);
 }
 
 void UPlugInv_InventoryComponent::OpenInventoryMenu()

@@ -5,6 +5,7 @@
 
 #include "Components/Image.h"
 #include "Items/O_PlugInv_InventoryItem.h"
+#include "Widgets/ItemPopUp/UW_PlugInv_ItemPopUp.h"
 
 void UPlugInv_GridSlot::NativeOnInitialized()
 {
@@ -73,4 +74,21 @@ bool UPlugInv_GridSlot::IsAvailable() const
 void UPlugInv_GridSlot::SetAvailable(const bool bValue)
 {
 	this->bAvailable = bValue;
+}
+
+void UPlugInv_GridSlot::SetItemPopUp(UPlugInv_ItemPopUp* Value)
+{
+	ItemPopUp = Value;
+	ItemPopUp->SetGridIndex(TileIndex);
+	ItemPopUp->OnNativeDestruct.AddUObject(this, &ThisClass::OnItemPopUpDestruct);
+}
+
+TWeakObjectPtr<UPlugInv_ItemPopUp> UPlugInv_GridSlot::GetItemPopUp() const
+{
+	return ItemPopUp;
+}
+
+void UPlugInv_GridSlot::OnItemPopUpDestruct(UUserWidget* Menu)
+{
+	ItemPopUp.Reset();
 }

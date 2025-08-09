@@ -46,6 +46,8 @@ struct INVENTORY_API FPlugInv_ItemManifest
 	
 	template<typename T> requires std::derived_from<T, FPlugInv_ItemFragment>
 	T* GetFragmentOfTypeMutable();
+
+	void SpawnPickupActor(const UObject* WorldContextObject, const FVector& SpawnLocation, const FRotator& SpawnRotation);
 private:
 
 	// Item category.
@@ -53,13 +55,16 @@ private:
 	EPlugInv_ItemCategory ItemCategory{EPlugInv_ItemCategory::None};
 
 	// Item tags.
-	UPROPERTY(EditAnywhere, Category = "Inventory")
+	UPROPERTY(EditAnywhere, Category = "Inventory", meta = (Categories="GameItems"))
 	FGameplayTagContainer ItemTypesTags;
 
 	// TInstanced struct is a type safe wrapper of FInstancedStruct. This way ensures that it can be only of type FPlugInv_ItemFragment and children.
 	// With ExcludeBaseStruct we also ensure that it can't be only FPlugInv_ItemFragment but child structs.
 	UPROPERTY(EditAnywhere, Category = "Inventory", meta = (ExcludeBaseStruct))
 	TArray<TInstancedStruct<FPlugInv_ItemFragment>> Fragments;
+
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	TSubclassOf<AActor> PickupActorClass;
 };
 
 /*
