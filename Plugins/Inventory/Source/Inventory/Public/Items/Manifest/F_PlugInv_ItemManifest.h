@@ -13,6 +13,7 @@
  * The Item Manifest contains all the necessary data for creating a new Inventory Item.
  */
 
+class UPlugInv_CompositeBase;
 struct FPlugInv_ItemFragment;
 
 USTRUCT(BlueprintType)
@@ -35,6 +36,10 @@ struct INVENTORY_API FPlugInv_ItemManifest
 		return ItemTypesTags.First();
 	}
 
+	TArray<TInstancedStruct<FPlugInv_ItemFragment>>& GetFragmentsMutable() { return Fragments; }
+	
+	void AssimilateInventoryFragments(UPlugInv_CompositeBase* Composite) const;
+
 	template<typename T> requires std::derived_from<T, FPlugInv_ItemFragment>
 	const T* GetFragmentOfTypeByTag(const FGameplayTag& FragmentTag) const;
 
@@ -47,6 +52,9 @@ struct INVENTORY_API FPlugInv_ItemManifest
 	template<typename T> requires std::derived_from<T, FPlugInv_ItemFragment>
 	T* GetFragmentOfTypeMutable();
 
+	template<typename T> requires std::derived_from<T, FPlugInv_ItemFragment>
+	TArray<const T*> GetAllFragmentsOfType() const;
+	
 	void SpawnPickupActor(const UObject* WorldContextObject, const FVector& SpawnLocation, const FRotator& SpawnRotation);
 private:
 
@@ -65,6 +73,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Inventory")
 	TSubclassOf<AActor> PickupActorClass;
+
+	// Clear fragment ptrs
+	void ClearFragments();
 };
 
 /*
@@ -132,4 +143,18 @@ T* FPlugInv_ItemManifest::GetFragmentOfTypeMutable()
 		}
 	}
 	return nullptr;
+}
+
+template <typename T> requires std::derived_from<T, FPlugInv_ItemFragment>
+TArray<const T*> FPlugInv_ItemManifest::GetAllFragmentsOfType() const
+{
+	TArray<const T*> Result;
+	for (const TInstancedStruct<FPlugInv_ItemFragment>& Fragment : Fragments)
+	{
+		if (const T* FragmentPtr = Fragment.GetPtr<T>())
+		{
+			Result.Add(FragmentPtr);
+		}
+	}
+	return Result;
 }

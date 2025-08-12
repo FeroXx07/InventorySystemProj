@@ -114,7 +114,7 @@ void UPlugInv_InventoryGrid::AddItemToIndices(const FPlugInv_SlotAvailabilityRes
 
 void UPlugInv_InventoryGrid::AddItemToIndex(UPlugInv_InventoryItem* NewItem, const int32 Index, const bool bStackable, const int32 StackAmount)
 {
-	LOG_DOUBLE_S(FColor::Orange,"InventoryGrid::AddItemToIndex : Adding Item with index: {0}, isStackable: {1}", Index, bStackable);
+	LOG_DOUBLE_S(5, FColor::Orange,"InventoryGrid::AddItemToIndex : Adding Item with index: {0}, isStackable: {1}", Index, bStackable);
 	
 	// Get Grid Fragment
 	const FPlugInv_GridFragment* GridFragment = GetFragment<FPlugInv_GridFragment>(NewItem, FragmentTags::GridFragment);
@@ -168,7 +168,7 @@ void UPlugInv_InventoryGrid::AddSlottedItemToCanvas(const int32 Index, const FPl
 	const FVector2D DrawPosWithPadding = DrawPos + FVector2D(GridFragment->GetGridPadding());
 	CanvasPanelSlot->SetPosition(DrawPosWithPadding);
 
-	LOG_DOUBLE_S(FColor::Orange, "InventoryGrid::AddSlottedItemToCanvas : DrawSize.X: {0}, DrawPos: {1}, DrawPosWithPadding: {2}, TileSize: {3}", DrawSize, DrawPos, DrawPosWithPadding, TileSize);
+	LOG_DOUBLE_S(5, FColor::Orange, "InventoryGrid::AddSlottedItemToCanvas : DrawSize.X: {0}, DrawPos: {1}, DrawPosWithPadding: {2}, TileSize: {3}", DrawSize, DrawPos, DrawPosWithPadding, TileSize);
 
 }
 
@@ -364,7 +364,7 @@ FPlugInv_SlotAvailabilityResult UPlugInv_InventoryGrid::HasRoomForItem(const FPl
 		}
 	}
 	
-	LOG_DOUBLE_S(FColor::Orange, "InventoryGrid::HasRoomForItem: TotalRoomToFill: {0}, Remainder: {1}, bStackable: {2}", Result.TotalRoomToFill, Result.Remainder, Result.bStackable);
+	LOG_DOUBLE_S(5, FColor::Orange, "InventoryGrid::HasRoomForItem: TotalRoomToFill: {0}, Remainder: {1}, bStackable: {2}", Result.TotalRoomToFill, Result.Remainder, Result.bStackable);
 	return Result;	
 }
 
@@ -485,7 +485,7 @@ void UPlugInv_InventoryGrid::OnSlottedItemClicked(int32 GridIndex, const FPointe
 {
 	UPlugInv_InventoryStatics::ItemUnhovered(GetOwningPlayer());
 	
-	LOG_DOUBLE_S(FColor::Orange, "InventoryGrid::OnSlottedItemClicked : Clicked on item at index {0}", GridIndex);
+	LOG_DOUBLE_S(5, FColor::Orange, "InventoryGrid::OnSlottedItemClicked : Clicked on item at index {0}", GridIndex);
 	check(GridSlots.IsValidIndex(GridIndex));
 	UPlugInv_InventoryItem* ClickedInventoryItem = GridSlots[GridIndex]->GetInventoryItem().Get();
 
@@ -678,7 +678,7 @@ void UPlugInv_InventoryGrid::AssignHoverItem(UPlugInv_InventoryItem* InventoryIt
 
 void UPlugInv_InventoryGrid::RemoveItemFromGrid(UPlugInv_InventoryItem* InventoryItem, const int32 GridIndex)
 {
-	LOG_DOUBLE_S(FColor::Orange, "InventoryGrid::RemoveItemFromGrid : Removed item at index {0}", GridIndex);
+	LOG_DOUBLE_S(5, FColor::Orange, "InventoryGrid::RemoveItemFromGrid : Removed item at index {0}", GridIndex);
 
 	const FPlugInv_GridFragment* GridFragment = GetFragment<FPlugInv_GridFragment>(InventoryItem, FragmentTags::GridFragment);
 	if (!GridFragment) return;
@@ -716,7 +716,10 @@ void UPlugInv_InventoryGrid::UpdateTileParameters(const FVector2D& CanvasPositio
 	TileParameters.TileIndex = UPlugInv_WidgetUtils::GetIndexFromPosition(HoveredTileCoordinates, Columns);
 	TileParameters.TileQuadrant = CalculateTileQuadrant(CanvasPosition, MousePosition);
 
-	LOG_DOUBLE_S(FColor::Orange, "InventoryGrid::UpdateTileParameters : Parameters.TileIndex: {0}, Parameters.TileQuadrant: {1}, Parameters.TileCoordinates: {2}, ", TileParameters.TileIndex, UEnum::GetDisplayValueAsText(TileParameters.TileQuadrant).ToString(), TileParameters.TileCoordinates);
+	if (FMath::RandRange(0, 10) == 0)
+	{
+		LOG_DOUBLE_S(5, FColor::Orange, "InventoryGrid::UpdateTileParameters : Parameters.TileIndex: {0}, Parameters.TileQuadrant: {1}, Parameters.TileCoordinates: {2}, ", TileParameters.TileIndex, UEnum::GetDisplayValueAsText(TileParameters.TileQuadrant).ToString(), TileParameters.TileCoordinates);
+	}
 	
 	// Handle highlight/unhighlight of the grid slots
 	OnTileParametersUpdated(TileParameters);
@@ -767,9 +770,12 @@ void UPlugInv_InventoryGrid::OnTileParametersUpdated(const FPlugInv_TileParamete
 	// check hover position
 	CurrentQueryResult = CheckHoverPosition(StartingCoordinate, Dimensions);
 
-	LOG_DOUBLE_S(FColor::Orange, "InventoryGrid::OnTileParametersUpdated : ItemDropIndex = {0}, QuerybHasSpace? = {1}, QueryHasItem = {2}, QueryUpperLeftIndex = {3}"
-		, ItemDropIndex, CurrentQueryResult.bHasSpace, CurrentQueryResult.ValidItem.IsValid(), CurrentQueryResult.UpperLeftIndex);
-
+	if (FMath::RandRange(0, 10) == 0)
+	{
+		LOG_DOUBLE_S(5, FColor::Orange, "InventoryGrid::OnTileParametersUpdated : ItemDropIndex = {0}, QuerybHasSpace? = {1}, QueryHasItem = {2}, QueryUpperLeftIndex = {3}"
+				, ItemDropIndex, CurrentQueryResult.bHasSpace, CurrentQueryResult.ValidItem.IsValid(), CurrentQueryResult.UpperLeftIndex);
+	}
+	
 	// in the grid bounds?
 	if (CurrentQueryResult.bHasSpace)
 	{
@@ -822,7 +828,7 @@ FIntPoint UPlugInv_InventoryGrid::CalculateStartingCoordinate(const FIntPoint& C
 		StartingCoord.Y = Coordinates.Y - FMath::FloorToInt(0.5f * Dimensions.Y) + HasEvenHeight;
 		break;
 	default:
-		LOG_DOUBLE_ERROR_S("Invalid quadrant");
+		LOG_DOUBLE_ERROR_S(20, "Invalid quadrant");
 		return FIntPoint(-1, -1);
 	}
 	return StartingCoord;

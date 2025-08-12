@@ -10,6 +10,7 @@
 #include "Components/CanvasPanelSlot.h"
 #include "Components/WidgetSwitcher.h"
 #include "InventoryManagment/Utils/BPF_PlugInv_InventoryStatics.h"
+#include "Items/O_PlugInv_InventoryItem.h"
 #include "Widgets/Inventory/Spatial/UW_PlugInv_InventoryGrid.h"
 #include "Widgets/ItemDescription/UW_PlugInv_ItemDescription.h"
 
@@ -80,6 +81,7 @@ FPlugInv_SlotAvailabilityResult UPlugInv_InventorySpatial::HasRoomForItem(TObjec
 
 void UPlugInv_InventorySpatial::OnItemHovered(UPlugInv_InventoryItem* Item)
 {
+	const FPlugInv_ItemManifest& Manifest = Item->GetItemManifest();
 	//Super::OnItemHovered(Item);
 	UPlugInv_ItemDescription* DescriptionWidget = GetItemDescription();
 	DescriptionWidget->SetVisibility(ESlateVisibility::Collapsed);
@@ -87,8 +89,9 @@ void UPlugInv_InventorySpatial::OnItemHovered(UPlugInv_InventoryItem* Item)
 	GetOwningPlayer()->GetWorldTimerManager().ClearTimer(DescriptionTimer);
 	
 	FTimerDelegate DescriptionTimerDelegate;
-	DescriptionTimerDelegate.BindLambda([this]()
+	DescriptionTimerDelegate.BindLambda([this, &Manifest, DescriptionWidget]()
 	{
+		Manifest.AssimilateInventoryFragments(DescriptionWidget);
 		GetItemDescription()->SetVisibility(ESlateVisibility::HitTestInvisible);
 	});
 	

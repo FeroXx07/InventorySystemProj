@@ -5,8 +5,10 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "StructUtils/InstancedStruct.h"
 #include "BPF_PlugInv_ItemFragmentLibrary.generated.h"
 
+class UPlugInv_CompositeBase;
 class APlayerController;
 /**
  * 
@@ -37,6 +39,8 @@ struct INVENTORY_API FPlugInv_ItemFragment
 	FPlugInv_ItemFragment& operator=(FPlugInv_ItemFragment&&) = default; // Move operation with universal ref (&&)
 	virtual ~FPlugInv_ItemFragment() {} // Destructor
 
+	virtual void Manifest() {}
+
 	const FGameplayTag& GetFragmentTag() const
 	{
 		return FragmentTag;
@@ -51,6 +55,74 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Inventory", meta = (Categories="FragmentTags"))
 	FGameplayTag FragmentTag = FGameplayTag::EmptyTag;
+};
+
+/*
+ * Item fragment specifically for assimilation into a widget.
+ */
+USTRUCT(BlueprintType)
+struct FPlugInv_InventoryItemFragment : public FPlugInv_ItemFragment
+{
+	GENERATED_BODY()
+
+	virtual void Assimilate(UPlugInv_CompositeBase* Composite) const;
+
+protected:
+	bool MatchesWidgetTag(const UPlugInv_CompositeBase* Composite) const;
+};
+
+USTRUCT(BlueprintType)
+struct FPlugInv_TextFragment : public FPlugInv_InventoryItemFragment
+{
+	GENERATED_BODY()
+
+	FText GetText() const { return FragmentText; }
+	void SetText(const FText& Text) { FragmentText = Text; }
+	virtual void Assimilate(UPlugInv_CompositeBase* Composite) const override;
+
+private:
+
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	FText FragmentText;
+};
+
+USTRUCT(BlueprintType)
+struct FPlugInv_LabeledNumberFragment : public FPlugInv_InventoryItemFragment
+{
+	GENERATED_BODY()
+
+	virtual void Assimilate(UPlugInv_CompositeBase* Composite) const override;
+	virtual void Manifest() override;
+	float GetValue() const { return Value; }
+	// When manifesting for the first time, this fragment will randomize. However, onee equipped
+	// and dropped, an item should retain the same value, so randomization should not occur.
+	bool bRandomizeOnManifest{true};
+
+private:
+
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	FText Text_Label{};
+
+	UPROPERTY(VisibleAnywhere, Category = "Inventory")
+	float Value{0.f};
+
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	float Min{0};
+
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	float Max{0};
+	
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	bool bCollapseLabel{false};
+
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	bool bCollapseValue{false};
+
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	int32 MinFractionalDigits{1};
+	
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	int32 MaxFractionalDigits{1};
 };
 
 USTRUCT(BlueprintType)
@@ -90,7 +162,7 @@ private:
 };
 
 USTRUCT(BlueprintType)
-struct FPlugInv_ImageFragment : public FPlugInv_ItemFragment
+struct FPlugInv_ImageFragment : public FPlugInv_InventoryItemFragment
 {
 	GENERATED_BODY()
 	
@@ -98,6 +170,8 @@ struct FPlugInv_ImageFragment : public FPlugInv_ItemFragment
 	{
 		return IconTexture;
 	}
+
+	virtual void Assimilate(UPlugInv_CompositeBase* Composite) const override;
 
 private:
 
@@ -143,7 +217,7 @@ private:
 };
 
 USTRUCT(BlueprintType)
-struct FPlugInv_ConsumableFragment : public FPlugInv_ItemFragment
+struct FPlugInv_ConsumeModifier : public FPlugInv_LabeledNumberFragment
 {
 	GENERATED_BODY()
 
@@ -151,23 +225,31 @@ struct FPlugInv_ConsumableFragment : public FPlugInv_ItemFragment
 };
 
 USTRUCT(BlueprintType)
-struct FPlugInv_HealthPotionFragment : public FPlugInv_ConsumableFragment
+struct FPlugInv_ConsumableFragment : public FPlugInv_InventoryItemFragment
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, Category = "Inventory")
-	float HealAmount = 20.f;
+	virtual void OnConsume(APlayerController* PC);
+	virtual void Assimilate(UPlugInv_CompositeBase* Composite) const override;
+	virtual void Manifest() override;
+
+private:
+	UPROPERTY(EditAnywhere, Category = "Inventory", meta = (ExcludeBaseStruct))
+	TArray<TInstancedStruct<FPlugInv_ConsumeModifier>> ConsumeModifiers;
+};
+
+USTRUCT(BlueprintType)
+struct FPlugInv_HealthPotionFragment : public FPlugInv_ConsumeModifier
+{
+	GENERATED_BODY()
 
 	virtual void OnConsume(APlayerController* PC) override;
 };
 
 USTRUCT(BlueprintType)
-struct FPlugInv_ManaPotionFragment : public FPlugInv_ConsumableFragment
+struct FPlugInv_ManaPotionFragment : public FPlugInv_ConsumeModifier
 {
 	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, Category = "Inventory")
-	float ManaAmount = 20.f;
 
 	virtual void OnConsume(APlayerController* PC) override;
 };

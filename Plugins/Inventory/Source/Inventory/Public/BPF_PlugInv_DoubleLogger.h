@@ -9,24 +9,24 @@
 
 #define DrawLogScreenTime 20.f
 
-#define LOG_DOUBLE_S(Color, FormatStr, ...) \
+#define LOG_DOUBLE_S(DrawTime, Color, FormatStr, ...) \
 do { \
 FString ScreenStr = UPlugInv_DoubleLogger::FormatText(TEXT(FormatStr), ##__VA_ARGS__); \
-UPlugInv_DoubleLogger::DrawToScreen(ScreenStr, Color, DrawLogScreenTime); \
+UPlugInv_DoubleLogger::DrawToScreen(ScreenStr, Color, DrawTime); \
 UE_LOG(LogInventory, Display, TEXT("%s"), *ScreenStr); \
 } while (0)
 
-#define LOG_DOUBLE_WARNING_S(FormatStr, ...) \
+#define LOG_DOUBLE_WARNING_S(DrawTime, FormatStr, ...) \
 do { \
 FString ScreenStr = UPlugInv_DoubleLogger::FormatText(TEXT(FormatStr), ##__VA_ARGS__); \
-UPlugInv_DoubleLogger::DrawToScreen(ScreenStr, FColor::Yellow, DrawLogScreenTime); \
+UPlugInv_DoubleLogger::DrawToScreen(ScreenStr, FColor::Yellow, DrawTime); \
 UE_LOG(LogInventory, Warning, TEXT("%s"), *ScreenStr); \
 } while (0)
 
-#define LOG_DOUBLE_ERROR_S(FormatStr, ...) \
+#define LOG_DOUBLE_ERROR_S(DrawTime, FormatStr, ...) \
 do { \
 FString ScreenStr = UPlugInv_DoubleLogger::FormatText(TEXT(FormatStr), ##__VA_ARGS__); \
-UPlugInv_DoubleLogger::DrawToScreen(ScreenStr, FColor::Red, DrawLogScreenTime); \
+UPlugInv_DoubleLogger::DrawToScreen(ScreenStr, FColor::Red, DrawTime); \
 UE_LOG(LogInventory, Error, TEXT("%s"), *ScreenStr); \
 } while (0)
 
