@@ -5,12 +5,25 @@
 
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
+#include "InventoryManagment/Utils/BPF_PlugInv_InventoryStatics.h"
 #include "Items/O_PlugInv_InventoryItem.h"
 
 FReply UPlugInv_SlottedItem::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
 	OnSlottedItemClicked.Broadcast(GridIndex, InMouseEvent);
 	return Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
+}
+
+void UPlugInv_SlottedItem::NativeOnMouseEnter(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
+{
+	UPlugInv_InventoryStatics::ItemHovered(GetOwningPlayer(), InventoryItem.Get());
+	Super::NativeOnMouseEnter(MyGeometry, MouseEvent);
+}
+
+void UPlugInv_SlottedItem::NativeOnMouseLeave(const FPointerEvent& MouseEvent)
+{
+	UPlugInv_InventoryStatics::ItemUnhovered(GetOwningPlayer());
+	Super::NativeOnMouseLeave(MouseEvent);
 }
 
 void UPlugInv_SlottedItem::SetInventoryItem(UPlugInv_InventoryItem* Item)

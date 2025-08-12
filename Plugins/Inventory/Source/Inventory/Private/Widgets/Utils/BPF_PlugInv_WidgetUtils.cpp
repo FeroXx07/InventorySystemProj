@@ -40,3 +40,33 @@ bool UPlugInv_WidgetUtils::IsWithinBounds(const FVector2D& BoundaryPos, const FV
 	return MousePos.X >= BoundaryPos.X && MousePos.X <= (BoundaryPos.X + WidgetSize.X) &&
 		MousePos.Y >= BoundaryPos.Y && MousePos.Y <= (BoundaryPos.Y + WidgetSize.Y);
 }
+
+FVector2D UPlugInv_WidgetUtils::GetClampedWidgetPosition(const FVector2D& Boundary, const FVector2D& WidgetSize,
+	const FVector2D& MousePos)
+{
+	FVector2D ClampedPosition = MousePos;
+	
+	// Adjust the horizontal position to ensure that the widget stays within the boundary
+	if (MousePos.X + WidgetSize.X > Boundary.X) // Widget exceeds the right edge
+	{
+		ClampedPosition.X = Boundary.X - WidgetSize.X;
+	}
+	
+	if (MousePos.X < 0.f) // Widget exceeds the left edge
+	{
+		ClampedPosition.X = 0.f;
+	}
+
+	// Adjust vertical position to ensure that the widget stays within the boundary
+	if (MousePos.Y + WidgetSize.Y > Boundary.Y) // Widget exceeds the bottom edge
+	{
+		ClampedPosition.Y = Boundary.Y - WidgetSize.Y;
+	}
+	
+	if (MousePos.Y < 0.f) // Widget exceeds the top edge
+	{
+		ClampedPosition.Y = 0.f;
+	}
+
+	return ClampedPosition;
+}

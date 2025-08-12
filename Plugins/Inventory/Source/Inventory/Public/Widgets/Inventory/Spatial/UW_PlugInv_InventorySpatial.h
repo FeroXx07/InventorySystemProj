@@ -6,6 +6,7 @@
 #include "Widgets/Inventory/InventoryBase/UW_PlugInv_InventoryBase.h"
 #include "UW_PlugInv_InventorySpatial.generated.h"
 
+class UPlugInv_ItemDescription;
 class UCanvasPanel;
 class UWidgetSwitcher;
 class UPlugInv_InventoryGrid;
@@ -22,9 +23,12 @@ class INVENTORY_API UPlugInv_InventorySpatial : public UPlugInv_InventoryBase
 public:
 	virtual void NativeOnInitialized() override;
 	virtual FReply NativeOnMouseButtonDown(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 	
 	virtual FPlugInv_SlotAvailabilityResult HasRoomForItem(TObjectPtr<UPlugInv_ItemComponent> ItemComponent) const override;
-	
+	virtual void OnItemHovered(UPlugInv_InventoryItem* Item) override;
+	virtual void OnItemUnHovered() override;
+	virtual bool HasHoverItem() const override;
 private:
 	// By marking a pointer to a widget as BindWidget, you can create an identically-named widget in a Blueprint subclass of your C++ class, and at run-time access it from the C++.
 	// https://unreal-garden.com/tutorials/ui-bindwidget/
@@ -64,6 +68,19 @@ private:
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UButton> Button_Craftables;
 
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	TSubclassOf<UPlugInv_ItemDescription> ItemDescriptionClass;
+	
+	UPROPERTY()
+	TObjectPtr<UPlugInv_ItemDescription> ItemDescription;
+	
+	FTimerHandle DescriptionTimer;
+
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	float DescriptionTimerDelay = 0.5f;
+	
+	UPlugInv_ItemDescription* GetItemDescription();
+
 	// Function to bind to buttons.
 	UFUNCTION()
 	void ShowEquippables();
@@ -81,4 +98,6 @@ private:
 
 	// Function to set the active inventory grid.
 	void SetActiveGrid(const TObjectPtr<UPlugInv_InventoryGrid>& Grid, const TObjectPtr<UButton>& Button);
+
+	void SetItemDescriptionSizeAndPosition(UPlugInv_ItemDescription* Description, UCanvasPanel* Canvas) const;
 };

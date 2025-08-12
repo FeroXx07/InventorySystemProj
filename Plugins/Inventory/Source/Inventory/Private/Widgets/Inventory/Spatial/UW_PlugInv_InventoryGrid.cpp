@@ -483,6 +483,8 @@ bool UPlugInv_InventoryGrid::IsLeftClick(const FPointerEvent& MouseEvent) const
 
 void UPlugInv_InventoryGrid::OnSlottedItemClicked(int32 GridIndex, const FPointerEvent& MouseEvent)
 {
+	UPlugInv_InventoryStatics::ItemUnhovered(GetOwningPlayer());
+	
 	LOG_DOUBLE_S(FColor::Orange, "InventoryGrid::OnSlottedItemClicked : Clicked on item at index {0}", GridIndex);
 	check(GridSlots.IsValidIndex(GridIndex));
 	UPlugInv_InventoryItem* ClickedInventoryItem = GridSlots[GridIndex]->GetInventoryItem().Get();
@@ -1093,6 +1095,11 @@ void UPlugInv_InventoryGrid::DropItem()
 	
 	ClearHoverItem();
 	ShowCursor();
+}
+
+bool UPlugInv_InventoryGrid::HasHoverItem() const
+{
+	return IsValid(HoverItem);
 }
 
 

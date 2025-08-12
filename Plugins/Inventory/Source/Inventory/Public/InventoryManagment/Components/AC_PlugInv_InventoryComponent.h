@@ -22,6 +22,8 @@ class INVENTORY_API UPlugInv_InventoryComponent : public UActorComponent
 public:
 	// Sets default values for this component's properties.
 	UPlugInv_InventoryComponent();
+
+	virtual void PostInitProperties() override;
 	
 	// Check in client-side and tell server, then it all replicates down to clients.
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Inventory")
@@ -51,6 +53,8 @@ public:
 
 	void SpawnDroppedItem(UPlugInv_InventoryItem* Item, int32 StackCount) const;
 
+	UPlugInv_InventoryBase* GetInventoryMenu() const { return InventoryMenu; }
+	
 	// CRUD Events.
 	FInventoryItemChange OnItemAdded;
 	FInventoryItemChange OnItemRemoved;

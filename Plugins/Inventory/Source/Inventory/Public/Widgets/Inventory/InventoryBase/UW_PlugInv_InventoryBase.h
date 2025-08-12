@@ -8,6 +8,8 @@
 #include "UW_PlugInv_InventoryBase.generated.h"
 
 class UPlugInv_ItemComponent;
+class UPlugInv_InventoryItem;
+
 /**
  * 
  */
@@ -22,4 +24,7 @@ public:
 	{
 		return FPlugInv_SlotAvailabilityResult();
 	}
+	virtual void OnItemHovered(UPlugInv_InventoryItem* Item) {}
+	virtual void OnItemUnHovered() {}
+	virtual bool HasHoverItem() const { return false; }
 };

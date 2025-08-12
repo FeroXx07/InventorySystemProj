@@ -18,11 +18,17 @@ UPlugInv_InventoryComponent::UPlugInv_InventoryComponent()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = false;
-	InventoryList = FPlugInv_InventoryFastArray(this);
 	// ...
+
 	SetIsReplicatedByDefault(true);
 	bReplicateUsingRegisteredSubObjectList = true;
 	bInventoryMenuOpen = false;
+}
+
+void UPlugInv_InventoryComponent::PostInitProperties()
+{
+	Super::PostInitProperties();
+	InventoryList = FPlugInv_InventoryFastArray(this);
 }
 
 /** Check in client-side and tell server, then it all replicates down to clients. **/
@@ -107,7 +113,14 @@ void UPlugInv_InventoryComponent::Server_AddStacksToItem_Implementation(UPlugInv
 void UPlugInv_InventoryComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
+	if (InventoryList.OwnerComponent == nullptr)
+	{
+		UPlugInv_DoubleLogger::LogError("InventoryList OwnerComponent is null in BeginPlay!");
+	}
+	else
+	{
+		UPlugInv_DoubleLogger::LogWarning("InventoryList OwnerComponent is NOT null in BeginPlay!");
+	}
 	ConstructInventory();	
 }
 
