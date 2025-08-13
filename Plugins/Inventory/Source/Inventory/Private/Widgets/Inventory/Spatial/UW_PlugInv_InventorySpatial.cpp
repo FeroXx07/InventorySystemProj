@@ -5,12 +5,17 @@
 
 #include "BPF_PlugInv_DoubleLogger.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
+#include "Blueprint/WidgetTree.h"
 #include "Components/Button.h"
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
 #include "Components/WidgetSwitcher.h"
+#include "InventoryManagment/Components/AC_PlugInv_InventoryComponent.h"
 #include "InventoryManagment/Utils/BPF_PlugInv_InventoryStatics.h"
 #include "Items/O_PlugInv_InventoryItem.h"
+#include "Widgets/Inventory/GridSlots/UW_PlugInv_EquippedGridSlot.h"
+#include "Widgets/Inventory/HoverItem/UW_PlugInv_HoverItem.h"
+#include "Widgets/Inventory/SlottedItems/UW_PlugInv_EquippedSlottedItem.h"
 #include "Widgets/Inventory/Spatial/UW_PlugInv_InventoryGrid.h"
 #include "Widgets/ItemDescription/UW_PlugInv_ItemDescription.h"
 
@@ -27,6 +32,15 @@ void UPlugInv_InventorySpatial::NativeOnInitialized()
 	Grid_Craftables->SetOwningCanvas(CanvasPanel_Root);
 	
 	ShowEquippables();
+
+	WidgetTree->ForEachWidget([this](UWidget* Widget)
+	{
+		if (UPlugInv_EquippedGridSlot* EquippedGridSlot = Cast<UPlugInv_EquippedGridSlot>(Widget); IsValid(EquippedGridSlot))
+		{
+			EquippedGridSlots.Add(EquippedGridSlot);
+			EquippedGridSlot->EquippedGridSlotClicked.AddDynamic(this, &ThisClass::EquippedGridSlotClicked);
+		}
+	});
 }
 
 FReply UPlugInv_InventorySpatial::NativeOnMouseButtonDown(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
@@ -113,6 +127,17 @@ bool UPlugInv_InventorySpatial::HasHoverItem() const
 	return false;
 }
 
+UPlugInv_HoverItem* UPlugInv_InventorySpatial::GetHoverItem() const
+{
+	if (!ActiveGrid.IsValid()) return nullptr;
+	return ActiveGrid->GetHoverItem();
+}
+
+float UPlugInv_InventorySpatial::GetEquippablesTileSize() const
+{
+	return Grid_Equippables->GetTileSize();
+}
+
 UPlugInv_ItemDescription* UPlugInv_InventorySpatial::GetItemDescription()
 {
 	if (!IsValid(ItemDescription))
@@ -139,6 +164,69 @@ void UPlugInv_InventorySpatial::ShowCraftables()
 	SetActiveGrid(Grid_Craftables, Button_Craftables);
 }
 
+void UPlugInv_InventorySpatial::EquippedGridSlotClicked(UPlugInv_EquippedGridSlot* EquippedGridSlot,
+	const FGameplayTag& EquipmentTypeTag)
+{
+	// Check to see if we can equip the Hover Item
+	if (!CanEquipHoverItem(EquippedGridSlot, EquipmentTypeTag)) return;
+
+	UPlugInv_HoverItem* HoverItem = GetHoverItem();
+	// Create an Equipped Slotted Item and add it to the Equipped Grid Slot (call EquippedGridSlot->OnItemEquipped())
+	const float TileSize = UPlugInv_InventoryStatics::GetInventoryWidget(GetOwningPlayer())->GetEquippablesTileSize();
+	
+	UPlugInv_EquippedSlottedItem* EquippedSlottedItem = EquippedGridSlot->OnItemEquipped(
+		HoverItem->GetInventoryItem(),
+		EquipmentTypeTag,
+		TileSize
+	);
+	EquippedSlottedItem->OnEquippedSlottedItemClicked.AddDynamic(this, &ThisClass::EquippedSlottedItemClicked);
+	
+	// Inform the server that we've equipped an item (potentially unequipping an item as well)
+	UPlugInv_InventoryComponent* InventoryComponent = UPlugInv_InventoryStatics::GetInventoryComponent(GetOwningPlayer());
+	check(IsValid(InventoryComponent)); 
+	InventoryComponent->Server_EquipSlotClicked(HoverItem->GetInventoryItem(), nullptr);
+	
+	if (GetOwningPlayer()->GetNetMode() == ENetMode::NM_ListenServer || GetOwningPlayer()->GetNetMode() == ENetMode::NM_Standalone)
+	{
+		InventoryComponent->OnItemEquipped.Broadcast(HoverItem->GetInventoryItem());
+	}
+
+	// Clear the Hover Item
+	Grid_Equippables->ClearHoverItem();
+}
+
+void UPlugInv_InventorySpatial::EquippedSlottedItemClicked(UPlugInv_EquippedSlottedItem* EquippedSlottedItem)
+{
+	// Remove the Item Description
+	UPlugInv_InventoryStatics::ItemUnhovered(GetOwningPlayer());
+
+	if (IsValid(GetHoverItem()) && GetHoverItem()->IsStackable()) return;
+
+	// Get Item to Equip
+	UPlugInv_InventoryItem* ItemToEquip = IsValid(GetHoverItem()) ? GetHoverItem()->GetInventoryItem() : nullptr;
+
+	// Get Item to Unequip
+	UPlugInv_InventoryItem* ItemToUnequip = EquippedSlottedItem->GetInventoryItem();
+
+	// Get the Equipped Grid Slot holding this item
+	UPlugInv_EquippedGridSlot* EquippedGridSlot = FindSlotWithEquippedItem(ItemToUnequip);
+	
+	// Clear the equipped grid slot of this item (set its inventory item to nullptr
+	ClearSlotOfItem(EquippedGridSlot);
+
+	// Assign previously equipped item as the hover item
+	Grid_Equippables->AssignHoverItem(ItemToUnequip);
+
+	// Remove of the equipped slotted item from the equipped grid slot
+	RemoveEquippedSlottedItem(EquippedSlottedItem);
+	
+	// Make a new equipped slotted item (for the item we held in HoverItem)
+	MakeEquippedSlottedItem(EquippedSlottedItem, EquippedGridSlot, ItemToEquip);
+	
+	// Broadcast delegates for OnItemEquipped/OnItemUnequipped (from the IC)
+	BroadcastSlotClickedDelegates(ItemToEquip, ItemToUnequip);
+}
+
 void UPlugInv_InventorySpatial::DisableButton(const TObjectPtr<UButton>& Button) const
 {
 	Button_Equippables->SetIsEnabled(true);
@@ -152,6 +240,7 @@ void UPlugInv_InventorySpatial::SetActiveGrid(const TObjectPtr<UPlugInv_Inventor
 	if (ActiveGrid.IsValid())
 	{
 		ActiveGrid->HideCursor();
+		ActiveGrid->OnHide();
 	}
 	
 	ActiveGrid = Grid;
@@ -182,4 +271,94 @@ void UPlugInv_InventorySpatial::SetItemDescriptionSizeAndPosition(UPlugInv_ItemD
 	const FVector2D ClampedPosition = UPlugInv_WidgetUtils::GetClampedWidgetPosition(CanvasSize, ItemDescriptionSize, MousePos);
 	
 	ItemDescriptionCPS->SetPosition(ClampedPosition);
+}
+
+bool UPlugInv_InventorySpatial::CanEquipHoverItem(const UPlugInv_EquippedGridSlot* EquippedGridSlot,
+	const FGameplayTag& EquipmentTypeTag) const
+{
+	bool CanEquipHoverItem = false;
+	
+	if (!IsValid(EquippedGridSlot) || EquippedGridSlot->GetInventoryItem().IsValid())
+	{
+		return CanEquipHoverItem;
+	}
+
+	const UPlugInv_HoverItem* HoverItem = GetHoverItem();
+	if (!IsValid(HoverItem))
+	{
+		return CanEquipHoverItem;
+	}
+
+	const UPlugInv_InventoryItem* HeldItem = HoverItem->GetInventoryItem();
+	if (HasHoverItem() && IsValid(HeldItem)
+		&& !HoverItem->IsStackable() && HeldItem->GetItemManifest().GetItemCategory() == EPlugInv_ItemCategory::Equippable &&
+		HeldItem->GetItemManifest().GetItemType().MatchesTag(EquipmentTypeTag))
+	{
+		CanEquipHoverItem = true;
+	}
+
+	return CanEquipHoverItem;
+}
+
+UPlugInv_EquippedGridSlot* UPlugInv_InventorySpatial::FindSlotWithEquippedItem(
+	UPlugInv_InventoryItem* EquippedItem) const
+{
+	const TObjectPtr<UPlugInv_EquippedGridSlot>* FoundEquippedGridSlot = EquippedGridSlots.FindByPredicate(
+		[EquippedItem](const UPlugInv_EquippedGridSlot* GridSlot)
+		{
+			return GridSlot->GetInventoryItem() == EquippedItem;
+		});
+
+	return FoundEquippedGridSlot ? *FoundEquippedGridSlot : nullptr;
+}
+
+void UPlugInv_InventorySpatial::ClearSlotOfItem(UPlugInv_EquippedGridSlot* EquippedGridSlot)
+{
+	if (IsValid(EquippedGridSlot))
+	{
+		EquippedGridSlot->SetEquippedSlottedItem(nullptr);
+		EquippedGridSlot->SetInventoryItem(nullptr);
+	}
+}
+
+void UPlugInv_InventorySpatial::RemoveEquippedSlottedItem(UPlugInv_EquippedSlottedItem* EquippedSlottedItem)
+{
+	// (unbind from the OnEquippedSlottedItemClicked )
+	// Removing the Equipped Slotted Item from Parent
+	if (!IsValid(EquippedSlottedItem)) return;
+	
+	if (EquippedSlottedItem->OnEquippedSlottedItemClicked.IsAlreadyBound(this, &ThisClass::EquippedSlottedItemClicked))
+	{
+		EquippedSlottedItem->OnEquippedSlottedItemClicked.RemoveDynamic(this, &ThisClass::EquippedSlottedItemClicked);
+	}
+	EquippedSlottedItem->RemoveFromParent();
+}
+
+void UPlugInv_InventorySpatial::MakeEquippedSlottedItem(const UPlugInv_EquippedSlottedItem* EquippedSlottedItem,
+	UPlugInv_EquippedGridSlot* EquippedGridSlot, UPlugInv_InventoryItem* ItemToEquip)
+{
+	if (!IsValid(EquippedGridSlot)) return;
+
+	UPlugInv_EquippedSlottedItem* SlottedItem = EquippedGridSlot->OnItemEquipped(
+		ItemToEquip,
+		EquippedSlottedItem->GetEquipmentTypeTag(),
+		UPlugInv_InventoryStatics::GetInventoryWidget(GetOwningPlayer())->GetEquippablesTileSize());
+	
+	if (IsValid(SlottedItem)) SlottedItem->OnEquippedSlottedItemClicked.AddDynamic(this, &ThisClass::EquippedSlottedItemClicked);
+	EquippedGridSlot->SetEquippedSlottedItem(SlottedItem);
+}
+
+void UPlugInv_InventorySpatial::BroadcastSlotClickedDelegates(UPlugInv_InventoryItem* ItemToEquip,
+	UPlugInv_InventoryItem* ItemToUnequip) const
+{
+	UPlugInv_InventoryComponent* InventoryComponent = UPlugInv_InventoryStatics::GetInventoryComponent(GetOwningPlayer());
+	
+	check(IsValid(InventoryComponent));
+	InventoryComponent->Server_EquipSlotClicked(ItemToEquip, ItemToUnequip);
+
+	if (GetOwningPlayer()->GetNetMode() == ENetMode::NM_ListenServer || GetOwningPlayer()->GetNetMode() == ENetMode::NM_Standalone)
+	{
+		InventoryComponent->OnItemEquipped.Broadcast(ItemToEquip);
+		InventoryComponent->OnItemUnequipped.Broadcast(ItemToUnequip);
+	}
 }

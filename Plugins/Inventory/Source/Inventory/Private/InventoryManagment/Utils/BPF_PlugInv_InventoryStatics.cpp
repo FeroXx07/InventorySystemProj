@@ -61,3 +61,22 @@ void UPlugInv_InventoryStatics::ItemUnhovered(APlayerController* PC)
 	
 	InventoryBase->OnItemUnHovered();
 }
+
+UPlugInv_HoverItem* UPlugInv_InventoryStatics::GetHoverItem(APlayerController* PC)
+{
+	const UPlugInv_InventoryComponent* InventoryComponent = GetInventoryComponent(PC);
+	if (!IsValid(InventoryComponent)) return nullptr;
+
+	const UPlugInv_InventoryBase* InventoryBase = InventoryComponent->GetInventoryMenu();
+	if (!IsValid(InventoryBase)) return nullptr;
+
+	return InventoryBase->GetHoverItem();
+}
+
+UPlugInv_InventoryBase* UPlugInv_InventoryStatics::GetInventoryWidget(const APlayerController* PC)
+{
+	const UPlugInv_InventoryComponent* InventoryComponent = GetInventoryComponent(PC);
+	if (!IsValid(InventoryComponent)) return nullptr;
+	
+	return InventoryComponent->GetInventoryMenu();
+}

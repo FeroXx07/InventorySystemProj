@@ -165,6 +165,20 @@ void UPlugInv_InventoryComponent::Server_ConsumeItem_Implementation(UPlugInv_Inv
 	}
 }
 
+void UPlugInv_InventoryComponent::Server_EquipSlotClicked_Implementation(UPlugInv_InventoryItem* ItemToEquip,
+	UPlugInv_InventoryItem* ItemToUnequip)
+{
+	Multicast_EquipSlotClicked(ItemToEquip, ItemToUnequip);
+}
+
+void UPlugInv_InventoryComponent::Multicast_EquipSlotClicked_Implementation(UPlugInv_InventoryItem* ItemToEquip,
+	UPlugInv_InventoryItem* ItemToUnequip)
+{
+	// Equipment Component will listen to these delegates
+	OnItemEquipped.Broadcast(ItemToEquip);
+	OnItemUnequipped.Broadcast(ItemToUnequip);
+}
+
 void UPlugInv_InventoryComponent::AddSubObjToReplication(UObject* SubObject)
 {
 	if (IsUsingRegisteredSubObjectList() && IsReadyForReplication() && IsValid(SubObject))
@@ -183,6 +197,7 @@ void UPlugInv_InventoryComponent::ToggleInventoryMenu()
 	{
 		OpenInventoryMenu();
 	}
+	OnInventoryMenuToggled.Broadcast(bInventoryMenuOpen);
 }
 
 void UPlugInv_InventoryComponent::SpawnDroppedItem(UPlugInv_InventoryItem* Item, const int32 StackCount) const

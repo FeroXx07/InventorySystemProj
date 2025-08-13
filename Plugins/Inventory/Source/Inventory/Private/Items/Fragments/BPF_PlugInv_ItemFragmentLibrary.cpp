@@ -4,6 +4,7 @@
 #include "Items/Fragments/BPF_PlugInv_ItemFragmentLibrary.h"
 #include "Widgets/Composite/UW_PlugInv_CompositeBase.h"
 #include "BPF_PlugInv_DoubleLogger.h"
+#include "EquipmentManagment/AC_PlugInv_EquipActor.h"
 #include "Widgets/Composite/UW_PlugInv_Leaf_Image.h"
 #include "Widgets/Composite/UW_PlugInv_Leaf_LabeledValue.h"
 #include "Widgets/Composite/UW_PlugInv_Leaf_Text.h"
@@ -50,6 +51,83 @@ void FPlugInv_ManaPotionFragment::OnConsume(APlayerController* PC)
 {
 	FPlugInv_ConsumeModifier::OnConsume(PC);
 	LOG_DOUBLE_S(5, FColor::Cyan, "Mana potion consumed! Restored by: {0} (FPlugInv_ManaPotionFragment)", this->GetValue());
+}
+
+void FPlugInv_StrengthModifier::OnEquip(APlayerController* PC)
+{
+	FPlugInv_EquipModifier::OnEquip(PC);
+	LOG_DOUBLE_S(5, FColor::Green, "Strength increased by: {0} (FPlugInv_StrengthModifier)", this->GetValue());
+}
+
+void FPlugInv_StrengthModifier::OnUnequip(APlayerController* PC)
+{
+	FPlugInv_EquipModifier::OnUnequip(PC);
+	LOG_DOUBLE_S(5, FColor::Orange, "Strength decreased by: {0} (FPlugInv_StrengthModifier)", this->GetValue());
+}
+
+void FPlugInv_EquipmentFragment::OnEquip(APlayerController* PC)
+{
+	if (bEquipped) return;
+	bEquipped = true;
+	for (TInstancedStruct<FPlugInv_EquipModifier>& Modifier : EquipModifiers)
+	{
+		FPlugInv_EquipModifier& ModRef = Modifier.GetMutable();
+		ModRef.OnEquip(PC);
+	}
+}
+
+void FPlugInv_EquipmentFragment::OnUnequip(APlayerController* PC)
+{
+	if (!bEquipped) return;
+	bEquipped = false;
+	for (TInstancedStruct<FPlugInv_EquipModifier>& Modifier : EquipModifiers)
+	{
+		FPlugInv_EquipModifier& ModRef = Modifier.GetMutable();
+		ModRef.OnUnequip(PC);
+	}
+}
+
+void FPlugInv_EquipmentFragment::Assimilate(UPlugInv_CompositeBase* Composite) const
+{
+	FPlugInv_InventoryItemFragment::Assimilate(Composite);
+	for (const TInstancedStruct<FPlugInv_EquipModifier>& Modifier : EquipModifiers)
+	{
+		const FPlugInv_EquipModifier& ModRef = Modifier.Get();
+		ModRef.Assimilate(Composite);
+	}
+}
+
+void FPlugInv_EquipmentFragment::Manifest()
+{
+	FPlugInv_InventoryItemFragment::Manifest();
+	for (TInstancedStruct<FPlugInv_EquipModifier>& Modifier : EquipModifiers)
+    {
+		FPlugInv_EquipModifier& ModRef = Modifier.GetMutable<>();
+    	ModRef.Manifest();
+    }
+}
+
+APlugInv_EquipActor* FPlugInv_EquipmentFragment::SpawnAttachedActor(USkeletalMeshComponent* AttachMesh) const
+{
+	if (!IsValid(EquipActorClass) || !IsValid(AttachMesh)) return nullptr;
+	
+	APlugInv_EquipActor* SpawnedActor = AttachMesh->GetWorld()->SpawnActor<APlugInv_EquipActor>(EquipActorClass);
+	SpawnedActor->AttachToComponent(AttachMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, SocketAttachPoint);
+
+	return SpawnedActor;
+}
+
+void FPlugInv_EquipmentFragment::DestroyAttachedActor() const
+{
+	if (EquippedActor.IsValid())
+	{
+		EquippedActor->Destroy();
+	}
+}
+
+void FPlugInv_EquipmentFragment::SetEquippedActor(APlugInv_EquipActor* EquipActor)
+{
+	EquippedActor = EquipActor;
 }
 
 void FPlugInv_InventoryItemFragment::Assimilate(UPlugInv_CompositeBase* Composite) const

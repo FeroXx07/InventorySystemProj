@@ -6,6 +6,9 @@
 #include "Widgets/Inventory/InventoryBase/UW_PlugInv_InventoryBase.h"
 #include "UW_PlugInv_InventorySpatial.generated.h"
 
+class UPlugInv_EquippedSlottedItem;
+struct FGameplayTag;
+class UPlugInv_EquippedGridSlot;
 class UPlugInv_ItemDescription;
 class UCanvasPanel;
 class UWidgetSwitcher;
@@ -29,6 +32,8 @@ public:
 	virtual void OnItemHovered(UPlugInv_InventoryItem* Item) override;
 	virtual void OnItemUnHovered() override;
 	virtual bool HasHoverItem() const override;
+	virtual UPlugInv_HoverItem* GetHoverItem() const override;
+	virtual float GetEquippablesTileSize() const override;
 private:
 	// By marking a pointer to a widget as BindWidget, you can create an identically-named widget in a Blueprint subclass of your C++ class, and at run-time access it from the C++.
 	// https://unreal-garden.com/tutorials/ui-bindwidget/
@@ -36,6 +41,9 @@ private:
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UCanvasPanel> CanvasPanel_Root;
+
+	UPROPERTY(meta=(BindWidget))
+	TArray<TObjectPtr<UPlugInv_EquippedGridSlot>> EquippedGridSlots;
 	
 	// Reference to an inventory grid widget.
 	UPROPERTY(meta=(BindWidget))
@@ -93,6 +101,12 @@ private:
 	UFUNCTION()
 	void ShowCraftables();
 
+	UFUNCTION()
+	void EquippedGridSlotClicked(UPlugInv_EquippedGridSlot* EquippedGridSlot, const FGameplayTag& EquipmentTypeTag);
+
+	UFUNCTION()
+	void EquippedSlottedItemClicked(UPlugInv_EquippedSlottedItem* EquippedSlottedItem);
+
 	// Disable active inventory grid button.
 	void DisableButton(const TObjectPtr<UButton>& Button) const;
 
@@ -100,4 +114,16 @@ private:
 	void SetActiveGrid(const TObjectPtr<UPlugInv_InventoryGrid>& Grid, const TObjectPtr<UButton>& Button);
 
 	void SetItemDescriptionSizeAndPosition(UPlugInv_ItemDescription* Description, UCanvasPanel* Canvas) const;
+
+	bool CanEquipHoverItem(const UPlugInv_EquippedGridSlot* EquippedGridSlot, const FGameplayTag& EquipmentTypeTag) const;
+
+	UPlugInv_EquippedGridSlot* FindSlotWithEquippedItem(UPlugInv_InventoryItem* EquippedItem) const;
+
+	void ClearSlotOfItem(UPlugInv_EquippedGridSlot* EquippedGridSlot);
+	
+	void RemoveEquippedSlottedItem(UPlugInv_EquippedSlottedItem* EquippedSlottedItem);
+	
+	void MakeEquippedSlottedItem(const UPlugInv_EquippedSlottedItem* EquippedSlottedItem, UPlugInv_EquippedGridSlot* EquippedGridSlot, UPlugInv_InventoryItem* ItemToEquip);
+
+	void BroadcastSlotClickedDelegates(UPlugInv_InventoryItem* ItemToEquip, UPlugInv_InventoryItem* ItemToUnequip) const;
 };

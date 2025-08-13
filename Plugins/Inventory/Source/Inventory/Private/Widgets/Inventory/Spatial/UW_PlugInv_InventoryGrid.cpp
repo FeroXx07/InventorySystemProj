@@ -27,6 +27,7 @@ void UPlugInv_InventoryGrid::NativeOnInitialized()
 	InventoryComponent = UPlugInv_InventoryStatics::GetInventoryComponent(GetOwningPlayer());
 	InventoryComponent->OnItemAdded.AddDynamic(this, &ThisClass::AddItem);
 	InventoryComponent->OnStackChange.AddDynamic(this, &ThisClass::AddStacks);
+	InventoryComponent->OnInventoryMenuToggled.AddDynamic(this, &ThisClass::OnInventoryMenuToggled);
 }
 
 void UPlugInv_InventoryGrid::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
@@ -239,9 +240,9 @@ void UPlugInv_InventoryGrid::SetOwningCanvas(UCanvasPanel* OwningCanvas)
 	OwningCanvasPanel = OwningCanvas;
 }
 
-FPlugInv_SlotAvailabilityResult UPlugInv_InventoryGrid::HasRoomForItem(const UPlugInv_InventoryItem* InventoryItem)
+FPlugInv_SlotAvailabilityResult UPlugInv_InventoryGrid::HasRoomForItem(const UPlugInv_InventoryItem* InventoryItem, const int32 StackAmountOverride)
 {
-	return HasRoomForItem(InventoryItem->GetItemManifest());
+	return HasRoomForItem(InventoryItem->GetItemManifest(), StackAmountOverride);
 }
 
 bool UPlugInv_InventoryGrid::IsIndexClaimed(const TSet<int32>& CheckedIndices, const TObjectPtr<UPlugInv_GridSlot>& GridSlot)
@@ -249,7 +250,7 @@ bool UPlugInv_InventoryGrid::IsIndexClaimed(const TSet<int32>& CheckedIndices, c
 	return CheckedIndices.Contains(GridSlot->GetTileIndex());
 }
 
-FPlugInv_SlotAvailabilityResult UPlugInv_InventoryGrid::HasRoomForItem(const FPlugInv_ItemManifest& ItemManifest)
+FPlugInv_SlotAvailabilityResult UPlugInv_InventoryGrid::HasRoomForItem(const FPlugInv_ItemManifest& ItemManifest, const int32 StackAmountOverride)
 {
 	FPlugInv_SlotAvailabilityResult Result;
 
@@ -277,7 +278,11 @@ FPlugInv_SlotAvailabilityResult UPlugInv_InventoryGrid::HasRoomForItem(const FPl
 	// Determine how many stacks to add.
 	const int32 MaxStackSize = Result.bStackable ? StackableFragment->GetMaxStackSize() : 1;
 	int32 AmountToFill = Result.bStackable ? StackableFragment->GetStackCount() : 1;
-
+	if (StackAmountOverride != -1 && Result.bStackable)
+	{
+		AmountToFill = StackAmountOverride;
+	}
+	
 	// Container of unique values unlike arrays.
 	TSet<int32> CheckedIndices;
 	// For each Grid Slot:
@@ -538,9 +543,13 @@ void UPlugInv_InventoryGrid::OnSlottedItemClicked(int32 GridIndex, const FPointe
 			return;
 		}
 	}
-		
-	// Swap with the hover item.
-	SwapClickedWithHoverItem(ClickedInventoryItem, GridIndex);
+
+	// Make sure wee can swap with a valid item 
+	if (CurrentQueryResult.ValidItem.IsValid())
+	{
+		// Swap with the hover item.
+		SwapClickedWithHoverItem(ClickedInventoryItem, GridIndex);
+	}
 }
 
 void UPlugInv_InventoryGrid::OnGridSlotClicked(int32 GridIndex, const FPointerEvent& MouseEvent)
@@ -633,6 +642,14 @@ void UPlugInv_InventoryGrid::OnPopUpMenuConsume(int32 Index)
 	}
 }
 
+void UPlugInv_InventoryGrid::OnInventoryMenuToggled(bool bOpen)
+{
+	if (!bOpen)
+	{
+		PutHoverItemBack();
+	}
+}
+
 void UPlugInv_InventoryGrid::PickUp(UPlugInv_InventoryItem* ClickedInventoryItem, const int32 GridIndex)
 {
 	AssignHoverItem(ClickedInventoryItem, GridIndex, GridIndex);
@@ -667,8 +684,13 @@ void UPlugInv_InventoryGrid::AssignHoverItem(UPlugInv_InventoryItem* InventoryIt
 	GetOwningPlayer()->SetMouseCursorWidget(EMouseCursor::Default, HoverItem);
 }
 
+void UPlugInv_InventoryGrid::OnHide()
+{
+	PutHoverItemBack();
+}
+
 void UPlugInv_InventoryGrid::AssignHoverItem(UPlugInv_InventoryItem* InventoryItem, const int32 GridIndex,
-	const int32 PreviousGridIndex)
+                                             const int32 PreviousGridIndex)
 {
 	AssignHoverItem(InventoryItem);
 
@@ -1092,6 +1114,16 @@ void UPlugInv_InventoryGrid::CreateItemPopUp(const int32 GridIndex)
 	}
 }
 
+void UPlugInv_InventoryGrid::PutHoverItemBack()
+{
+	if (!IsValid(HoverItem)) return;
+	
+	FPlugInv_SlotAvailabilityResult Result = HasRoomForItem(HoverItem->GetInventoryItem(), HoverItem->GetStackCount());
+	Result.Item = HoverItem->GetInventoryItem();
+	AddStacks(Result);
+	ClearHoverItem();
+}
+
 void UPlugInv_InventoryGrid::DropItem()
 {
 	if (!IsValid(HoverItem)) return;
@@ -1106,6 +1138,11 @@ void UPlugInv_InventoryGrid::DropItem()
 bool UPlugInv_InventoryGrid::HasHoverItem() const
 {
 	return IsValid(HoverItem);
+}
+
+UPlugInv_HoverItem* UPlugInv_InventoryGrid::GetHoverItem() const
+{
+	return HoverItem;
 }
 
 

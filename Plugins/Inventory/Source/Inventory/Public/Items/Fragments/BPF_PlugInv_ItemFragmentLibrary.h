@@ -8,6 +8,7 @@
 #include "StructUtils/InstancedStruct.h"
 #include "BPF_PlugInv_ItemFragmentLibrary.generated.h"
 
+class APlugInv_EquipActor;
 class UPlugInv_CompositeBase;
 class APlayerController;
 /**
@@ -252,4 +253,57 @@ struct FPlugInv_ManaPotionFragment : public FPlugInv_ConsumeModifier
 	GENERATED_BODY()
 
 	virtual void OnConsume(APlayerController* PC) override;
+};
+
+
+USTRUCT(BlueprintType)
+struct FPlugInv_EquipModifier : public FPlugInv_LabeledNumberFragment
+{
+	GENERATED_BODY()
+
+	virtual void OnEquip(APlayerController* PC) {}
+	virtual void OnUnequip(APlayerController* PC) {}
+};
+
+USTRUCT(BlueprintType)
+struct FPlugInv_StrengthModifier : public FPlugInv_EquipModifier
+{
+	GENERATED_BODY()
+
+	virtual void OnEquip(APlayerController* PC) override;
+	virtual void OnUnequip(APlayerController* PC) override;
+};
+
+
+USTRUCT(BlueprintType)
+struct FPlugInv_EquipmentFragment : public FPlugInv_InventoryItemFragment
+{
+	GENERATED_BODY()
+
+	bool bEquipped{false};
+	void OnEquip(APlayerController* PC);
+	void OnUnequip(APlayerController* PC);
+	virtual void Assimilate(UPlugInv_CompositeBase* Composite) const override;
+	virtual void Manifest() override;
+	
+	APlugInv_EquipActor* SpawnAttachedActor(USkeletalMeshComponent* AttachMesh) const;
+	void DestroyAttachedActor() const;
+	FGameplayTag GetEquipmentType() const { return EquipmentType; }
+	void SetEquippedActor(APlugInv_EquipActor* EquipActor);
+private:
+
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	TArray<TInstancedStruct<FPlugInv_EquipModifier>> EquipModifiers;
+
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	TSubclassOf<APlugInv_EquipActor> EquipActorClass = nullptr;
+
+	UPROPERTY(VisibleAnywhere, Category = "Inventory")
+	TWeakObjectPtr<APlugInv_EquipActor> EquippedActor = nullptr;
+
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	FName SocketAttachPoint{NAME_None};
+
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	FGameplayTag EquipmentType = FGameplayTag::EmptyTag;
 };

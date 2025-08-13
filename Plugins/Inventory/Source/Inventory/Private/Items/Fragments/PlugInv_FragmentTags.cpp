@@ -10,12 +10,13 @@ namespace FragmentTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(StackableFragment, "FragmentTags.StackableFragment", "StackableFragment");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(ConsumableFragment, "FragmentTags.ConsumableFragment", "ConsumableFragment");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(ItemNameFragment, "FragmentTags.ItemNameFragment", "ItemNameFragment");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(PrimaryStatFragment, "FragmentTags.PrimaryStatFragment", "PrimaryStatFragment");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(EquipmentFragment, "FragmentTags.EquipmentFragment", "EquipmentFragment");
 	
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(ItemTypeFragment, "FragmentTags.ItemTypeFragment", "ItemTypeFragment");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(FlavorTextFragment, "FragmentTags.FlavorTextFragment", "FlavorTextFragment");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(SellValueFragment, "FragmentTags.SellValueFragment", "SellValueFragment");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(RequiredLevelFragment, "FragmentTags.RequiredLevelFragment", "RequiredLevelFragment");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(PrimaryStatFragment, "FragmentTags.PrimaryStatFragment", "PrimaryStatFragment");
 
 	namespace StatMod
 	{

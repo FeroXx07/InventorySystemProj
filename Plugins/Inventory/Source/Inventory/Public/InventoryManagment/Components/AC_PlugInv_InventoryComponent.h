@@ -13,6 +13,8 @@ class UPlugInv_InventoryBase;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryItemChange, UPlugInv_InventoryItem*, Item);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FNoRoomInInventory);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FStackChange, const FPlugInv_SlotAvailabilityResult&, Result);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FItemEquipStatusChanged, UPlugInv_InventoryItem*, Item);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryMenuToggled, bool, bOpen);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent), Blueprintable)
 class INVENTORY_API UPlugInv_InventoryComponent : public UActorComponent
@@ -44,6 +46,12 @@ public:
 	// Server RPC (Client->Server).
 	UFUNCTION(Server, Reliable, Category = "Inventory")
 	void Server_ConsumeItem(UPlugInv_InventoryItem* Item);
+
+	UFUNCTION(Server, Reliable)
+	void Server_EquipSlotClicked(UPlugInv_InventoryItem* ItemToEquip, UPlugInv_InventoryItem* ItemToUnequip);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_EquipSlotClicked(UPlugInv_InventoryItem* ItemToEquip, UPlugInv_InventoryItem* ItemToUnequip);
 	
 	// Adds Unreal SubObjects to replication.
 	void AddSubObjToReplication(UObject* SubObject);
@@ -61,6 +69,9 @@ public:
 	FInventoryItemChange OnItemChanged;
 	FNoRoomInInventory OnNoRoomInInventory;
 	FStackChange OnStackChange;
+	FItemEquipStatusChanged OnItemEquipped;
+	FItemEquipStatusChanged OnItemUnequipped;
+	FInventoryMenuToggled OnInventoryMenuToggled;
 	
 protected:
 	// Called when the game starts

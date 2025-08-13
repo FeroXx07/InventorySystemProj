@@ -7,6 +7,7 @@
 #include "Blueprint/UserWidget.h"
 #include "UW_PlugInv_InventoryBase.generated.h"
 
+class UPlugInv_HoverItem;
 class UPlugInv_ItemComponent;
 class UPlugInv_InventoryItem;
 
@@ -27,4 +28,6 @@ public:
 	virtual void OnItemHovered(UPlugInv_InventoryItem* Item) {}
 	virtual void OnItemUnHovered() {}
 	virtual bool HasHoverItem() const { return false; }
+	virtual UPlugInv_HoverItem* GetHoverItem() const { return nullptr; }
+	virtual float GetEquippablesTileSize() const { return 0.f; }
 };

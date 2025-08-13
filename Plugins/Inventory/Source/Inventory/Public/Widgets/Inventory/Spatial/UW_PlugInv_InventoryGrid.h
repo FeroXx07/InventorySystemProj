@@ -55,14 +55,18 @@ public:
 	void SetOwningCanvas(UCanvasPanel* OwningCanvas);
 	void DropItem();
 	bool HasHoverItem() const;
-	
+	UPlugInv_HoverItem* GetHoverItem() const;
+	float GetTileSize() const { return TileSize; }
+	void ClearHoverItem();
+	void AssignHoverItem(UPlugInv_InventoryItem* InventoryItem);
+	void OnHide();
 private:
 	// Function to construct the actual grid.
 	void ConstructGrid();
 	
 	// Overloads for HasRoomForItem
-	FPlugInv_SlotAvailabilityResult HasRoomForItem(const UPlugInv_InventoryItem* InventoryItem);
-	FPlugInv_SlotAvailabilityResult HasRoomForItem(const FPlugInv_ItemManifest& ItemManifest);
+	FPlugInv_SlotAvailabilityResult HasRoomForItem(const UPlugInv_InventoryItem* InventoryItem, const int32 StackAmountOverride = -1);
+	FPlugInv_SlotAvailabilityResult HasRoomForItem(const FPlugInv_ItemManifest& ItemManifest, const int32 StackAmountOverride = -1);
 	
 	// Add Item to multiple indices if needed
 	void AddItemToIndices(const FPlugInv_SlotAvailabilityResult& Result, UPlugInv_InventoryItem* NewItem);
@@ -99,7 +103,6 @@ private:
 	bool IsRightClick(const FPointerEvent& MouseEvent) const;
 	bool IsLeftClick(const FPointerEvent& MouseEvent) const;
 	void PickUp(UPlugInv_InventoryItem* ClickedInventoryItem, const int32 GridIndex);
-	void AssignHoverItem(UPlugInv_InventoryItem* InventoryItem);
 	void AssignHoverItem(UPlugInv_InventoryItem* InventoryItem, const int32 GridIndex, const int32 PreviousGridIndex);
 	void RemoveItemFromGrid(UPlugInv_InventoryItem* InventoryItem, const int32 GridIndex);
 	void UpdateTileParameters(const FVector2D& CanvasPosition, const FVector2D& MousePosition);
@@ -113,7 +116,6 @@ private:
 	void UnHighlightSlots(const int32 Index, const FIntPoint& Dimensions);
 	void ChangeHoverType(const int32 Index, const FIntPoint& Dimensions, EPlugInv_GridSlotState GridSlotState);
 	void PutDownOnIndex(const int32 Index);
-	void ClearHoverItem();
 	UUserWidget* GetVisibleCursorWidget();
 	UUserWidget* GetHiddenCursorWidget();
 	bool IsHoverAndClickedSameTypeAndStackable(const UPlugInv_InventoryItem* ClickedInventoryItem) const;
@@ -125,6 +127,7 @@ private:
 	bool ShouldFillInStack(const int32 RoomInClickedSlot, const int32 HoveredStackCount) const;
 	void FillInStack(const int32 FillAmount, const int32 Remainder, const int32 Index);
 	void CreateItemPopUp(const int32 GridIndex);
+	void PutHoverItemBack();
 	
 	UFUNCTION()
 	void AddStacks(const FPlugInv_SlotAvailabilityResult& Result);
@@ -149,6 +152,9 @@ private:
 
 	UFUNCTION()
 	void OnPopUpMenuConsume(int32 Index);
+
+	UFUNCTION()
+	void OnInventoryMenuToggled(bool bOpen);
 	
 	// Weak ref to the inventory component.
 	TWeakObjectPtr<UPlugInv_InventoryComponent> InventoryComponent;

@@ -7,6 +7,8 @@
 #include "Widgets/Utils/BPF_PlugInv_WidgetUtils.h"
 #include "BPF_PlugInv_InventoryStatics.generated.h"
 
+class UPlugInv_InventoryBase;
+class UPlugInv_HoverItem;
 class UPlugInv_InventoryItem;
 enum class EPlugInv_ItemCategory : uint8;
 class UPlugInv_InventoryComponent;
@@ -35,6 +37,11 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	static void ItemUnhovered(APlayerController* PC);
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	static UPlugInv_HoverItem* GetHoverItem(APlayerController* PC);
+
+	static UPlugInv_InventoryBase* GetInventoryWidget(const APlayerController* PC);
 };
 
 template <typename T, typename FuncT>
