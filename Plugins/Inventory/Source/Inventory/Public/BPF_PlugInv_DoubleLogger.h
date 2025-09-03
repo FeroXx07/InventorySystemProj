@@ -67,7 +67,7 @@ class INVENTORY_API UPlugInv_DoubleLogger : public UBlueprintFunctionLibrary
 	GENERATED_BODY()
 
 public:
-	static void Log(const FString& ContentStr);
+	static void Log(const FString& ContentStr, FColor Color = FColor::Purple);
 	static void LogWarning(const FString& ContentStr);
 	static void LogError(const FString& ContentStr);
 

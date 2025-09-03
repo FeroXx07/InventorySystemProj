@@ -27,7 +27,7 @@ public class Inventory : ModuleRules
 			{
 				"Core",
 				"NetCore",
-				"GameplayTags"
+				"GameplayTags", "ScriptableEditorWidgets", // Contains USinglePropertyView
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
@@ -39,7 +39,10 @@ public class Inventory : ModuleRules
 				"CoreUObject",
 				"Engine",
 				"Slate",
-				"SlateCore", "EnhancedInput", "UMG", "InputCore"
+				"SlateCore", "EnhancedInput", "UMG", "InputCore",
+				"UnrealEd",    // Editor-specific functionality
+				"Blutility",   // Contains UEditorUtilityWidget
+				"UMGEditor"    // Editor-specific UMG functionality
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

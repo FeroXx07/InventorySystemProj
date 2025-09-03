@@ -6,10 +6,10 @@
 
 #include "Inventory.h"
 
-void UPlugInv_DoubleLogger::Log(const FString& ContentStr)
+void UPlugInv_DoubleLogger::Log(const FString& ContentStr, const FColor Color)
 {
 	UE_LOG(LogInventory, Display, TEXT("%s"), *ContentStr);
-	DrawToScreen(ContentStr, FColor::Purple, 5.f);
+	DrawToScreen(ContentStr, Color, 5.f);
 }
 
 void UPlugInv_DoubleLogger::LogWarning(const FString& ContentStr)
