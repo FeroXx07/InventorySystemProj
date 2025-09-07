@@ -3,12 +3,55 @@
 
 #include "Diegetic/Actors/Dieg_WorldInventoryActor.h"
 
+#include "Components/WidgetComponent.h"
+#include "Components/WidgetInteractionComponent.h"
+#include "Diegetic/Components/Dieg_3DInventoryComponent.h"
+#include "Diegetic/Components/Dieg_InventoryComponent.h"
+
 
 // Sets default values
 ADieg_WorldInventoryActor::ADieg_WorldInventoryActor()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
+	Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+	SetRootComponent(Root);
+
+	StaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Static Mesh Component"));
+	StaticMeshComponent->SetupAttachment(Root);
+
+	// Load default cube mesh from Engine Content
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMesh(TEXT("/Engine/BasicShapes/Cube.Cube"));
+	if (CubeMesh.Succeeded())
+	{
+		StaticMeshComponent->SetStaticMesh(CubeMesh.Object);
+	}
+	// Load default engine material
+	static ConstructorHelpers::FObjectFinder<UMaterial> CubeMaterial(TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"));
+	if (CubeMaterial.Succeeded())
+	{
+		StaticMeshComponent->SetMaterial(0, CubeMaterial.Object);
+	}
+	
+	WidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("Widget Component"));
+	WidgetComponent->SetupAttachment(Root);
+
+	WidgetInteractionComponent = CreateDefaultSubobject<UWidgetInteractionComponent>(TEXT("Widget Interaction Component"));
+	WidgetInteractionComponent->SetupAttachment(WidgetComponent);
+	
+	InventoryComponent = CreateDefaultSubobject<UDieg_InventoryComponent>(TEXT("Inventory Component"));
+	InventoryComponent3D = CreateDefaultSubobject<UDieg_3DInventoryComponent>(TEXT("3D Inventory Component"));
+}
+
+void ADieg_WorldInventoryActor::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	if (!InventoryComponent3D->OnInventoryExternalLinkRequest.IsAlreadyBound(this, &ThisClass::Handle3DInventoryBindRequest))
+	{
+		InventoryComponent3D->OnInventoryExternalLinkRequest.AddDynamic(this, &ThisClass::Handle3DInventoryBindRequest);
+	}
 }
 
 // Called when the game starts or when spawned
@@ -22,5 +65,10 @@ void ADieg_WorldInventoryActor::BeginPlay()
 void ADieg_WorldInventoryActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+}
+
+void ADieg_WorldInventoryActor::Handle3DInventoryBindRequest(UDieg_InventoryComponent* InventoryComponentRef)
+{
+	InventoryComponentRef = InventoryComponent;
 }
 

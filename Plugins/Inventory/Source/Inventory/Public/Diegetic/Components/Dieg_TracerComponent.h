@@ -39,6 +39,9 @@ private:
 	void DoMultipleTraces();
 	
 	ADieg_PlayerController* CacheOwningPlayerController();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Properties", meta = (AllowPrivateAccess = "true"))
+	bool bDebugDraw{false};
 	
 	// Max distance for interaction.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Properties", meta = (AllowPrivateAccess = "true"))

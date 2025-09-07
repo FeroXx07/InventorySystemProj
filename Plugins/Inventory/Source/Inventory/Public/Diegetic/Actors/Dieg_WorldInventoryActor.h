@@ -6,20 +6,46 @@
 #include "GameFramework/Actor.h"
 #include "Dieg_WorldInventoryActor.generated.h"
 
+class UWidgetInteractionComponent;
+class UWidgetComponent;
+class UDieg_3DInventoryComponent;
+class UDieg_InventoryComponent;
+
 UCLASS()
 class INVENTORY_API ADieg_WorldInventoryActor : public AActor
 {
 	GENERATED_BODY()
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+	USceneComponent* Root;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UStaticMeshComponent> StaticMeshComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UWidgetComponent> WidgetComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UWidgetInteractionComponent> WidgetInteractionComponent;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UDieg_InventoryComponent> InventoryComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UDieg_3DInventoryComponent> InventoryComponent3D;
 public:
 	// Sets default values for this actor's properties
 	ADieg_WorldInventoryActor();
 
+	virtual void PostInitializeComponents() override;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
-public:
+	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	UFUNCTION()
+	void Handle3DInventoryBindRequest(UDieg_InventoryComponent* InventoryComponentRef);
+	
 };

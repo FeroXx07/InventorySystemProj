@@ -39,8 +39,8 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	
-	UFUNCTION(BlueprintNativeEvent, Category="Item")
-	void SetMeshFromDataAsset(UDieg_ItemDefinitionDataAsset* InItemDataAsset);
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Item")
+	void SetFromDataAsset(UDieg_ItemDefinitionDataAsset* InItemDataAsset);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Item") 
 	float OffsetZ{0.0f};
@@ -61,5 +61,7 @@ public:
 
 	const TObjectPtr<UDieg_ItemInstance>& GetItemInstance() const;
 	TObjectPtr<UDieg_ItemInstance>& GetItemInstanceMutable();
-	void SetItemInstance(const TObjectPtr<UDieg_ItemInstance>& Instance);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Item")
+	void SetItemInstance(UDieg_ItemInstance* Instance);
 };

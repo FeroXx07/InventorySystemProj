@@ -7,6 +7,16 @@
 #include "Dieg_3DInventoryComponent.generated.h"
 
 
+class ADieg_WorldItemActor;
+class UDieg_Slot;
+class UWidgetComponent;
+class UDieg_Grid;
+class UDieg_InventoryComponent;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLinkInventoryRefExternally, UDieg_InventoryComponent*, NewInventoryRef);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FWidgetSlotHover, const FGeometry&, InGeometry, const FPointerEvent&, InMouseEvent, UDieg_3DInventoryComponent*, InventoryComponent3D, UDieg_Slot*, Slot);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FWidgetSlotUnHover, const FPointerEvent&, InMouseEvent, UDieg_3DInventoryComponent*, InventoryComponent3D, UDieg_Slot*, Slot);
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class INVENTORY_API UDieg_3DInventoryComponent : public UActorComponent
 {
@@ -16,12 +26,55 @@ public:
 	// Sets default values for this component's properties
 	UDieg_3DInventoryComponent();
 
+	UPROPERTY(BlueprintAssignable, Category = "Inventory")
+	FLinkInventoryRefExternally OnInventoryExternalLinkRequest;
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	FWidgetSlotHover On3DWidgetSlotHovered;
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	FWidgetSlotUnHover On3DWidgetSlotUnHovered;
 protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UDieg_InventoryComponent> InventoryComponentRef;
+
+	UPROPERTY(VisibleAnywhere, Category = "Inventory", meta = (AllowPrivateAccess = "true"))
+	TArray<TWeakObjectPtr<ADieg_WorldItemActor>> Items;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory", meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<ADieg_WorldItemActor> ItemClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widget", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UDieg_Grid> GridWidget;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widget", meta = (AllowPrivateAccess = "true"))
+	TWeakObjectPtr<UWidgetComponent> WidgetComponentRef;
+	
 	// Called when the game starts
 	virtual void BeginPlay() override;
-
-public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 	                           FActorComponentTickFunction* ThisTickFunction) override;
+
+	UFUNCTION(Category = "Constructor", BlueprintCallable)
+	void InitializeInventory();
+
+	UFUNCTION(Category = "Constructor", BlueprintCallable)
+	void Populate3D();
+
+	UFUNCTION(Category = "Constructor", BlueprintCallable)
+	void DeInitializeInventory();
+
+	UFUNCTION(Category = "Direct", BlueprintCallable)
+	void AddItemToInventory(ADieg_WorldItemActor* ItemActor);
+
+	UFUNCTION(Category = "Direct", BlueprintCallable)
+	void RemoveItemFromInventory(ADieg_WorldItemActor* ItemActor);
+
+	UFUNCTION(Category = "Event Handler", BlueprintCallable)
+	void WidgetSlotHover(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent, UDieg_Slot* GridSlot);
+
+	UFUNCTION(Category = "Event Handler", BlueprintCallable)
+	void WidgetSlotUnHovered(const FPointerEvent& InMouseEvent, UDieg_Slot* GridSlot);
+	
 };

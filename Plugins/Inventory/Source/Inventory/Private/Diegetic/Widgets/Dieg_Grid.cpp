@@ -41,7 +41,7 @@ void UDieg_Grid::CreateEmptyGrid_Implementation(int32 TotalSlots_, int32 MaxColu
 	}
 	for (const FIntPoint& SlotValue : Slots)
 	{
-		LOG_DOUBLE_S(5.0f, FColor::Green, "Slot {0}", SlotValue);
+		// LOG_DOUBLE_S(5.0f, FColor::Green, "Slot {0}", SlotValue);
 		CreateSlot(SlotValue);
 	}
 	

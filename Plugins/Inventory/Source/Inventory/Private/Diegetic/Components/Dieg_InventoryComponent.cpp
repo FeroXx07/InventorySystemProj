@@ -3,6 +3,7 @@
 
 #include "Diegetic/Components/Dieg_InventoryComponent.h"
 
+#include "BPF_PlugInv_DoubleLogger.h"
 #include "Algo/ForEach.h"
 #include "Diegetic/Dieg_UtilityLibrary.h"
 #include "Diegetic/UObjects/Dieg_ItemInstance.h"
@@ -35,18 +36,24 @@ void UDieg_InventoryComponent::BeginPlay()
 }
 
 
-TArray<FDieg_InventorySlot*> UDieg_InventoryComponent::GetRootSlots()
+TArray<FDieg_InventorySlot*> UDieg_InventoryComponent::GetRootSlotsMutable()
 {
 	TArray<FDieg_InventorySlot*> RootSlots;
-
-	// Lambda as predicate
-	Algo::ForEach(InventorySlots, [&RootSlots](FDieg_InventorySlot& Slot)
+	for (FDieg_InventorySlot& Slot : InventorySlots)
 	{
 		if (Slot.IsRootSlot())
-		{
 			RootSlots.Add(&Slot);
-		}
-	});
+	}
+	// TArray<FDieg_InventorySlot*> RootSlots;
+	//
+	// // Lambda as predicate
+	// Algo::ForEach(InventorySlots, [&RootSlots](FDieg_InventorySlot& Slot)
+	// {
+	// 	if (Slot.IsRootSlot())
+	// 	{
+	// 		RootSlots.Add(&Slot);
+	// 	}
+	// });
 
 	return RootSlots;
 }
@@ -63,6 +70,8 @@ void UDieg_InventoryComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 // Initializes inventory slots and pre-populates items if needed
 void UDieg_InventoryComponent::InitializeSlots(const int32 NumSlots, const int32 NumColumns, const FGameplayTagContainer& Tags)
 {
+	LOG_DOUBLE_S(10.0, FColor::Turquoise, "InitializeSlots in {0}. NumSlots: {1}, NumColumns: {2}", this->GetName(), NumSlots, NumColumns);
+	
 	// Generate grid coordinates
 	TArray<FIntPoint> Slots = UDieg_UtilityLibrary::GetSlotPoints(NumSlots, NumColumns);
 	const int32 Size = Slots.Num();
@@ -80,7 +89,14 @@ void UDieg_InventoryComponent::InitializeSlots(const int32 NumSlots, const int32
 		InventorySlots.EmplaceAt(i, Slot);
 		SlotsOccupation.Emplace(SlotCoordinates, false);
 	}
+
+	if (PrePopulateData.IsEmpty())
+	{
+		return;
+	}
 	
+	LOG_DOUBLE_S(10.0, FColor::Turquoise, "InitializeSlots in {0}. Prepopulating", this->GetName());
+
 	// Prepopulate inventory from saved data
 	for (const FDieg_PrePopulate& Data : PrePopulateData)
 	{
@@ -98,7 +114,12 @@ bool UDieg_InventoryComponent::TryAddItem(UDieg_ItemInstance* ItemToAdd, int32& 
 		return false;
 	}
 
-	int32 ToAdd = FMath::Clamp(ItemToAdd->GetQuantity(), 1, ItemToAdd->GetItemDefinitionDataAsset()->ItemDefinition.StackSizeMax);
+	const int32 CurrentQuantity = ItemToAdd->GetQuantity();
+	const int32 MaxQuantity =  ItemToAdd->GetItemDefinitionDataAsset()->ItemDefinition.StackSizeMax;
+	int32 ToAdd = FMath::Clamp(CurrentQuantity, 1, MaxQuantity);
+
+	LOG_DOUBLE_S(10.0, FColor::Turquoise, "TryAddItem in {0}. CurrentQuantity: {1}, MaxQuantity: {2}, ToAdd: {3}",
+		this->GetName(), CurrentQuantity, MaxQuantity, ToAdd);
 
 	// First try stacking on existing items of same type
 	TSet<FDieg_InventorySlot*> FoundRootInstances = FindRootSlotByItemType(ItemToAdd);
@@ -119,8 +140,8 @@ bool UDieg_InventoryComponent::TryAddItem(UDieg_ItemInstance* ItemToAdd, int32& 
 	}
 
 	// Attempt to place in new slots
-	const TArray<FIntPoint>& Shape = ItemToAdd->GetItemDefinitionDataAsset()->ItemDefinition.DefaultShape;
-	const FIntPoint& ShapeRoot = ItemToAdd->GetItemDefinitionDataAsset()->ItemDefinition.DefaultShapeRoot;
+	const TArray<FIntPoint> Shape = ItemToAdd->GetItemDefinitionDataAsset()->ItemDefinition.DefaultShape;
+	const FIntPoint ShapeRoot = ItemToAdd->GetItemDefinitionDataAsset()->ItemDefinition.DefaultShapeRoot;
 	for (const FDieg_InventorySlot& Slot : InventorySlots)
 	{
 		int32 RotationUsed = 0;
@@ -136,6 +157,12 @@ bool UDieg_InventoryComponent::TryAddItem(UDieg_ItemInstance* ItemToAdd, int32& 
 	Remaining = ToAdd;
 	ItemToAdd->SetQuantity(Remaining);
 	return false;
+}
+
+bool UDieg_InventoryComponent::TryRemoveItem(UDieg_ItemInstance* ItemToRemove)
+{
+	RemoveItemFromInventory(ItemToRemove);
+	return true;
 }
 
 // Checks if an item can be added (stacking or new slots)
@@ -164,8 +191,8 @@ bool UDieg_InventoryComponent::CanAddItem(const UDieg_ItemInstance* ItemToAdd)
 	}
 
 	// Check for available slots for new placement
-	const TArray<FIntPoint>& Shape = ItemToAdd->GetItemDefinitionDataAsset()->ItemDefinition.DefaultShape;
-	const FIntPoint& ShapeRoot = ItemToAdd->GetItemDefinitionDataAsset()->ItemDefinition.DefaultShapeRoot;
+	const TArray<FIntPoint> Shape = ItemToAdd->GetItemDefinitionDataAsset()->ItemDefinition.DefaultShape;
+	const FIntPoint ShapeRoot = ItemToAdd->GetItemDefinitionDataAsset()->ItemDefinition.DefaultShapeRoot;
 
 	for (const FDieg_InventorySlot& Slot : InventorySlots)
 	{
@@ -299,8 +326,8 @@ bool UDieg_InventoryComponent::AreSlotsAvailable(const TArray<FIntPoint>& InputS
 const FDieg_InventorySlot* UDieg_InventoryComponent::AddItemToInventory(UDieg_ItemInstance* ItemToAdd, const FIntPoint& SlotCoordinates, const float RotationUsed)
 {
 	// Get rotated coordinates and root
-	const TArray<FIntPoint>& Shape = ItemToAdd->GetItemDefinitionDataAsset()->ItemDefinition.DefaultShape;
-	const FIntPoint& ShapeRoot = ItemToAdd->GetItemDefinitionDataAsset()->ItemDefinition.DefaultShapeRoot;
+	const TArray<FIntPoint> Shape = ItemToAdd->GetItemDefinitionDataAsset()->ItemDefinition.DefaultShape;
+	const FIntPoint ShapeRoot = ItemToAdd->GetItemDefinitionDataAsset()->ItemDefinition.DefaultShapeRoot;
 	FIntPoint RotatedShapeRoot;
 	TArray<FIntPoint> RotatedShapeCoordinates = GetRelevantCoordinates(SlotCoordinates, Shape, ShapeRoot, RotationUsed, RotatedShapeRoot);
 
@@ -429,7 +456,7 @@ TArray<int32> UDieg_InventoryComponent::GetRelevantItems(const TArray<FIntPoint>
 // Converts a pre-populate struct into an item instance
 UDieg_ItemInstance* UDieg_InventoryComponent::MakeInstanceFromPrePopulateData(const FDieg_PrePopulate& PrePopData)
 {
-	UDieg_ItemInstance* ItemInstance = NewObject<UDieg_ItemInstance>(this);
+	UDieg_ItemInstance* ItemInstance = NewObject<UDieg_ItemInstance>(this, TEXT("ItemInstance_FromPrepopulate"));
 	ItemInstance->Initialize(PrePopData.ItemDefinitionDataAsset, PrePopData.Quantity);
 	return ItemInstance;
 }

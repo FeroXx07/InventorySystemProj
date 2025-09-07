@@ -9,17 +9,17 @@ void UDieg_ItemDefinitionDataAsset::PostEditChangeProperty(struct FPropertyChang
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 
-	SetItemDefinitionRoot(ItemDefinition);
+	SetItemDefinitionShapeRoot(ItemDefinition);
 }
 
 void UDieg_ItemDefinitionDataAsset::PostSaveRoot(FObjectPostSaveRootContext ObjectSaveContext)
 {
 	Super::PostSaveRoot(ObjectSaveContext);
 
-	SetItemDefinitionRoot(ItemDefinition);
+	SetItemDefinitionShapeRoot(ItemDefinition);
 }
 
-void UDieg_ItemDefinitionDataAsset::SetItemDefinitionRoot(FDieg_ItemDefinition& ItemDef)
+void UDieg_ItemDefinitionDataAsset::SetItemDefinitionShapeRoot(FDieg_ItemDefinition& ItemDef)
 {
 	if (!ItemDef.DefaultShape.IsEmpty())
 	{

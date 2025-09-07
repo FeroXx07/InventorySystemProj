@@ -13,7 +13,9 @@ class UDieg_ItemDefinitionDataAsset;
 /**
  * 
  */
-UCLASS()
+
+// EditInlineNew + DefaultToInstanced → tells UE this UObject can exist as an instanced subobject (same way components do).
+UCLASS(EditInlineNew, DefaultToInstanced)
 class INVENTORY_API UDieg_ItemInstance : public UObject
 {
 	GENERATED_BODY()
@@ -34,8 +36,13 @@ protected:
 	bool bIsInitialized{false};
 public:
 	void Initialize(UDieg_ItemDefinitionDataAsset* Def, int32 InQuantity = 1); // Instantiates fragments
-	
+
+	UFUNCTION(BlueprintCallable)
 	UDieg_ItemDefinitionDataAsset* GetItemDefinitionDataAsset() const;
+
+	UFUNCTION(BlueprintCallable)
+	const FDieg_ItemDefinition& GetItemDefinition() const;
+	
 	int32 GetQuantity() const { return Quantity; };
 	void SetQuantity(int32 InQuantity) {Quantity = InQuantity;};
 	template <typename T> T* GetFragment() const; // Gets a specific fragment instance

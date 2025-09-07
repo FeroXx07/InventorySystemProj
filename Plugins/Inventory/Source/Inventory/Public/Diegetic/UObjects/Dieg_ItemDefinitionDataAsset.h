@@ -18,8 +18,8 @@ class INVENTORY_API UDieg_ItemDefinitionDataAsset : public UPrimaryDataAsset
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 	virtual void PostSaveRoot(FObjectPostSaveRootContext ObjectSaveContext) override;
 public:
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Definition")
 	FDieg_ItemDefinition ItemDefinition;
 
-	static void SetItemDefinitionRoot(FDieg_ItemDefinition& ItemDef);
+	static void SetItemDefinitionShapeRoot(FDieg_ItemDefinition& ItemDef);
 };

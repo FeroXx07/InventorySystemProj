@@ -71,3 +71,8 @@ UDieg_ItemDefinitionDataAsset* UDieg_ItemInstance::GetItemDefinitionDataAsset() 
 {
 	return ItemDefinitionDataAsset;
 }
+
+const FDieg_ItemDefinition& UDieg_ItemInstance::GetItemDefinition() const
+{
+	return ItemDefinitionDataAsset->ItemDefinition;
+}

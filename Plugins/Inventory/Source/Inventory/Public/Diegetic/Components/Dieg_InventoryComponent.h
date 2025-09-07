@@ -52,8 +52,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory Component|Setup")
 	TArray<FDieg_PrePopulate> PrePopulateData;
 
-	TArray<FDieg_InventorySlot*> GetRootSlots();
-
 public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
@@ -64,6 +62,9 @@ public:
 
 	// Attempts to add an item; updates Remaining quantity
 	bool TryAddItem(UDieg_ItemInstance* ItemToAdd, int32& Remaining);
+
+	// Attempts to remove an item.
+	bool TryRemoveItem(UDieg_ItemInstance* ItemToRemove);
 
 	// Checks if an item can be added (stackable or empty slots)
 	bool CanAddItem(const UDieg_ItemInstance* ItemToAdd);
@@ -80,6 +81,9 @@ public:
 	// Returns all root slots containing exactly the provided instance
 	TSet<FDieg_InventorySlot*> FindRootSlotByInstance(const UDieg_ItemInstance* ItemToCheck);
 
+	TArray<FDieg_InventorySlot*> GetRootSlotsMutable();
+	int32 GetTotalSlots() const { return TotalSlots; };
+	int32 GetMaxColumns() const { return MaxColumns; };
 private:
 	// Places an item in inventory starting at given slot with rotation; returns root slot
 	const FDieg_InventorySlot* AddItemToInventory(UDieg_ItemInstance* ItemToAdd, const FIntPoint& SlotCoordinates, float RotationUsed);

@@ -21,20 +21,31 @@ ADieg_WorldItemActor::ADieg_WorldItemActor()
 	StaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Static Mesh Component"));
 	StaticMeshComponent->SetupAttachment(Root);
 
-	ItemInstance = CreateDefaultSubobject<UDieg_ItemInstance>(TEXT("Item Instance"));
-}
+    ItemInstance = CreateDefaultSubobject<UDieg_ItemInstance>(TEXT("ItemInstance"));}
 
 void ADieg_WorldItemActor::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
-	if (!IsValid(PrePopulateData.ItemDefinitionDataAsset))
+
+	if (GetWorld() && GetWorld()->IsGameWorld())
 	{
-		UPlugInv_DoubleLogger::LogError("ADieg_WorldItemActor::OnConstruction Null Data Asset");
-		return;
+		// Runtime: External initialization
+		
 	}
-	SetMeshFromDataAsset(PrePopulateData.ItemDefinitionDataAsset);
-	Quantity = PrePopulateData.Quantity;
-	ItemInstance->Initialize(PrePopulateData.ItemDefinitionDataAsset, Quantity);
+	else
+	{
+		// Editor
+		if (!IsValid(PrePopulateData.ItemDefinitionDataAsset))
+		{
+			UPlugInv_DoubleLogger::LogError("Null Data Asset");
+			return;
+		}
+		
+		SetFromDataAsset(PrePopulateData.ItemDefinitionDataAsset);
+		Quantity = PrePopulateData.Quantity;
+		ItemInstance->Initialize(PrePopulateData.ItemDefinitionDataAsset, Quantity);
+	}
+
 }
 
 // Called when the game starts or when spawned
@@ -53,13 +64,15 @@ TObjectPtr<UDieg_ItemInstance>& ADieg_WorldItemActor::GetItemInstanceMutable()
 	return ItemInstance;
 }
 
-void ADieg_WorldItemActor::SetItemInstance(const TObjectPtr<UDieg_ItemInstance>& Instance)
+void ADieg_WorldItemActor::SetItemInstance_Implementation(UDieg_ItemInstance* Instance)
 {
-	this->ItemInstance = Instance;
+	if (IsValid(Instance))
+	{
+		ItemInstance = Instance;
+		SetFromDataAsset(ItemInstance->GetItemDefinitionDataAsset());
+	}
 }
-
-
-void ADieg_WorldItemActor::SetMeshFromDataAsset_Implementation(UDieg_ItemDefinitionDataAsset* InItemDataAsset)
+void ADieg_WorldItemActor::SetFromDataAsset_Implementation(UDieg_ItemDefinitionDataAsset* InItemDataAsset)
 {
 	// Check soft reference validation
 	const TSoftObjectPtr<UStaticMesh> StaticMeshSoftRef = InItemDataAsset->ItemDefinition.WorldMesh;

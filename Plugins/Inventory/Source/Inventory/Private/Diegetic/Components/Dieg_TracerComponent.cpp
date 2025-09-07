@@ -63,19 +63,22 @@ FHitResult UDieg_TracerComponent::DoSingleTrace(
     FHitResult HitResult;
     bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, Channel);
 
-    // Draw the trace line
-    DrawDebugLine(
-        GetWorld(),
-        TraceStart,
-        TraceEnd,
-        bHit ? FColor::Red : FColor::Green,
-        false, // not persistent
-        0.5f,  // duration
-        0,     // depth priority
-        1.0f   // thickness
-    );
-
-    if (bHit)
+	if (bDebugDraw)
+	{
+		// Draw the trace line
+		DrawDebugLine(
+			GetWorld(),
+			TraceStart,
+			TraceEnd,
+			bHit ? FColor::Red : FColor::Green,
+			false, // not persistent
+			0.5f,  // duration
+			0,     // depth priority
+			1.0f   // thickness
+		);
+	}
+	
+    if (bHit && bDebugDraw)
     {
         DrawDebugPoint(GetWorld(), HitResult.ImpactPoint, 10.0f, FColor::Blue, false, 2.0f);
     }
