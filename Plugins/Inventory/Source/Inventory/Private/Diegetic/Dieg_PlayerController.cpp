@@ -9,6 +9,7 @@
 #include "Blueprint/UserWidget.h"
 #include "Diegetic/Actors/Dieg_WorldItemActor.h"
 #include "Diegetic/Components/Dieg_InventoryComponent.h"
+#include "Diegetic/Components/Dieg_InventoryInputHandler.h"
 #include "Diegetic/Components/Dieg_TracerComponent.h"
 #include "Diegetic/Interfaces/Dieg_Interactable.h"
 #include "Diegetic/Widgets/Dieg_InteractWidget.h"
@@ -17,6 +18,7 @@ ADieg_PlayerController::ADieg_PlayerController()
 {
 	TracerComponent = CreateDefaultSubobject<UDieg_TracerComponent>(TEXT("Tracer Component"));
 	InventoryComponent = CreateDefaultSubobject<UDieg_InventoryComponent>(TEXT("Inventory Component"));
+	InventoryInputHandlerComponent = CreateDefaultSubobject<UDieg_InventoryInputHandler>(TEXT("Inventory Input Handler Component"));
 }
 
 void ADieg_PlayerController::BeginPlay()
@@ -48,7 +50,7 @@ void ADieg_PlayerController::SetupInputComponent()
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent))
 	{
 		EnhancedInputComponent->BindAction(PrimaryInteractIA, ETriggerEvent::Triggered, this, &ADieg_PlayerController::TryInteract);
-		EnhancedInputComponent->BindAction(ToggleInventoryIA, ETriggerEvent::Triggered, this, &ADieg_PlayerController::TryToggleInventory);
+		// EnhancedInputComponent->BindAction(ToggleInventoryIA, ETriggerEvent::Triggered, this, &ADieg_PlayerController::TryToggleInventory);
 	}
 }
 

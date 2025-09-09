@@ -6,6 +6,7 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Dieg_UtilityLibrary.generated.h"
 
+class ADieg_PlayerController;
 /**
  * 
  */
@@ -15,6 +16,7 @@ class INVENTORY_API UDieg_UtilityLibrary : public UBlueprintFunctionLibrary
 	GENERATED_BODY()
 
 public:
+	static ADieg_PlayerController* GetOwningPlayerController(const UObject* Object);
 
 	UFUNCTION(BlueprintCallable, Category = "Diegetic Inventory Utility Statics")
 	static FIntPoint GetPositionFromIndex(const int32 Index, const int32 Columns);

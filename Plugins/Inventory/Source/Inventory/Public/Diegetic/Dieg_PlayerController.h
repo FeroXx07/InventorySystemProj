@@ -7,6 +7,7 @@
 #include "Interfaces/Dieg_Interactor.h"
 #include "Dieg_PlayerController.generated.h"
 
+class UDieg_InventoryInputHandler;
 class UDieg_ItemInstance;
 class ADieg_WorldItemActor;
 class UDieg_InteractWidget;
@@ -73,6 +74,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category= "Strong References")
 	TObjectPtr<UDieg_InventoryComponent> InventoryComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category= "Strong References")
+	TObjectPtr<UDieg_InventoryInputHandler> InventoryInputHandlerComponent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category= "Weak References")
 	TWeakObjectPtr<AActor> HoveredActor;

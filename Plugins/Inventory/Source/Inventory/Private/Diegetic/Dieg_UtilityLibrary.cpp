@@ -3,7 +3,22 @@
 
 #include "Diegetic/Dieg_UtilityLibrary.h"
 
+#include "Diegetic/Dieg_PlayerController.h"
+#include "Kismet/GameplayStatics.h"
 #include "Materials/MaterialExpressionSceneColor.h"
+
+ADieg_PlayerController* UDieg_UtilityLibrary::GetOwningPlayerController(const UObject* Object)
+{
+	if (ADieg_PlayerController* PlayerController1 = Cast<ADieg_PlayerController>(Object->GetOuter()))
+	{
+		return PlayerController1;
+	}
+	if (ADieg_PlayerController* PlayerController2 = Cast<ADieg_PlayerController>(UGameplayStatics::GetPlayerController(Object->GetWorld(), 0)))
+	{
+		return PlayerController2;
+	}
+	return nullptr;
+}
 
 FIntPoint UDieg_UtilityLibrary::GetPositionFromIndex(const int32 Index, const int32 Columns)
 {
