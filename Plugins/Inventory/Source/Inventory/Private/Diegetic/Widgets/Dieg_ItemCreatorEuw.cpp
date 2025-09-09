@@ -96,6 +96,9 @@ void UDieg_ItemCreatorEuw::ModifyDataAsset()
 	ItemDefinition.WorldMesh = Property_StaticMesh;
 	ItemDefinition.DefaultShape = SelectedSlots.Array();
 	ItemDefinition.StackSizeMax = Property_MaxQuantity;
+	
+	// Update the shape root after setting the shape
+	UDieg_ItemDefinitionDataAsset::SetItemDefinitionShapeRoot(ItemDefinition);
 		
 	// Mark dirty so it can be saved
 	SelectedItemDataAsset->MarkPackageDirty();
@@ -160,6 +163,9 @@ void UDieg_ItemCreatorEuw::CreateDataAsset()
 		ItemDefinition.WorldMesh = Property_StaticMesh;
 		ItemDefinition.DefaultShape = SelectedSlots.Array();
 		ItemDefinition.StackSizeMax = Property_MaxQuantity;
+		
+		// Update the shape root after setting the shape
+		UDieg_ItemDefinitionDataAsset::SetItemDefinitionShapeRoot(ItemDefinition);
 		
 		// Mark dirty so it can be saved
 		ItemDataAsset->MarkPackageDirty();

@@ -132,15 +132,18 @@ FVector2D UDieg_UtilityLibrary::Rotate2D(const FVector2D& Coordinates, float Ang
 
 TArray<FIntPoint> UDieg_UtilityLibrary::Rotate2DArray(const TArray<FIntPoint>& Shape, float AngleDegrees)
 {
+	// Sort shape elements to ensure consistent ordering regardless of input order
+	TArray<FIntPoint> SortedShape = Shape;
+	SortedShape.Sort([](const FIntPoint& A, const FIntPoint& B) {
+		if (A.Y != B.Y) return A.Y < B.Y;  // Sort by Y first (rows)
+		return A.X < B.X;                  // Then by X (columns)
+	});
+
 	TArray<FIntPoint> RotatedShape;
-	RotatedShape.Reserve(Shape.Num());
+	RotatedShape.Reserve(SortedShape.Num());
 
-	// Track min values to normalize the shape after rotation
-	int32 MinX = MAX_int32;
-	int32 MinY = MAX_int32;
-
-	//Rotate each point and track minimum X/Y
-	for (const FIntPoint& Point : Shape)
+	//Rotate each point using the sorted shape
+	for (const FIntPoint& Point : SortedShape)
 	{
 		const FVector2D RotatedF = Rotate2D(Point, AngleDegrees);
 		const FIntPoint RotatedI(
@@ -149,20 +152,15 @@ TArray<FIntPoint> UDieg_UtilityLibrary::Rotate2DArray(const TArray<FIntPoint>& S
 		);
 
 		RotatedShape.Add(RotatedI);
-
-		// Track minimum bounds
-		MinX = FMath::Min(MinX, RotatedI.X);
-		MinY = FMath::Min(MinY, RotatedI.Y);
 	}
 
-	// At this stage, the rotated shape may have negative coordinates (e.g., going above or left of (0,0)).
-	// Subtracts the MinValues from each point, so the shape is shifted back into positive grid space.
-	if (MinX != 0 || MinY != 0)
+	// Using proper bounding box calculation instead of min/max tracking
+	FIntPoint MinBounds = GetMinSpan(RotatedShape);
+	if (MinBounds.X != 0 || MinBounds.Y != 0)
 	{
-		const FIntPoint Offset(MinX, MinY);
 		for (FIntPoint& Point : RotatedShape)
 		{
-			Point -= Offset;
+			Point -= MinBounds;
 		}
 	}
 
@@ -172,28 +170,28 @@ TArray<FIntPoint> UDieg_UtilityLibrary::Rotate2DArray(const TArray<FIntPoint>& S
 TArray<FIntPoint> UDieg_UtilityLibrary::Rotate2DArrayWithRoot(const TArray<FIntPoint>& Shape, const float AngleDegrees,
 	const FIntPoint& RootIn, FIntPoint& RootOut)
 {
+	// Sort shape elements to ensure consistent ordering regardless of input order
+	TArray<FIntPoint> SortedShape = Shape;
+	SortedShape.Sort([](const FIntPoint& A, const FIntPoint& B) {
+		if (A.Y != B.Y) return A.Y < B.Y;  // Sort by Y first (rows)
+		return A.X < B.X;                  // Then by X (columns)
+	});
+
 	TArray<FIntPoint> RotatedShape;
-	RotatedShape.Reserve(Shape.Num());
+	RotatedShape.Reserve(SortedShape.Num());
 
-	int32 MinX = MAX_int32;
-	int32 MinY = MAX_int32;
-
-	// Rotate each point
-	for (const FIntPoint& Point : Shape)
+	// Rotate each point using the sorted shape
+	for (const FIntPoint& Point : SortedShape)
 	{
 		const FVector2D RotatedF = Rotate2D(Point, AngleDegrees, false);
 		const FIntPoint RotatedI(
 			FMath::RoundToInt(RotatedF.X),
 			FMath::RoundToInt(RotatedF.Y)
 		);
-
 		RotatedShape.Add(RotatedI);
-
-		MinX = FMath::Min(MinX, RotatedI.X);
-		MinY = FMath::Min(MinY, RotatedI.Y);
 	}
 
-	// Rotate the root as well
+	// Rotate the root
 	{
 		const FVector2D RotatedRootF = Rotate2D(RootIn, AngleDegrees, false);
 		RootOut = FIntPoint(
@@ -202,15 +200,15 @@ TArray<FIntPoint> UDieg_UtilityLibrary::Rotate2DArrayWithRoot(const TArray<FIntP
 		);
 	}
 
-	// Normalize coordinates to positive grid
-	if (MinX != 0 || MinY != 0)
+	// Using proper bounding box calculation instead of min/max tracking
+	FIntPoint MinBounds = GetMinSpan(RotatedShape);
+	if (MinBounds.X != 0 || MinBounds.Y != 0)
 	{
-		FIntPoint Offset(MinX, MinY);
 		for (FIntPoint& P : RotatedShape)
 		{
-			P -= Offset;
+			P -= MinBounds;
 		}
-		RootOut -= Offset;
+		RootOut -= MinBounds;
 	}
 
 	return RotatedShape;
