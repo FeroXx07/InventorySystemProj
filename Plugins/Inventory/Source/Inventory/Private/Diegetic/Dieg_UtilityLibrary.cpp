@@ -132,18 +132,11 @@ FVector2D UDieg_UtilityLibrary::Rotate2D(const FVector2D& Coordinates, float Ang
 
 TArray<FIntPoint> UDieg_UtilityLibrary::Rotate2DArray(const TArray<FIntPoint>& Shape, float AngleDegrees)
 {
-	// Sort shape elements to ensure consistent ordering regardless of input order
-	TArray<FIntPoint> SortedShape = Shape;
-	SortedShape.Sort([](const FIntPoint& A, const FIntPoint& B) {
-		if (A.Y != B.Y) return A.Y < B.Y;  // Sort by Y first (rows)
-		return A.X < B.X;                  // Then by X (columns)
-	});
-
 	TArray<FIntPoint> RotatedShape;
-	RotatedShape.Reserve(SortedShape.Num());
+	RotatedShape.Reserve(Shape.Num());
 
-	//Rotate each point using the sorted shape
-	for (const FIntPoint& Point : SortedShape)
+	//Rotate each point
+	for (const FIntPoint& Point : Shape)
 	{
 		const FVector2D RotatedF = Rotate2D(Point, AngleDegrees);
 		const FIntPoint RotatedI(
@@ -170,18 +163,18 @@ TArray<FIntPoint> UDieg_UtilityLibrary::Rotate2DArray(const TArray<FIntPoint>& S
 TArray<FIntPoint> UDieg_UtilityLibrary::Rotate2DArrayWithRoot(const TArray<FIntPoint>& Shape, const float AngleDegrees,
 	const FIntPoint& RootIn, FIntPoint& RootOut)
 {
-	// Sort shape elements to ensure consistent ordering regardless of input order
-	TArray<FIntPoint> SortedShape = Shape;
-	SortedShape.Sort([](const FIntPoint& A, const FIntPoint& B) {
-		if (A.Y != B.Y) return A.Y < B.Y;  // Sort by Y first (rows)
-		return A.X < B.X;                  // Then by X (columns)
-	});
+	// If no rotation, return the shape as-is with original root
+	if (FMath::IsNearlyEqual(AngleDegrees, 0.0f))
+	{
+		RootOut = RootIn;
+		return Shape;
+	}
 
 	TArray<FIntPoint> RotatedShape;
-	RotatedShape.Reserve(SortedShape.Num());
+	RotatedShape.Reserve(Shape.Num());
 
-	// Rotate each point using the sorted shape
-	for (const FIntPoint& Point : SortedShape)
+	// Rotate each point
+	for (const FIntPoint& Point : Shape)
 	{
 		const FVector2D RotatedF = Rotate2D(Point, AngleDegrees, false);
 		const FIntPoint RotatedI(

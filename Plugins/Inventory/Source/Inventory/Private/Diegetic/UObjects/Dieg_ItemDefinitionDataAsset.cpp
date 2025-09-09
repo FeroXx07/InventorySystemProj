@@ -23,8 +23,7 @@ void UDieg_ItemDefinitionDataAsset::SetItemDefinitionShapeRoot(FDieg_ItemDefinit
 {
 	if (!ItemDef.DefaultShape.IsEmpty())
 	{
-		// Find the top-left most point as the root, not just the first element
-		// This ensures consistent root regardless of shape element order
+		// Find the top-left most point as the root
 		FIntPoint TopLeftMost = ItemDef.DefaultShape[0];
 		
 		for (const FIntPoint& Point : ItemDef.DefaultShape)

@@ -184,11 +184,22 @@ void ADieg_WorldItemActor::AdjustRotation() const
 		CurrentRotation, ItemDefinition.DefaultShapeRoot, ShapeRootOut);
 	const FIntPoint ShapeSpan = UDieg_UtilityLibrary::GetShapeSpan(RotatedShape);
 
-	// Convert 2D coordinates to 3D space. X and Y are not the same in both.
+	// Position the mesh so that the root (0,0 after normalization) aligns with the actor's root
+	// We need to account for both the shape span and the root position
 	const float UnitScaled = GetUnitScaled();
 	const FVector Multiplier = GetLocationMultiplier();
-	const FVector Location = FVector(ShapeSpan.Y * UnitScaled, -ShapeSpan.X * UnitScaled, 0.0) * Multiplier;
-	StaticMeshComponent->SetRelativeLocation(Location);
+	
+	// Calculate the mesh position using shape span (as before) but offset by the root position
+	// to ensure the root aligns with the actor's root
+	const FVector ShapeSpanOffset = FVector(ShapeSpan.Y * UnitScaled, -ShapeSpan.X * UnitScaled, 0.0) * Multiplier;
+	const FVector RootOffset = FVector(
+		ShapeRootOut.Y * UnitScaled, 
+		-ShapeRootOut.X * UnitScaled, 
+		0.0
+	) * Multiplier;
+	
+	// Combine both offsets to position the mesh correctly
+	StaticMeshComponent->SetRelativeLocation(ShapeSpanOffset - RootOffset);
 }
 
 void ADieg_WorldItemActor::AdjustForGrabPoint(const FVector2D& GrabPoint) const
