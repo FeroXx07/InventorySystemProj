@@ -34,13 +34,14 @@ FIntPoint UDieg_UtilityLibrary::GetShapeSpan(const TArray<FIntPoint>& Shape)
 {
 	TArray<int32> X, Y;
 	int32 SpanX = 0, SpanY = 0;
+	int32 IndexX = -1; int32 IndexY = -1;
 	for (const FIntPoint& Element : Shape)
 	{
 		X.Add(Element.X);
 		Y.Add(Element.Y);
 	}
-	FindMaxOfArray(X, SpanX);
-	FindMaxOfArray(Y, SpanY);
+	SpanX = FindMaxOfArray(X, IndexX);
+	SpanY = FindMaxOfArray(Y, IndexY);
 
 	// 2x2 Size block: Coordinates span from 0..1, its max value would say 1 instead of 2, add 1.
 	return FIntPoint(SpanX + 1, SpanY + 1);

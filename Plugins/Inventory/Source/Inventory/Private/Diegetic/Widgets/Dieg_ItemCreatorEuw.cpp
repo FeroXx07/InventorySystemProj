@@ -383,7 +383,7 @@ void UDieg_ItemCreatorEuw::HandleButtonConfirmClicked()
 void UDieg_ItemCreatorEuw::HandleComboBoxDaChange(FString SelectedItem, ESelectInfo::Type SelectionType)
 {
 	// Only selection changes that weren't set in code.
-	if (SelectionType != ESelectInfo::Type::Direct)
+	if (!SelectedItem.IsEmpty() && SelectionType != ESelectInfo::Type::Direct)
 	{
 		SelectDataAsset(SelectedItem);
 	}
