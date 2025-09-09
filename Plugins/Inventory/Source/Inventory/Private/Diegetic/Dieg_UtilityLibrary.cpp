@@ -3,6 +3,8 @@
 
 #include "Diegetic/Dieg_UtilityLibrary.h"
 
+#include "Materials/MaterialExpressionSceneColor.h"
+
 FIntPoint UDieg_UtilityLibrary::GetPositionFromIndex(const int32 Index, const int32 Columns)
 {
 	return FIntPoint(Index % Columns, Index / Columns);
@@ -211,6 +213,31 @@ TArray<FIntPoint> UDieg_UtilityLibrary::Rotate2DArrayWithRoot(const TArray<FIntP
 	}
 
 	return RotatedShape;
+}
+
+FIntPoint UDieg_UtilityLibrary::GetOffsetBasedOnRotation(float AngleDegrees)
+{
+	// Normalize angle to [0, 360)
+	const float NormalizedAngle = FMath::Fmod(AngleDegrees, 360.0f);
+
+	// Handle discrete right-angle rotations (grid-friendly, no trig needed)
+	if (FMath::IsNearlyEqual(NormalizedAngle, 0.0f))
+	{
+		return FIntPoint(0, 1); // no rotation
+	}
+	if (FMath::IsNearlyEqual(NormalizedAngle, 90.0f))
+	{
+		return FIntPoint(1, 1);
+	}
+	if (FMath::IsNearlyEqual(NormalizedAngle, 180.0f))
+	{
+		return FIntPoint(1, 0);
+	}
+	if (FMath::IsNearlyEqual(NormalizedAngle, 270.0f) || FMath::IsNearlyEqual(NormalizedAngle, -90.0f))
+	{
+		return FIntPoint(0, 0);
+	}
+	return FIntPoint(0, 1); // no rotation
 }
 
 // FVector2D UDieg_UtilityLibrary::Rotate2D(const FVector2D& Coordinates, const float AngleDegrees, bool DefaultImplementation)

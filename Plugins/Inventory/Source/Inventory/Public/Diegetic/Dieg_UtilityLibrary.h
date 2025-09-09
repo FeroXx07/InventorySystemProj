@@ -15,13 +15,6 @@ class INVENTORY_API UDieg_UtilityLibrary : public UBlueprintFunctionLibrary
 	GENERATED_BODY()
 
 public:
-	template<typename T> requires std::derived_from<T, UObject>
-	static T* GetClassDefaults()
-	{
-		TSubclassOf<T> Subclass;
-		T* DefaultObject = Subclass.GetDefaultObject();
-		return DefaultObject;
-	}
 
 	UFUNCTION(BlueprintCallable, Category = "Diegetic Inventory Utility Statics")
 	static FIntPoint GetPositionFromIndex(const int32 Index, const int32 Columns);
@@ -56,6 +49,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Diegetic Inventory Utility Statics")
 	static TArray<FIntPoint> Rotate2DArrayWithRoot(const TArray<FIntPoint>& Shape, const float AngleDegrees,  const FIntPoint& RootIn, FIntPoint& RootOut);
+
+	UFUNCTION(BlueprintCallable, Category = "Diegetic Inventory Utility Statics")
+	static FIntPoint GetOffsetBasedOnRotation(float AngleDegrees);
 };
 
 

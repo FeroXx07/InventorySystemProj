@@ -50,6 +50,12 @@ public:
 
 	void SetParentGrid(const TObjectPtr<UDieg_Grid>& Grid);
 
+	UFUNCTION(BlueprintCallable, Category = "Diegetic Inventory")
+	float GetInventoryScale3D() const { return InventoryScale3D; }
+	
+	UFUNCTION(BlueprintCallable, Category = "Diegetic Inventory")
+	float GetGridSize3D() const { return GridSize3D; }
+
 	UPROPERTY(BlueprintAssignable, BlueprintCallable)
 	FHoverSlot OnHoverSlot;
 	UPROPERTY(BlueprintAssignable, BlueprintCallable)
@@ -59,7 +65,7 @@ public:
 	UPROPERTY(BlueprintAssignable, BlueprintCallable)
 	FReleasedSlot OnReleasedSlot;
 	
-private:
+protected:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<USizeBox> SizeBox_Root;
 

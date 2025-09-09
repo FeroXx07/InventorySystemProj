@@ -28,3 +28,13 @@ enum class EDieg_SlotStatus : uint8
 	Occupied UMETA(DisplayName = "Occupied"),
 };
 
+UENUM(BlueprintType)
+enum class EDieg_TextLocation : uint8
+{
+	None,
+	TopRight UMETA(DisplayName = "Top Right"),
+	TopLeft UMETA(DisplayName = "Top Left"),
+	BottomRight UMETA(DisplayName = "Bottom Right"),
+	BottomLeft UMETA(DisplayName = "Bottom Left"),
+};
+

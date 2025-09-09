@@ -96,7 +96,7 @@ void UDieg_3DInventoryComponent::Populate3D()
 	for (const FDieg_InventorySlot* RootSlot : InventoryRootSlots)
 	{
 		ADieg_WorldItemActor* ItemActor = GetWorld()->SpawnActor<ADieg_WorldItemActor>(ItemClass, ZeroLocation, ZeroRotation, SpawnParams);
-		ItemActor->SetItemInstance(RootSlot->ItemInstance);
+		ItemActor->SetFromInventorySlot(*RootSlot);
 		Items.Add(ItemActor);
 		ItemActor->AttachToComponent(WidgetComponentRef.Get(), FAttachmentTransformRules::KeepRelativeTransform);
 	}
