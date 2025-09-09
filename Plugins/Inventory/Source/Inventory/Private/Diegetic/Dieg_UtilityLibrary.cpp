@@ -193,16 +193,25 @@ TArray<FIntPoint> UDieg_UtilityLibrary::Rotate2DArrayWithRoot(const TArray<FIntP
 		);
 	}
 
-	// Using proper bounding box calculation instead of min/max tracking
-	FIntPoint MinBounds = GetMinSpan(RotatedShape);
+	// Normalize the rotated shape to start from (0,0) by finding the minimum coordinates
+	FIntPoint MinBounds = FIntPoint(INT32_MAX, INT32_MAX);
+	for (const FIntPoint& Point : RotatedShape)
+	{
+		MinBounds.X = FMath::Min(MinBounds.X, Point.X);
+		MinBounds.Y = FMath::Min(MinBounds.Y, Point.Y);
+	}
+	
+	// Normalize all points to start from (0,0)
 	if (MinBounds.X != 0 || MinBounds.Y != 0)
 	{
 		for (FIntPoint& P : RotatedShape)
 		{
 			P -= MinBounds;
 		}
-		RootOut -= MinBounds;
 	}
+	
+	// After normalization, the root should always be at (0,0) since it's the top-left most point
+	RootOut = FIntPoint::ZeroValue;
 
 	return RotatedShape;
 }

@@ -285,7 +285,7 @@ bool UDieg_InventoryComponent::CanAddItemToSlot(const FIntPoint& SlotCoordinates
 	// Test default rotation first
 	FIntPoint DefaultCoordsRoot;
 	const TArray<FIntPoint> DefaultCoords = GetRelevantCoordinates(SlotCoordinates, ItemShape, ItemShapeRoot, ItemRotationPriority, DefaultCoordsRoot);
-	if (AreSlotsAvailable(DefaultCoords, nullptr))
+	if (DefaultCoords.Contains(SlotCoordinates) && AreSlotsAvailable(DefaultCoords, nullptr))
 	{
 		RotationUsedOut = ItemRotationPriority;
 		return true;
@@ -299,7 +299,7 @@ bool UDieg_InventoryComponent::CanAddItemToSlot(const FIntPoint& SlotCoordinates
 
 		FIntPoint TestCoordsRoot;
 		TArray<FIntPoint> TestCoords = GetRelevantCoordinates(SlotCoordinates, ItemShape, ItemShapeRoot, TestAngle, TestCoordsRoot);
-		if (AreSlotsAvailable(TestCoords, nullptr))
+		if (TestCoords.Contains(SlotCoordinates) && AreSlotsAvailable(TestCoords, nullptr))
 		{
 			RotationUsedOut = TestAngle;
 			return true;
