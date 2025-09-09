@@ -70,7 +70,9 @@ void UDieg_InventoryComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 // Initializes inventory slots and pre-populates items if needed
 void UDieg_InventoryComponent::InitializeSlots(const int32 NumSlots, const int32 NumColumns, const FGameplayTagContainer& Tags)
 {
-	LOG_DOUBLE_S(10.0, FColor::Turquoise, "InitializeSlots in {0}. NumSlots: {1}, NumColumns: {2}", this->GetName(), NumSlots, NumColumns);
+	FString TempName = this->GetOwner()->GetActorNameOrLabel().Append(" " + this->GetName());
+
+	LOG_DOUBLE_S(10.0, FColor::Turquoise, "InitializeSlots in {0}. NumSlots: {1}, NumColumns: {2}", TempName, NumSlots, NumColumns);
 	
 	// Generate grid coordinates
 	TArray<FIntPoint> Slots = UDieg_UtilityLibrary::GetSlotPoints(NumSlots, NumColumns);
@@ -95,8 +97,8 @@ void UDieg_InventoryComponent::InitializeSlots(const int32 NumSlots, const int32
 		return;
 	}
 	
-	LOG_DOUBLE_S(10.0, FColor::Turquoise, "InitializeSlots in {0}. Prepopulating", this->GetName());
-
+	LOG_DOUBLE_S(10.0, FColor::Turquoise, "InitializeSlots in {0}. Prepopulating", TempName);
+	
 	// Prepopulate inventory from saved data
 	for (const FDieg_PrePopulate& Data : PrePopulateData)
 	{
@@ -118,8 +120,9 @@ bool UDieg_InventoryComponent::TryAddItem(UDieg_ItemInstance* ItemToAdd, int32& 
 	const int32 MaxQuantity =  ItemToAdd->GetItemDefinitionDataAsset()->ItemDefinition.StackSizeMax;
 	int32 ToAdd = FMath::Clamp(CurrentQuantity, 1, MaxQuantity);
 
-	LOG_DOUBLE_S(10.0, FColor::Turquoise, "TryAddItem in {0}. CurrentQuantity: {1}, MaxQuantity: {2}, ToAdd: {3}",
-		this->GetName(), CurrentQuantity, MaxQuantity, ToAdd);
+	FString TempName = this->GetOwner()->GetActorNameOrLabel().Append(" " + this->GetName());
+	LOG_DOUBLE_S(10.0, FColor::Turquoise, "TryAddItem in {0}. Item Name: {1}, CurrentQuantity: {2}, MaxQuantity: {3}, ToAdd: {4}",
+		 TempName, ItemToAdd->GetItemDefinition().Name.ToString(), CurrentQuantity, MaxQuantity, ToAdd);
 
 	// First try stacking on existing items of same type
 	TSet<FDieg_InventorySlot*> FoundRootInstances = FindRootSlotByItemType(ItemToAdd);
@@ -325,11 +328,16 @@ bool UDieg_InventoryComponent::AreSlotsAvailable(const TArray<FIntPoint>& InputS
 // Places an item into inventory and sets root/rotation
 const FDieg_InventorySlot* UDieg_InventoryComponent::AddItemToInventory(UDieg_ItemInstance* ItemToAdd, const FIntPoint& SlotCoordinates, const float RotationUsed)
 {
+	FString TempName = this->GetOwner()->GetActorNameOrLabel().Append(" " + this->GetName());
+	
 	// Get rotated coordinates and root
 	const TArray<FIntPoint> Shape = ItemToAdd->GetItemDefinitionDataAsset()->ItemDefinition.DefaultShape;
 	const FIntPoint ShapeRoot = ItemToAdd->GetItemDefinitionDataAsset()->ItemDefinition.DefaultShapeRoot;
 	FIntPoint RotatedShapeRoot;
 	TArray<FIntPoint> RotatedShapeCoordinates = GetRelevantCoordinates(SlotCoordinates, Shape, ShapeRoot, RotationUsed, RotatedShapeRoot);
+	
+	LOG_DOUBLE_S(10.0, FColor::Turquoise, "AddItemToInventory in {0}. Item Name: {1}, Slot Coordinates: {2}, Rotation Used: {3}, Rotated Shape Root: {4}",
+		TempName, ItemToAdd->GetItemDefinition().Name.ToString(), SlotCoordinates, RotationUsed, RotatedShapeRoot);
 
 	// Safety check: cannot place
 	int32 AssertRotation = 0;
@@ -344,6 +352,9 @@ const FDieg_InventorySlot* UDieg_InventoryComponent::AddItemToInventory(UDieg_It
 	{
 		if (FDieg_InventorySlot* Slot = InventorySlots.FindByPredicate([&](const FDieg_InventorySlot& S) { return S.Coordinates == Coord; }))
 		{
+			LOG_DOUBLE_S(10.0, FColor::Green, "Setting Inventory Slots in AddItemToInventory in {0}. Item Name: {1}, Slot Coordinates: {2}, Rotation Used: {3}, Root Slot: {4}",
+			TempName, ItemToAdd->GetItemDefinition().Name.ToString(), Coord, RotationUsed, RotatedShapeRoot);
+			
 			Slot->ItemInstance = ItemToAdd;
 			Slot->Rotation = RotationUsed;
 			Slot->RootSlot = RotatedShapeRoot;
@@ -456,7 +467,8 @@ TArray<int32> UDieg_InventoryComponent::GetRelevantItems(const TArray<FIntPoint>
 // Converts a pre-populate struct into an item instance
 UDieg_ItemInstance* UDieg_InventoryComponent::MakeInstanceFromPrePopulateData(const FDieg_PrePopulate& PrePopData)
 {
-	UDieg_ItemInstance* ItemInstance = NewObject<UDieg_ItemInstance>(this, TEXT("ItemInstance_FromPrepopulate"));
+	const FName UniqueName = MakeUniqueObjectName(this, UDieg_ItemInstance::StaticClass(), TEXT("ItemInstance_FromPrepopulate"));
+	UDieg_ItemInstance* ItemInstance = NewObject<UDieg_ItemInstance>(this, UniqueName);
 	ItemInstance->Initialize(PrePopData.ItemDefinitionDataAsset, PrePopData.Quantity);
 	return ItemInstance;
 }

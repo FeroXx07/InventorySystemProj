@@ -166,8 +166,11 @@ FIntPoint ADieg_WorldItemActor::GetTextCoordinates(const TArray<FIntPoint>& Shap
 
 void ADieg_WorldItemActor::AdjustLocation(const FIntPoint& Coordinates)
 {
-	const float UnitScaled = GetUnitScaled();
-	FVector Location = FVector(Coordinates.X * UnitScaled * -1.0, Coordinates.Y * UnitScaled * -1.0, 0.0f);
+	const UDieg_Slot* DefaultSlot = GetDefault<UDieg_Slot>();
+	const float InventoryScale3D = DefaultSlot->GetInventoryScale3D();
+	const float UnitScaled = InventoryScale3D * GetUnitScaled();
+	const FVector Location = FVector(0.0f, Coordinates.X * UnitScaled * -1.0, Coordinates.Y * UnitScaled * -1.0);
+	SetActorLocation(Location);
 }
 
 void ADieg_WorldItemActor::AdjustRotation() const
