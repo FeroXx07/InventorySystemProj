@@ -21,6 +21,13 @@ void UDieg_ItemCreatorEuw::NativePreConstruct()
 {
 	Super::NativePreConstruct();
 
+	
+}
+
+void UDieg_ItemCreatorEuw::NativeConstruct()
+{
+	Super::NativeConstruct();
+
 	if (!IsValid(SinglePropertyView_Name) || !IsValid(SinglePropertyView_StaticMesh) || !IsValid(SinglePropertyView_MaxQuantity))
 	{
 		return;
@@ -73,12 +80,7 @@ void UDieg_ItemCreatorEuw::NativePreConstruct()
 		SpinBox_GridSize->OnValueChanged.AddDynamic(this, &ThisClass::HandleSpinBoxGridSizeChange);
 	
 	SpinBox_GridSize->SetDelta(1.0f);
-}
-
-void UDieg_ItemCreatorEuw::NativeConstruct()
-{
-	Super::NativeConstruct();
-
+	
 	RefreshItemList();
 }
 
