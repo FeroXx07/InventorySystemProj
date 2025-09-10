@@ -45,6 +45,7 @@ void UDieg_3DInventoryComponent::PreInitialize()
 	if (const TObjectPtr<UWidgetComponent> WidgetComp = Owner->FindComponentByClass<UWidgetComponent>())
 	{
 		WidgetComponentRef = WidgetComp;
+		WidgetComponentRef->InitWidget();
 		GridWidget = Cast<UDieg_Grid>(WidgetComponentRef.Get()->GetWidget());
 	}
 
@@ -75,7 +76,9 @@ void UDieg_3DInventoryComponent::PreInitialize()
 		// If Inventory component is not found on owner actor, request external actors to bind it, through this delegate.
 		if (OnInventoryExternalLinkRequest.IsBound())
 		{
-			OnInventoryExternalLinkRequest.Broadcast(InventoryComponentRef);
+			UDieg_InventoryComponent* RawRef = InventoryComponentRef.Get();
+			OnInventoryExternalLinkRequest.Broadcast(RawRef);
+			InventoryComponentRef = RawRef; // sync back into TObjectPtr
 		}
 	}
 
@@ -98,6 +101,11 @@ void UDieg_3DInventoryComponent::Initialize()
 
 void UDieg_3DInventoryComponent::Populate3D()
 {
+	if (!IsValid(ItemClass))
+	{
+		return;
+	}
+	
 	GridWidget->CreateEmptyGrid(InventoryComponentRef->GetTotalSlots(), InventoryComponentRef->GetMaxColumns());
 	const FVector ZeroLocation = FVector::ZeroVector;
 	const FRotator ZeroRotation = FRotator::ZeroRotator;

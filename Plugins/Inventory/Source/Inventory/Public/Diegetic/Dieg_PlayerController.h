@@ -46,6 +46,9 @@ public:
 
 	UFUNCTION(Category = "Game|Player|Dieg")
 	void HandleActorOutTrace(AActor* PreviousActor, TEnumAsByte<ECollisionChannel> TraceChannel);
+	
+	UFUNCTION(BlueprintCallable, Category="Inventory")
+	UDieg_InventoryComponent* GetInventoryComponent() {return InventoryComponent;};
 
 protected:
 	virtual void BeginPlay() override;

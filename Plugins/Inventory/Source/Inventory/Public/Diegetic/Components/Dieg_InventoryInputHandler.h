@@ -7,6 +7,8 @@
 #include "Dieg_InventoryInputHandler.generated.h"
 
 
+class UDieg_InventoryComponent;
+class ADieg_Briefcase;
 class ADieg_WorldItemActor;
 class UDieg_3DInventoryComponent;
 class UCameraComponent;
@@ -31,6 +33,18 @@ protected:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Diegetic Inventory", meta = (AllowPrivateAccess = "true"))
 	bool bIsInventoryOpen{false};
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Diegetic Inventory", meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<ADieg_Briefcase> BriefCaseActorClass;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Strong References", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<ADieg_Briefcase> BriefcaseActor;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Briefcase Spawn", meta = (AllowPrivateAccess = "true"))
+	FVector RelativeSpawnLocation{0.0f, 0.0, 0.0f};
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Briefcase Spawn", meta = (AllowPrivateAccess = "true"))
+	FRotator RelativeSpawnRotation{0.0f, 0.0, 0.0f};
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Input Actions")
 	TObjectPtr<UInputAction> ToggleInventoryIA;
@@ -74,8 +88,8 @@ protected:
 	TArray<TEnumAsByte<ECollisionChannel>> TraceChannels;
 	
 	void ToggleInventory();
-	void OpenUserInterface() const;
-	void CloseUserInterface() const;
+	void OpenUserInterface();
+	void CloseUserInterface();
 	bool LineTraceFromMouse(FHitResult& HitResult) const;
 	void StartHoverInventory(UDieg_3DInventoryComponent* NewHoveringInventory);
 	void StopHoverInventory(UDieg_3DInventoryComponent* HoveringInventory);

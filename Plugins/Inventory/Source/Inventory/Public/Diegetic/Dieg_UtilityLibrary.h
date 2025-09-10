@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "BPF_PlugInv_DoubleLogger.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Dieg_UtilityLibrary.generated.h"
 
@@ -17,6 +18,12 @@ class INVENTORY_API UDieg_UtilityLibrary : public UBlueprintFunctionLibrary
 
 public:
 	static ADieg_PlayerController* GetOwningPlayerController(const UObject* Object);
+
+	template <typename T>
+	static T* CacheComponent(AActor* Owner, TObjectPtr<T>& CachedPtr);
+
+	template <typename T>
+	static T* CacheComponentChecked(AActor* Owner, TObjectPtr<T>& CachedPtr);
 
 	UFUNCTION(BlueprintCallable, Category = "Diegetic Inventory Utility Statics")
 	static FIntPoint GetPositionFromIndex(const int32 Index, const int32 Columns);
@@ -56,6 +63,30 @@ public:
 	static FIntPoint GetOffsetBasedOnRotation(float AngleDegrees);
 };
 
+
+template <typename T>
+T* UDieg_UtilityLibrary::CacheComponent(AActor* Owner, TObjectPtr<T>& CachedPtr)
+{
+	if (!CachedPtr && Owner)
+	{
+		CachedPtr = Owner->FindComponentByClass<T>();
+	}
+	return CachedPtr.Get();
+}
+
+template <typename T>
+T* UDieg_UtilityLibrary::CacheComponentChecked(AActor* Owner, TObjectPtr<T>& CachedPtr)
+{
+	if (!CachedPtr && Owner)
+	{
+		CachedPtr = Owner->FindComponentByClass<T>();
+		if (!CachedPtr)
+		{
+			LOG_DOUBLE_WARNING_S(10.0f, "CacheComponentChecked: Could not find component on {1}", Owner->GetName());
+		}
+	}
+	return CachedPtr.Get();
+}
 
 template <typename T>
 T UDieg_UtilityLibrary::FindMaxOfArray(const TArray<T>& Array, int32& OutIndex)

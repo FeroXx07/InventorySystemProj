@@ -16,17 +16,20 @@ class INVENTORY_API ADieg_WorldInventoryActor : public AActor
 {
 	GENERATED_BODY()
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components",  meta = (AllowPrivateAccess = "true"))
 	USceneComponent* Root;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UStaticMeshComponent> StaticMeshComponent;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<USkeletalMeshComponent> SkeletalMeshComponent;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
-	bool bUseSkeletalMesh = false;
+	// // It will change OnConstruction().
+	// UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Properties", meta = (AllowPrivateAccess = "true"))
+	// bool bUseSkeletalMesh = false;
+	//
+	// // It will change attachment once in runtime, not in editor.
+	// UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Properties", meta = (AllowPrivateAccess = "true"))
+	// bool bAttachWidgetToMesh = false;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UWidgetComponent> WidgetComponent;
@@ -47,12 +50,12 @@ public:
 
 	virtual void OnConstruction(const FTransform& Transform) override;
 	
-	UMeshComponent* GetActiveMesh() const
-	{
-		return bUseSkeletalMesh 
-			? Cast<UMeshComponent>(SkeletalMeshComponent)
-			: Cast<UMeshComponent>(StaticMeshComponent);
-	}
+	// UMeshComponent* GetActiveMesh() const
+	// {
+	// 	return bUseSkeletalMesh 
+	// 		? Cast<UMeshComponent>(SkeletalMeshComponent)
+	// 		: Cast<UMeshComponent>(StaticMeshComponent);
+	// }
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -61,6 +64,5 @@ protected:
 	virtual void Tick(float DeltaTime) override;
 
 	UFUNCTION()
-	void Handle3DInventoryBindRequest(UDieg_InventoryComponent* InventoryComponentRef);
-	
+	virtual void Handle3DInventoryBindRequest(UDieg_InventoryComponent*& OutInventoryRef);	
 };
