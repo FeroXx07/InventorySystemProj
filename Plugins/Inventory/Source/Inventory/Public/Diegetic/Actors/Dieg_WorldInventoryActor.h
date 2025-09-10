@@ -23,6 +23,12 @@ class INVENTORY_API ADieg_WorldInventoryActor : public AActor
 	TObjectPtr<UStaticMeshComponent> StaticMeshComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<USkeletalMeshComponent> SkeletalMeshComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+	bool bUseSkeletalMesh = false;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UWidgetComponent> WidgetComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
@@ -38,6 +44,15 @@ public:
 	ADieg_WorldInventoryActor();
 
 	virtual void PostInitializeComponents() override;
+
+	virtual void OnConstruction(const FTransform& Transform) override;
+	
+	UMeshComponent* GetActiveMesh() const
+	{
+		return bUseSkeletalMesh 
+			? Cast<UMeshComponent>(SkeletalMeshComponent)
+			: Cast<UMeshComponent>(StaticMeshComponent);
+	}
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

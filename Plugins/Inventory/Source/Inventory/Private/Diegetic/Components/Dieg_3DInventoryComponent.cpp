@@ -25,7 +25,7 @@ void UDieg_3DInventoryComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	InitializeInventory();
+	PreInitialize();
 }
 
 
@@ -38,7 +38,7 @@ void UDieg_3DInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickT
 	// ...
 }
 
-void UDieg_3DInventoryComponent::InitializeInventory()
+void UDieg_3DInventoryComponent::PreInitialize()
 {
 	// Cache references
 	const TObjectPtr<AActor> Owner = GetOwner();
@@ -61,7 +61,7 @@ void UDieg_3DInventoryComponent::InitializeInventory()
 			GridWidget->OnGridSlotUnHover.AddDynamic(this, &ThisClass::UDieg_3DInventoryComponent::WidgetSlotUnHovered);
 		}
 	}
-
+	
 	// There are actors that can contain both 3D inventory and inventory components.
 	// Chest: 3D Inventory Comp + Inventory Comp
 	// Player: Inventory Comp; Uses another actor that contains 3D Inventory Comp to display (eg: Briefcase, Bag).
@@ -79,6 +79,17 @@ void UDieg_3DInventoryComponent::InitializeInventory()
 		}
 	}
 
+	if (IsValid(InventoryComponentRef))
+	{
+		if (!InventoryComponentRef->OnInventoryInitialized.IsAlreadyBound(this, &ThisClass::Initialize))
+		{
+			InventoryComponentRef->OnInventoryInitialized.AddDynamic(this, &ThisClass::Initialize);
+		}
+	}
+}
+
+void UDieg_3DInventoryComponent::Initialize()
+{
 	if (IsValid(InventoryComponentRef) && WidgetComponentRef.IsValid() && IsValid(GridWidget))
 	{
 		Populate3D();

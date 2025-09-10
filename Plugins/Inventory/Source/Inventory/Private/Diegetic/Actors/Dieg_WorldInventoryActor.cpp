@@ -33,6 +33,9 @@ ADieg_WorldInventoryActor::ADieg_WorldInventoryActor()
 	{
 		StaticMeshComponent->SetMaterial(0, CubeMaterial.Object);
 	}
+
+	SkeletalMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Skeletal Mesh Component"));
+	SkeletalMeshComponent->SetupAttachment(Root);
 	
 	WidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("Widget Component"));
 	WidgetComponent->SetupAttachment(Root);
@@ -40,8 +43,13 @@ ADieg_WorldInventoryActor::ADieg_WorldInventoryActor()
 	WidgetInteractionComponent = CreateDefaultSubobject<UWidgetInteractionComponent>(TEXT("Widget Interaction Component"));
 	WidgetInteractionComponent->SetupAttachment(WidgetComponent);
 	
-	InventoryComponent = CreateDefaultSubobject<UDieg_InventoryComponent>(TEXT("Inventory Component"));
+	//InventoryComponent = CreateDefaultSubobject<UDieg_InventoryComponent>(TEXT("Inventory Component"));
 	InventoryComponent3D = CreateDefaultSubobject<UDieg_3DInventoryComponent>(TEXT("3D Inventory Component"));
+
+	// Default: only static visible
+	SkeletalMeshComponent->SetHiddenInGame(true);
+	SkeletalMeshComponent->SetVisibility(false);
+	SkeletalMeshComponent->SetComponentTickEnabled(false);
 }
 
 void ADieg_WorldInventoryActor::PostInitializeComponents()
@@ -51,6 +59,32 @@ void ADieg_WorldInventoryActor::PostInitializeComponents()
 	if (!InventoryComponent3D->OnInventoryExternalLinkRequest.IsAlreadyBound(this, &ThisClass::Handle3DInventoryBindRequest))
 	{
 		InventoryComponent3D->OnInventoryExternalLinkRequest.AddDynamic(this, &ThisClass::Handle3DInventoryBindRequest);
+	}
+}
+
+void ADieg_WorldInventoryActor::OnConstruction(const FTransform& Transform)
+{
+	Super::OnConstruction(Transform);
+
+	if (bUseSkeletalMesh)
+	{
+		SkeletalMeshComponent->SetHiddenInGame(false);
+		SkeletalMeshComponent->SetVisibility(true);
+		SkeletalMeshComponent->SetComponentTickEnabled(true);
+
+		StaticMeshComponent->SetHiddenInGame(true);
+		StaticMeshComponent->SetVisibility(false);
+		StaticMeshComponent->SetComponentTickEnabled(false);
+	}
+	else
+	{
+		StaticMeshComponent->SetHiddenInGame(false);
+		StaticMeshComponent->SetVisibility(true);
+		StaticMeshComponent->SetComponentTickEnabled(true);
+
+		SkeletalMeshComponent->SetHiddenInGame(true);
+		SkeletalMeshComponent->SetVisibility(false);
+		SkeletalMeshComponent->SetComponentTickEnabled(false);
 	}
 }
 

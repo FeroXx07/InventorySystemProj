@@ -56,8 +56,14 @@ protected:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 	                           FActorComponentTickFunction* ThisTickFunction) override;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory Component")
+	bool bIsInitialized{false};
+
 	UFUNCTION(Category = "Constructor", BlueprintCallable)
-	void InitializeInventory();
+	void PreInitialize();
+
+	UFUNCTION(Category = "Constructor", BlueprintCallable)
+	void Initialize();
 
 	UFUNCTION(Category = "Constructor", BlueprintCallable)
 	void Populate3D();

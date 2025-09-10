@@ -9,6 +9,7 @@
 #include "Diegetic/UStructs/Dieg_PrePopulate.h"
 #include "Dieg_InventoryComponent.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryInitialized);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class INVENTORY_API UDieg_InventoryComponent : public UActorComponent
@@ -19,9 +20,15 @@ public:
 	// Sets default values for this component's properties
 	UDieg_InventoryComponent();
 
+	UPROPERTY(BlueprintAssignable)
+	FOnInventoryInitialized OnInventoryInitialized;
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory Component")
+	bool bIsInitialized{false};
 
 	// All inventory slots containing metadata and item references
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory Component|Storage")
@@ -58,7 +65,7 @@ public:
 	                           FActorComponentTickFunction* ThisTickFunction) override;
 	
 	// Initializes slots and prepopulates items
-	void InitializeSlots(int32 NumSlots, int32 NumColumns, const FGameplayTagContainer& Tags);
+	void Initialize(int32 NumSlots, int32 NumColumns, const FGameplayTagContainer& Tags);
 
 	// Attempts to add an item; updates Remaining quantity
 	bool TryAddItem(UDieg_ItemInstance* ItemToAdd, int32& Remaining);

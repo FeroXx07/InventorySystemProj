@@ -20,19 +20,12 @@ UDieg_InventoryComponent::UDieg_InventoryComponent()
 	// ...
 }
 
-
 // Called when the game starts
 void UDieg_InventoryComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ...
-	InitializeSlots(this->TotalSlots, this->MaxColumns, this->SlotTags);
-
-	if (ItemRotationPriority != 0 && ItemRotationPriority != 90 && ItemRotationPriority != 180 && ItemRotationPriority != -90)
-	{
-		ItemRotationPriority = 0;
-	}
+	Initialize(this->TotalSlots, this->MaxColumns, this->SlotTags);
 }
 
 
@@ -68,8 +61,13 @@ void UDieg_InventoryComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 }
 
 // Initializes inventory slots and pre-populates items if needed
-void UDieg_InventoryComponent::InitializeSlots(const int32 NumSlots, const int32 NumColumns, const FGameplayTagContainer& Tags)
+void UDieg_InventoryComponent::Initialize(const int32 NumSlots, const int32 NumColumns, const FGameplayTagContainer& Tags)
 {
+	if (bIsInitialized)
+	{
+		return;
+	}
+	
 	FString TempName = this->GetOwner()->GetActorNameOrLabel().Append(" " + this->GetName());
 
 	LOG_DOUBLE_S(10.0, FColor::Turquoise, "InitializeSlots in {0}. NumSlots: {1}, NumColumns: {2}", TempName, NumSlots, NumColumns);
@@ -105,6 +103,16 @@ void UDieg_InventoryComponent::InitializeSlots(const int32 NumSlots, const int32
 		UDieg_ItemInstance* NewItem = MakeInstanceFromPrePopulateData(Data);
 		int32 Remaining = INT32_MAX;
 		TryAddItem(NewItem, Remaining);
+	}
+
+	if (ItemRotationPriority != 0 && ItemRotationPriority != 90 && ItemRotationPriority != 180 && ItemRotationPriority != -90)
+	{
+		ItemRotationPriority = 0;
+	}
+
+	if (OnInventoryInitialized.IsBound())
+	{
+		OnInventoryInitialized.Broadcast();
 	}
 }
 
