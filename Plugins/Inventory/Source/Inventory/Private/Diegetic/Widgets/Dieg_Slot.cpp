@@ -3,6 +3,7 @@
 
 #include "Diegetic/Widgets/Dieg_Slot.h"
 
+#include "BPF_PlugInv_DoubleLogger.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
 #include "Components/GridSlot.h"
 #include "Components/Image.h"
@@ -75,6 +76,8 @@ void UDieg_Slot::InitializeDefaults_Implementation()
 FIntPoint UDieg_Slot::GetCoordinatesInGrid_Implementation()
 {
 	const UGridSlot* GridSlot = UWidgetLayoutLibrary::SlotAsGridSlot(this);
+	if (!IsValid(GridSlot))
+		return FIntPoint();
 	// X: Columns, Y: Rows
 	LastUpdatedCoordinate = FIntPoint(GridSlot->GetColumn(), GridSlot->GetRow());
 	return LastUpdatedCoordinate;
@@ -82,6 +85,9 @@ FIntPoint UDieg_Slot::GetCoordinatesInGrid_Implementation()
 
 void UDieg_Slot::SetStatusAndColor_Implementation(EDieg_SlotStatus Status, bool bChangeAppearance)
 {
+	// UPlugInv_DoubleLogger::Log(3.0f, TEXT("SetStatusAndColor_Implementation. Coordinate: {0}, Status: {1}"),
+	// 	FColor::Emerald, GetCoordinatesInGrid(), Status);
+
 	this->SlotStatus = Status;
 	const FLinearColor ColorToSet = SlotFillColor.FindChecked(Status);
 	Image_Fill->SetColorAndOpacity(ColorToSet);

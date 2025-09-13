@@ -23,7 +23,7 @@ public:
 	// Sets default values for this actor's properties
 	ADieg_WorldItemActor();
 	
-private:
+protected:
 	/** Root component */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
 	USceneComponent* Root;
@@ -40,7 +40,6 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Items", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UDieg_ItemInstance> ItemInstance;
 	
-protected:
 	virtual void OnConstruction(const FTransform& Transform) override;
 	
 	// Called when the game starts or when spawned
@@ -50,10 +49,10 @@ protected:
 	float OffsetZ{0.0f};
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Item") 
-	float CurrentRotation{0.0f};
+	FDieg_InventorySlot LastInventorySlotData;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Item") 
-	FVector LastValidWorldLocation{FVector{0.0f,0.0f,0.0f}};
+	float CurrentRotation{0.0f};
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Item") 
 	int32 Quantity {1};
@@ -95,6 +94,9 @@ public:
 
 	const TObjectPtr<UDieg_ItemInstance>& GetItemInstance() const;
 	TObjectPtr<UDieg_ItemInstance>& GetItemInstanceMutable();
+
+	float GetCurrentRotation() const { return CurrentRotation; }
+	FIntPoint GetCoordinates() const { return LastInventorySlotData.Coordinates; }
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Item")
 	void UpdateFromDataAsset(UDieg_ItemDefinitionDataAsset* InItemDataAsset);

@@ -48,6 +48,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Diegetic Inventory")
 	bool IsAppearanceLocked() const { return bIsLockedAppearance; }
 
+	UFUNCTION(BlueprintCallable, Category = "Diegetic Inventory")
+	void SetAppearanceLocked(bool Value) { bIsLockedAppearance = Value; }
+
 	void SetParentGrid(const TObjectPtr<UDieg_Grid>& Grid);
 
 	UFUNCTION(BlueprintCallable, Category = "Diegetic Inventory")

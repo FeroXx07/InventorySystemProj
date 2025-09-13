@@ -255,7 +255,7 @@ void UDieg_ItemCreatorEuw::RefreshItemList()
 	UPlugInv_DoubleLogger::Log("UDieg_ItemCreatorEuw::RefreshItemList()");
 	if (!IsValid(DataAssetClass))
 	{
-		LOG_DOUBLE_ERROR_S(20, "Data Asset Class in Item Creator Editor Utility Widget is null. Cannot refresh item list.");
+		UPlugInv_DoubleLogger::LogError(20.0f, TEXT("Data Asset Class in Item Creator Editor Utility Widget is null. Cannot refresh item list."));
 		return;
 	}
 	
@@ -340,7 +340,7 @@ bool UDieg_ItemCreatorEuw::IsValidAsset() const
 void UDieg_ItemCreatorEuw::GridSlotHover(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent,
                                          UDieg_Slot* GridSlot)
 {
-	LOG_DOUBLE_S(2, FColor::Yellow, "EUW Slot Hover: {0}", GridSlot->GetCoordinatesInGrid());
+	UPlugInv_DoubleLogger::Log(2.0f, TEXT("EUW Slot Hover: {0}"), FColor::Yellow, GridSlot->GetCoordinatesInGrid());
 }
 
 void UDieg_ItemCreatorEuw::GridSlotUnHovered(const FPointerEvent& InMouseEvent, UDieg_Slot* GridSlot)
@@ -350,7 +350,7 @@ void UDieg_ItemCreatorEuw::GridSlotUnHovered(const FPointerEvent& InMouseEvent, 
 void UDieg_ItemCreatorEuw::GridSlotPressed(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent,
 	UDieg_Slot* GridSlot)
 {
-	LOG_DOUBLE_S(2, FColor::Green, "EUW Slot Pressed: {0}", GridSlot->GetCoordinatesInGrid());
+	UPlugInv_DoubleLogger::Log(2.0f, TEXT("EUW Slot Pressed: {0}"), FColor::Green, GridSlot->GetCoordinatesInGrid());
 	HandleSlotPressed(GridSlot);
 }
 

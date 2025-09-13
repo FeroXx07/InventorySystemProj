@@ -28,6 +28,9 @@ protected:
 	virtual void BeginPlay() override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory Component")
+	bool bDebugLogs{false};
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory Component")
 	bool bIsInitialized{false};
 
 	// All inventory slots containing metadata and item references
@@ -91,6 +94,15 @@ public:
 	TArray<FDieg_InventorySlot*> GetRootSlotsMutable();
 	int32 GetTotalSlots() const { return TotalSlots; };
 	int32 GetMaxColumns() const { return MaxColumns; };
+
+	// Computes all coordinates the item would occupy based on root, shape, and rotation
+	static TArray<FIntPoint> GetRelevantCoordinates(const FIntPoint& SlotCoordinates, const TArray<FIntPoint>& Shape, const FIntPoint& ShapeRoot, float Rotation, FIntPoint& RootSlotOut);
+	
+	// Returns all inventory slot indices containing items overlapping the given shape
+	TArray<int32> GetRelevantItems(const TArray<FIntPoint>& ShapeCoordinates, const UDieg_ItemInstance* Object);
+
+	// Checks if all slots in the shape are free; optionally ignores some slots
+	bool AreSlotsAvailable(const TArray<FIntPoint>& InputShape, const TArray<FIntPoint>* Ignore = nullptr);
 private:
 	// Places an item in inventory starting at given slot with rotation; returns root slot
 	const FDieg_InventorySlot* AddItemToInventory(UDieg_ItemInstance* ItemToAdd, const FIntPoint& SlotCoordinates, float RotationUsed);
@@ -104,21 +116,12 @@ private:
 	// Checks if a given slot can accept the item shape (with optional rotation)
 	bool CanAddItemToSlot(const FIntPoint& SlotCoordinates, const TArray<FIntPoint>& ItemShape, const FIntPoint& ItemShapeRoot, int32& RotationUsedOut);
 
-	// Checks if all slots in the shape are free; optionally ignores some slots
-	bool AreSlotsAvailable(const TArray<FIntPoint>& InputShape, const TArray<FIntPoint>* Ignore = nullptr);
-
 	// Returns true if a coordinate is outside the inventory bounds
 	bool IsSlotPointOutOfBounds(const FIntPoint& SlotPoint); 
 
 	// Returns true if a coordinate is currently occupied
 	bool IsSlotPointOccupied(const FIntPoint& SlotPoint);
-	
-	// Computes all coordinates the item would occupy based on root, shape, and rotation
-	static TArray<FIntPoint> GetRelevantCoordinates(const FIntPoint& SlotCoordinates, const TArray<FIntPoint>& Shape, const FIntPoint& ShapeRoot, float Rotation, FIntPoint& RootSlotOut);
-	
-	// Returns all inventory slot indices containing items overlapping the given shape
-	TArray<int32> GetRelevantItems(const TArray<FIntPoint>& ShapeCoordinates, const UDieg_ItemInstance* Object);
-	
+
 	// Creates a new item instance from prepopulate data
 	UDieg_ItemInstance* MakeInstanceFromPrePopulateData(const FDieg_PrePopulate& PrePopData);
 };

@@ -70,7 +70,8 @@ void UDieg_InventoryComponent::Initialize(const int32 NumSlots, const int32 NumC
 	
 	FString TempName = this->GetOwner()->GetActorNameOrLabel().Append(" " + this->GetName());
 
-	LOG_DOUBLE_S(10.0, FColor::Turquoise, "InitializeSlots in {0}. NumSlots: {1}, NumColumns: {2}", TempName, NumSlots, NumColumns);
+	if (bDebugLogs)
+		UPlugInv_DoubleLogger::Log(5.0f, TEXT("InitializeSlots in {0}. NumSlots: {1}, NumColumns: {2}"), FColor::Turquoise, TempName, NumSlots, NumColumns);
 	
 	// Generate grid coordinates
 	TArray<FIntPoint> Slots = UDieg_UtilityLibrary::GetSlotPoints(NumSlots, NumColumns);
@@ -94,8 +95,9 @@ void UDieg_InventoryComponent::Initialize(const int32 NumSlots, const int32 NumC
 	{
 		return;
 	}
-	
-	LOG_DOUBLE_S(10.0, FColor::Turquoise, "InitializeSlots in {0}. Prepopulating", TempName);
+
+	if (bDebugLogs)
+		UPlugInv_DoubleLogger::Log(5.0f, TEXT("InitializeSlots in {0}. Prepopulating"), FColor::Turquoise, TempName);
 	
 	// Prepopulate inventory from saved data
 	for (const FDieg_PrePopulate& Data : PrePopulateData)
@@ -129,8 +131,11 @@ bool UDieg_InventoryComponent::TryAddItem(UDieg_ItemInstance* ItemToAdd, int32& 
 	int32 ToAdd = FMath::Clamp(CurrentQuantity, 1, MaxQuantity);
 
 	FString TempName = this->GetOwner()->GetActorNameOrLabel().Append(" " + this->GetName());
-	LOG_DOUBLE_S(10.0, FColor::Turquoise, "TryAddItem in {0}. Item Name: {1}, CurrentQuantity: {2}, MaxQuantity: {3}, ToAdd: {4}",
-		 TempName, ItemToAdd->GetItemDefinition().Name.ToString(), CurrentQuantity, MaxQuantity, ToAdd);
+	if (bDebugLogs)
+	{
+		UPlugInv_DoubleLogger::Log(5.0f, TEXT("TryAddItem in {0}. Item Name: {1}, CurrentQuantity: {2}, MaxQuantity: {3}, ToAdd: {4}"),
+		FColor::Turquoise,TempName, ItemToAdd->GetItemDefinition().Name.ToString(), CurrentQuantity, MaxQuantity,ToAdd);
+	}
 
 	// First try stacking on existing items of same type
 	TSet<FDieg_InventorySlot*> FoundRootInstances = FindRootSlotByItemType(ItemToAdd);
@@ -343,9 +348,12 @@ const FDieg_InventorySlot* UDieg_InventoryComponent::AddItemToInventory(UDieg_It
 	const FIntPoint ShapeRoot = ItemToAdd->GetItemDefinitionDataAsset()->ItemDefinition.DefaultShapeRoot;
 	FIntPoint RotatedShapeRoot;
 	TArray<FIntPoint> RotatedShapeCoordinates = GetRelevantCoordinates(SlotCoordinates, Shape, ShapeRoot, RotationUsed, RotatedShapeRoot);
-	
-	LOG_DOUBLE_S(10.0, FColor::Turquoise, "AddItemToInventory in {0}. Item Name: {1}, Slot Coordinates: {2}, Rotation Used: {3}, Rotated Shape Root: {4}",
-		TempName, ItemToAdd->GetItemDefinition().Name.ToString(), SlotCoordinates, RotationUsed, RotatedShapeRoot);
+
+	if (bDebugLogs)
+	{
+		UPlugInv_DoubleLogger::Log(5.0f, TEXT("AddItemToInventory in {0}. Item Name: {1}, Slot Coordinates: {2}, Rotation Used: {3}, Rotated Shape Root: {4}"),
+		FColor::Turquoise, TempName, ItemToAdd->GetItemDefinition().Name.ToString(), SlotCoordinates, RotationUsed, RotatedShapeRoot);
+	}
 
 	// Safety check: cannot place
 	int32 AssertRotation = 0;
@@ -360,8 +368,9 @@ const FDieg_InventorySlot* UDieg_InventoryComponent::AddItemToInventory(UDieg_It
 	{
 		if (FDieg_InventorySlot* Slot = InventorySlots.FindByPredicate([&](const FDieg_InventorySlot& S) { return S.Coordinates == Coord; }))
 		{
-			LOG_DOUBLE_S(10.0, FColor::Green, "Setting Inventory Slots in AddItemToInventory in {0}. Item Name: {1}, Slot Coordinates: {2}, Rotation Used: {3}, Root Slot: {4}",
-			TempName, ItemToAdd->GetItemDefinition().Name.ToString(), Coord, RotationUsed, RotatedShapeRoot);
+			if (bDebugLogs)
+				UPlugInv_DoubleLogger::Log(5.0f, TEXT("Setting Inventory Slots in AddItemToInventory in {0}. Item Name: {1}, Slot Coordinates: {2}, Rotation Used: {3}, Root Slot: {4}"),
+			FColor::Green, TempName, ItemToAdd->GetItemDefinition().Name.ToString(), Coord, RotationUsed, RotatedShapeRoot);
 			
 			Slot->ItemInstance = ItemToAdd;
 			Slot->Rotation = RotationUsed;

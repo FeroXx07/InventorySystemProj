@@ -76,14 +76,15 @@ void ADieg_WorldItemActor::SetFromItemInstance_Implementation(UDieg_ItemInstance
 	if (IsValid(Instance))
 	{
 		// Duplicate the UObject instead of storing the same reference
-		ItemInstance = DuplicateObject<UDieg_ItemInstance>(Instance, this);
-
+		//ItemInstance = DuplicateObject<UDieg_ItemInstance>(Instance, this);
+		ItemInstance = Instance;
 		UpdateFromDataAsset(ItemInstance->GetItemDefinitionDataAsset());
 	}
 }
 
 void ADieg_WorldItemActor::SetFromInventorySlot_Implementation(const FDieg_InventorySlot& InventorySlot)
 {
+	LastInventorySlotData = InventorySlot;
 	SetFromItemInstance(InventorySlot.ItemInstance);
 	const FDieg_ItemDefinition& ItemDefinition = ItemInstance->GetItemDefinitionDataAsset()->ItemDefinition;
 	CurrentRotation = InventorySlot.Rotation;

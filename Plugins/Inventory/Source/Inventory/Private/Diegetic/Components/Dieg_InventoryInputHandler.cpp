@@ -6,11 +6,16 @@
 #include "BPF_PlugInv_DoubleLogger.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Components/WidgetComponent.h"
 #include "Diegetic/Dieg_PlayerController.h"
 #include "Diegetic/Dieg_UtilityLibrary.h"
 #include "Diegetic/Actors/Dieg_Briefcase.h"
 #include "Diegetic/Actors/Dieg_WorldItemActor.h"
 #include "Diegetic/Components/Dieg_3DInventoryComponent.h"
+#include "Diegetic/Components/Dieg_InventoryComponent.h"
+#include "Diegetic/UObjects/Dieg_ItemInstance.h"
+#include "Diegetic/Widgets/Dieg_Grid.h"
+#include "Diegetic/Widgets/Dieg_Slot.h"
 #include "Kismet/GameplayStatics.h"
 
 
@@ -41,6 +46,10 @@ void UDieg_InventoryInputHandler::BeginPlay()
 		if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(OwningPlayerController.Get()->InputComponent))
 		{
 			EnhancedInputComponent->BindAction(ToggleInventoryIA, ETriggerEvent::Triggered, this, &ThisClass::ToggleInventory);
+			
+			EnhancedInputComponent->BindAction(DragIA, ETriggerEvent::Started, this, &ThisClass::TryDragItem);
+			EnhancedInputComponent->BindAction(DragIA, ETriggerEvent::Canceled, this, &ThisClass::TryDropItem);
+			EnhancedInputComponent->BindAction(DragIA, ETriggerEvent::Completed, this, &ThisClass::TryDropItem);
 		}
 	}
 }
@@ -61,11 +70,13 @@ void UDieg_InventoryInputHandler::ToggleInventory()
 	{
 		bIsInventoryOpen = false;
 		CloseUserInterface();
+		OnInventoryClosed.Broadcast();
 	}
 	else
 	{
 		bIsInventoryOpen = true;
 		OpenUserInterface();
+		OnInventoryOpened.Broadcast();
 	}
 }
 
@@ -73,7 +84,9 @@ void UDieg_InventoryInputHandler::OpenUserInterface()
 {
 	if (OwningPlayerController.IsValid())
 	{
-		OwningPlayerController->SetInputMode(FInputModeGameAndUI());
+		FInputModeGameAndUI InputModeGameAndUI;
+		InputModeGameAndUI.SetHideCursorDuringCapture(false);
+		OwningPlayerController->SetInputMode(InputModeGameAndUI);
 		OwningPlayerController->SetShowMouseCursor(true);
 		OwningPlayerController->SetIgnoreLookInput(true);
 		OwningPlayerController->SetIgnoreMoveInput(true);
@@ -159,11 +172,76 @@ bool UDieg_InventoryInputHandler::LineTraceFromMouse(FHitResult& HitResult) cons
 void UDieg_InventoryInputHandler::StartHoverInventory(UDieg_3DInventoryComponent* NewHoveringInventory)
 {
 	HoveringInventoryComponent3D = NewHoveringInventory;
+
+	// Bind events
+	if (!HoveringInventoryComponent3D->On3DWidgetSlotHovered.IsAlreadyBound(this, &ThisClass::HandleHoveringInventorySlotHovered))
+	{
+		HoveringInventoryComponent3D->On3DWidgetSlotHovered.AddDynamic(this, &ThisClass::HandleHoveringInventorySlotHovered);
+	}
+	if (!HoveringInventoryComponent3D->On3DWidgetSlotUnHovered.IsAlreadyBound(this, &ThisClass::HandleHoveringInventorySlotUnHovered))
+    {
+    	HoveringInventoryComponent3D->On3DWidgetSlotUnHovered.AddDynamic(this, &ThisClass::HandleHoveringInventorySlotUnHovered);
+    }
+
+	OnHoverInventory.Broadcast(HoveringInventoryComponent3D.Get());
+
+	if (IsDraggingItem())
+	{
+		ConnectItemToInventory();
+
+		// Disable all currently placed items' collision.
+		TArray<TWeakObjectPtr<ADieg_WorldItemActor>> ItemsInInventory = HoveringInventoryComponent3D->GetItems();
+		for (const TWeakObjectPtr<ADieg_WorldItemActor>& ItemActor : ItemsInInventory)
+		{
+			ItemActor->SetActorEnableCollision(false);
+		}
+
+		// We don't want now the mouse to change the state so lock the appearance
+		HoveringInventoryComponent3D->GetGridWidget()->ModifyAllSlotsAppearance(true,true, EDieg_SlotStatus::None);
+
+		OnDragHoverInventory.Broadcast(this, HoveringInventoryComponent3D.Get(), DraggingItem.Get(), RelativeCoordinates);
+	}
+	else
+	{
+		// Entered a new inventory widget, clear/empty any previous slot visual state.
+		HoveringInventoryComponent3D->GetGridWidget()->ModifyAllSlotsAppearance(false,true, EDieg_SlotStatus::None);
+	}
 }
 
 void UDieg_InventoryInputHandler::StopHoverInventory(UDieg_3DInventoryComponent* HoveringInventory)
 {
 	//HoveringInventoryComponent3D.Reset();
+	// Unbind events
+	if (HoveringInventoryComponent3D->On3DWidgetSlotHovered.IsAlreadyBound(this, &ThisClass::HandleHoveringInventorySlotHovered))
+	{
+		HoveringInventoryComponent3D->On3DWidgetSlotHovered.RemoveDynamic(this, &ThisClass::HandleHoveringInventorySlotHovered);
+	}
+	if (HoveringInventoryComponent3D->On3DWidgetSlotUnHovered.IsAlreadyBound(this, &ThisClass::HandleHoveringInventorySlotUnHovered))
+	{
+		HoveringInventoryComponent3D->On3DWidgetSlotUnHovered.RemoveDynamic(this, &ThisClass::HandleHoveringInventorySlotUnHovered);
+	}
+
+	OnUnHoverInventory.Broadcast(HoveringInventoryComponent3D.Get());
+
+	if (IsDraggingItem())
+	{
+		// Reset old inventory widget's slots
+		const TArray<FIntPoint> Empty;
+		HoveringInventoryComponent3D->GetGridWidget()->UpdateHoveringSlots(Empty,EDieg_SlotStatus::None, EDieg_SlotStatus::None);
+
+		// Reset item actors rotation to flat, since inventory no longer exists and item is in world
+		DraggingItem->SetActorRotation(FRotator::ZeroRotator);
+
+		// Disable all currently placed items' collision.
+		TArray<TWeakObjectPtr<ADieg_WorldItemActor>> ItemsInInventory = HoveringInventoryComponent3D->GetItems();
+		for (const TWeakObjectPtr<ADieg_WorldItemActor>& ItemActor : ItemsInInventory)
+		{
+			ItemActor->SetActorEnableCollision(true);
+		}
+
+		OnDragUnHoverInventory.Broadcast(this, HoveringInventoryComponent3D.Get(), DraggingItem.Get(), RelativeCoordinates);
+	}
+	
 }
 
 void UDieg_InventoryInputHandler::StartHoverItem(ADieg_WorldItemActor* NewHoveringWorldItem)
@@ -176,88 +254,373 @@ void UDieg_InventoryInputHandler::StopHoverItem(ADieg_WorldItemActor* HoveringWo
 	HoveringItem->Reset();
 }
 
-
 void UDieg_InventoryInputHandler::HandleTraceHit(const FHitResult& HitResult, bool bIsBlockingHit)
 {
 	AActor* HitActor = HitResult.GetActor();
 	
-	if (HitActor == LastHitActor)
+	if (HitActor != LastHitActor)
 	{
-		return;
-	}
-	
-	LastHitActor = HitActor;
-	FString TempName = this->GetOwner()->GetActorNameOrLabel().Append(" " + this->GetName());
+		LastHitActor = HitActor;
+		FString TempName = this->GetOwner()->GetActorNameOrLabel().Append(" " + this->GetName());
 
-	// Find if it is hovering an inventory
-	UDieg_3DInventoryComponent* NewHoveringInventory = HitActor->FindComponentByClass<UDieg_3DInventoryComponent>();
-	if (!NewHoveringInventory && HitActor->GetOwner())
-	{
-		NewHoveringInventory = HitActor->GetOwner()->FindComponentByClass<UDieg_3DInventoryComponent>();
+		// Find if it is hovering an inventory
+		UDieg_3DInventoryComponent* NewHoveringInventory = HitActor->FindComponentByClass<UDieg_3DInventoryComponent>();
+		if (!NewHoveringInventory && HitActor->GetOwner())
+		{
+			NewHoveringInventory = HitActor->GetOwner()->FindComponentByClass<UDieg_3DInventoryComponent>();
 
-		LOG_DOUBLE_S(1.0, FColor::Emerald, "HandleTraceHit in {0}. Hovering Inventory via Item",TempName);
-	}
+			if (bDebugLogs)
+				UPlugInv_DoubleLogger::Log(5.0f, TEXT("HandleTraceHit in {0}. Hovering Inventory via Item"), FColor::Emerald, TempName);
+		}
 
-	if (IsValid(NewHoveringInventory))
-	{
-		if (NewHoveringInventory != HoveringInventoryComponent3D)
+		if (IsValid(NewHoveringInventory))
+		{
+			if (NewHoveringInventory != HoveringInventoryComponent3D)
+			{
+				if (HoveringInventoryComponent3D.IsValid())
+				{
+					StopHoverInventory(HoveringInventoryComponent3D.Get());
+					if (bDebugLogs)
+						UPlugInv_DoubleLogger::Log(5.0f, TEXT("HandleTraceHit in {0}. SWAP. Stop Hovering Inventory"), FColor::Emerald, TempName);
+					HoveringInventoryComponent3D.Reset();
+				}
+				
+				StartHoverInventory(NewHoveringInventory);
+				if (bDebugLogs)
+					UPlugInv_DoubleLogger::Log(5.0f, TEXT("HandleTraceHit in {0}. Hovering Inventory"), FColor::Emerald, TempName);
+			}
+		}
+		else
 		{
 			if (HoveringInventoryComponent3D.IsValid())
 			{
 				StopHoverInventory(HoveringInventoryComponent3D.Get());
-				LOG_DOUBLE_S(1.0, FColor::Emerald, "HandleTraceHit in {0}. SWAP. Stop Hovering Inventory",TempName);
+				if (bDebugLogs)
+					UPlugInv_DoubleLogger::Log(5.0f, TEXT("HandleTraceHit in {0}. Stop Hovering Inventory"), FColor::Emerald, TempName);
 				HoveringInventoryComponent3D.Reset();
 			}
+		}
+
+		if (ADieg_WorldItemActor* NewHoveringItem = Cast<ADieg_WorldItemActor>(HitActor))
+		{
+			if (HoveringItem.IsValid())
+			{
+				StopHoverItem(HoveringItem.Get());
+				if (bDebugLogs)
+					UPlugInv_DoubleLogger::Log(5.0f, TEXT("HandleTraceHit in {0}. SWAP. Stop Hover Item"), FColor::Emerald, TempName);
+				HoveringItem.Reset();
+			}
 			
-			StartHoverInventory(NewHoveringInventory);
-			LOG_DOUBLE_S(1.0, FColor::Emerald, "HandleTraceHit in {0}. Hovering Inventory",TempName);
+			if (NewHoveringItem != HoveringItem)
+			{
+				StartHoverItem(NewHoveringItem);
+				if (bDebugLogs)
+					UPlugInv_DoubleLogger::Log(5.0f, TEXT("HandleTraceHit in {0}. Start Hover Item"), FColor::Emerald, TempName);
+			}
+		}
+		else
+		{
+			if (HoveringItem.IsValid())
+			{
+				StopHoverItem(HoveringItem.Get());
+				if (bDebugLogs)
+					UPlugInv_DoubleLogger::Log(5.0f, TEXT("HandleTraceHit in {0}. Stop Hover Item"), FColor::Emerald, TempName);
+				HoveringItem.Reset();
+			}
 		}
 	}
-	else
-	{
-		if (HoveringInventoryComponent3D.IsValid())
-		{
-			StopHoverInventory(HoveringInventoryComponent3D.Get());
-			LOG_DOUBLE_S(1.0, FColor::Emerald, "HandleTraceHit in {0}. Stop Hovering Inventory",TempName);
-			HoveringInventoryComponent3D.Reset();
-		}
-	}
-
-	if (ADieg_WorldItemActor* NewHoveringItem = Cast<ADieg_WorldItemActor>(HitActor))
-	{
-		if (HoveringItem.IsValid())
-		{
-			StopHoverItem(HoveringItem.Get());
-			LOG_DOUBLE_S(1.0, FColor::Emerald, "HandleTraceHit in {0}. SWAP. Stop Hover Item",TempName);
-			HoveringItem.Reset();
-		}
-		
-		if (NewHoveringItem != HoveringItem)
-		{
-			StartHoverItem(NewHoveringItem);
-			LOG_DOUBLE_S(1.0, FColor::Emerald, "HandleTraceHit in {0}. Start Hover Item",TempName);
-		}
-	}
-	else
-	{
-		if (HoveringItem.IsValid())
-		{
-			StopHoverItem(HoveringItem.Get());
-			LOG_DOUBLE_S(1.0, FColor::Emerald, "HandleTraceHit in {0}. Stop Hover Item",TempName);
-			HoveringItem.Reset();
-		}
-	}
-
+	
 	if (IsDraggingItem())
 	{
-		const FVector& ImpactPoint = HitResult.ImpactPoint;
-		DraggingItem->SetActorLocation(ImpactPoint);
+		const FVector ImpactPoint = HitResult.ImpactPoint;
+
+		// if (bDebugLogs)
+		// 	UPlugInv_DoubleLogger::Log(1.0f, TEXT("IsDraggingItem, ImpactPoint: {0}. Tick"), FColor::Emerald, ImpactPoint);
+		
+		DraggingItem->SetActorLocation(ImpactPoint, false, nullptr, ETeleportType::None);
 
 		if (IsInInventory())
 		{
 			
 		}
 	}
+}
+
+bool UDieg_InventoryInputHandler::IsItemInInventory(const ADieg_WorldItemActor* ItemIn,
+	UDieg_3DInventoryComponent*& Inventory3DOut)
+{
+	if (IsValid(ItemIn->GetOwner()); UDieg_3DInventoryComponent* Inventory3D = ItemIn->GetOwner()->GetComponentByClass<UDieg_3DInventoryComponent>())
+	{
+		Inventory3DOut = Inventory3D;
+		return true;
+	}
+
+	return false;
+}
+
+void UDieg_InventoryInputHandler::TryDragItem()
+{
+	if (HoveringItem.IsValid())
+	{
+		if (bDebugLogs)
+			UPlugInv_DoubleLogger::Log("TryDragItem");
+		DraggingItem = HoveringItem;
+
+		StartDraggingItem();
+	}
+}
+
+void UDieg_InventoryInputHandler::TryDropItem()
+{
+	StopDraggingItem();
+}
+
+void UDieg_InventoryInputHandler::HandleHoveringInventorySlotHovered(const FGeometry& Geometry,
+	const FPointerEvent& PointerEvent, UDieg_3DInventoryComponent* Dieg_3DInventoryComponent, UDieg_Slot* Dieg_Slot)
+{
+	
+	if (IsDraggingItem())
+	{
+		CurrentMouseCoordinates = Dieg_Slot->GetCoordinatesInGrid();
+		const TArray<FIntPoint> RelevantCoordinates = GetRelevantCoordinates();
+		Dieg_3DInventoryComponent->GetGridWidget()->UpdateHoveringSlots(RelevantCoordinates, EDieg_SlotStatus::Occupied, EDieg_SlotStatus::None);
+
+		if (bDebugLogs)
+			UPlugInv_DoubleLogger::Log(5.0f, TEXT("HoverSlotHandler: Checking if slots are available {0}"), FColor::Emerald, RelevantCoordinates);
+		const bool SlotsAreValid = Dieg_3DInventoryComponent->GetInventoryComponent()->AreSlotsAvailable(RelevantCoordinates);
+		if (SlotsAreValid)
+		{
+			ValidCoordinates = CurrentMouseCoordinates - GetRotatedGrabCoordinates(false);
+			ValidRotation = CurrentRotation;
+			ValidInventory3D = HoveringInventoryComponent3D;
+
+			if (bDebugLogs)
+				UPlugInv_DoubleLogger::Log(5.0f, TEXT("HoverSlotHandler: Valid"), FColor::Emerald);
+		}
+		else
+		{
+			if (bDebugLogs)
+				UPlugInv_DoubleLogger::Log(5.0f, TEXT("HoverSlotHandler: Not Available"), FColor::Emerald);
+		}
+
+		OnUpdateDragSlot.Broadcast(SlotsAreValid, this, DraggingItem.Get(), RelevantCoordinates, CurrentMouseCoordinates - GetRotatedGrabCoordinates(false), ValidRotation);
+	}
+	else
+	{
+		OnStartHoverSlot.Broadcast(Dieg_3DInventoryComponent, Dieg_Slot);
+	}
+	
+	CurrentMouseSlot = Dieg_Slot;
+}
+
+void UDieg_InventoryInputHandler::HandleHoveringInventorySlotUnHovered(const FPointerEvent& PointerEvent,
+	UDieg_3DInventoryComponent* Dieg_3DInventoryComponent, UDieg_Slot* Dieg_Slot)
+{
+}
+
+void UDieg_InventoryInputHandler::StartDraggingItem()
+{
+	BindItemEventsToHandler();
+	
+	RelativeCoordinates = GetGrabCoordinates();
+
+	if (bDebugLogs)
+		UPlugInv_DoubleLogger::Log(5.0f, TEXT("Grab coordinates are: {0}. StartDraggingItem"), FColor::Emerald, RelativeCoordinates);
+	
+	DraggingItem->SetActorEnableCollision(false);
+	
+	// It's starting dragging from world, not inventory here
+	const FIntPoint RotatedGrabPoint = GetRotatedGrabCoordinates(false);
+	UDieg_3DInventoryComponent* OwningInventory = nullptr;
+	if (IsItemInInventory(DraggingItem.Get(),OwningInventory))
+	{
+		// It's starting dragging from inventory
+		OwningInventory->RemoveItemFromInventory(DraggingItem.Get());
+		
+		ValidRotation = CurrentRotation = DraggingItem->GetCurrentRotation();
+		ValidCoordinates = DraggingItem->GetCoordinates();
+		// Due to mouse shenanigans (not the same clicking the same coordinate in top left corner than bottom right + other considerations)
+		CurrentMouseCoordinates = ValidCoordinates + RotatedGrabPoint;
+		ValidInventory3D = Default3DInventory = OwningInventory;
+
+		if (bDebugLogs)
+			UPlugInv_DoubleLogger::Log(5.0f, TEXT("CurrentMouseCoordinates {0} = ValidCoordinates {1} + RotatedGrabPoint {2}"),
+				FColor::Emerald, CurrentMouseCoordinates, ValidCoordinates, RotatedGrabPoint);
+
+		UDieg_Grid* GridWidget = OwningInventory->GetGridWidget();
+		GridWidget->ModifyAllSlotsAppearance(true, true, EDieg_SlotStatus::None);
+		TArray<FIntPoint> RelevantCoordinates = GetRelevantCoordinates();
+		GridWidget->UpdateHoveringSlots(RelevantCoordinates, EDieg_SlotStatus::Occupied, EDieg_SlotStatus::None);
+
+		// Later for when we drop the item, we reset the grid, still have it locked to native mouse events visuals and want to update its hover state visually.
+		CurrentMouseSlot = GridWidget->GetSlotMap().FindRef(CurrentMouseCoordinates);
+		
+		TArray<TWeakObjectPtr<ADieg_WorldItemActor>> Items = OwningInventory->GetItems();
+		for (TWeakObjectPtr<ADieg_WorldItemActor>& ItemActor : Items)
+		{
+			ItemActor->SetActorEnableCollision(false);
+		}
+
+		OnStartDragInventory.Broadcast(this, DraggingItem.Get(), RotatedGrabPoint, ValidCoordinates);
+	}
+	else
+	{
+		
+		ValidWorldLocation = DraggingItem.Get()->GetActorLocation();
+		OnStartDragWorld.Broadcast(this, DraggingItem.Get(), RotatedGrabPoint, ValidWorldLocation);
+	}
+}
+
+void UDieg_InventoryInputHandler::StopDraggingItem()
+{
+	if (!DraggingItem.IsValid())
+		return;
+
+	if (bDebugLogs)
+		UPlugInv_DoubleLogger::Log("StopDraggingItem");
+	
+	DraggingItem->SetActorEnableCollision(true);
+	DraggingItem.Reset();
+}
+
+void UDieg_InventoryInputHandler::ConnectItemToInventory() const
+{
+	UWidgetComponent* Comp = HoveringInventoryComponent3D->GetWidgetComponent().Get();
+	const FAttachmentTransformRules AttachmentTransformRules = FAttachmentTransformRules(EAttachmentRule::KeepRelative,
+		EAttachmentRule::KeepRelative,EAttachmentRule::KeepRelative, false);
+	DraggingItem->AttachToComponent(Comp, AttachmentTransformRules, NAME_None);
+	DraggingItem->SetOwner(HoveringInventoryComponent3D->GetOwner());
+}
+
+void UDieg_InventoryInputHandler::DisconnectItemToInventory() const
+{
+	DraggingItem->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+	DraggingItem->SetOwner(nullptr);
+}
+
+void UDieg_InventoryInputHandler::BindItemEventsToHandler()
+{
+}
+
+FIntPoint UDieg_InventoryInputHandler::GetGrabCoordinates() const
+{
+	// Default return value (no valid coordinates).
+	FIntPoint FinalResult = FIntPoint::ZeroValue;
+
+	// If no item is currently being dragged, we can't compute coordinates.
+	if (!DraggingItem.IsValid())
+	{
+		return FinalResult;
+	}
+
+	// Run a line trace from the mouse to find where the user is pointing in 3D space.
+	FHitResult HitResult;
+	if (!LineTraceFromMouse(HitResult))
+	{
+		return FinalResult;
+	}
+
+	// Calculate the exact impact point (slightly offset by the surface normal).
+	const FVector ImpactPoint = HitResult.ImpactPoint - HitResult.Normal;
+	const TWeakObjectPtr<UPrimitiveComponent> HitComponent = HitResult.Component;
+
+	// Get the definition of the item being dragged.
+	const FDieg_ItemDefinition& DraggingItemDefinition = DraggingItem->GetItemInstance()->GetItemDefinition();
+
+	// NOTE:
+	// Even though items can be rotated, the local space of the PrimitiveShapeComponent 
+	// (the hit component) is always considered "zero rotation".
+	// Because of that, we do NOT need to rotate the shape here.
+	// Rotation adjustments will be applied later in the pipeline when needed.
+
+	// Find the size (span) of the item's shape in grid units.
+	const FIntPoint ShapeSpan = UDieg_UtilityLibrary::GetShapeSpan(DraggingItemDefinition.DefaultShape);
+	const int32 XSpan = ShapeSpan.X;
+	const int32 YSpan = ShapeSpan.Y;
+
+	// Convert the 3D hit point into local component space.
+	const FVector LocalPosition3D = HitComponent->GetComponentToWorld().InverseTransformPosition(ImpactPoint);
+
+	// We only care about X and Y for 2D grid placement.
+	const FVector2D LocalPosition2D(LocalPosition3D.X, LocalPosition3D.Y);
+
+	// Get the grid size (how big each slot is in 3D space).
+	const UDieg_Slot* DefaultSlot = GetDefault<UDieg_Slot>();
+	const float GridSize3D = DefaultSlot->GetGridSize3D();
+
+	// Convert the local position into "grid space" (floating-point).
+	const FVector2D GridCoordinates = LocalPosition2D / GridSize3D;
+
+	// Map grid coordinates into shape coordinates.
+	// NOTE: XSpan is used here to "invert" the Y axis so placement is aligned correctly.
+	const FVector2D ShapeCoordinates(XSpan - GridCoordinates.Y, GridCoordinates.X);
+
+	// Clamp the result to valid shape bounds.
+	// We floor the values to integer cell indices, then clamp them so they stay inside the shape.
+	const FVector2D ClampedCoordinates(
+		FMath::Clamp(FMath::Floor(ShapeCoordinates.X), 0, XSpan - 1),
+		FMath::Clamp(FMath::Floor(ShapeCoordinates.Y), 0, YSpan - 1)
+	);
+
+	// Final integer result (grab coordinates within the item's shape).
+	FinalResult = FIntPoint(ClampedCoordinates.X, ClampedCoordinates.Y);
+
+	return FinalResult;
+}
+
+FIntPoint UDieg_InventoryInputHandler::GetRotatedGrabCoordinates(bool UseValidated) const
+{
+	// Default return value (no valid coordinates).
+	FIntPoint FinalResult = FIntPoint::ZeroValue;
+
+	// If no item is currently being dragged, we can't compute coordinates.
+	if (!DraggingItem.IsValid())
+	{
+		return FinalResult;
+	}
+
+	// Get the definition of the item being dragged.
+	const FDieg_ItemDefinition& DraggingItemDefinition = DraggingItem->GetItemInstance()->GetItemDefinition();
+	int32 Index = DraggingItemDefinition.DefaultShape.Find(RelativeCoordinates);
+
+	float RotationToUse = UseValidated ? ValidRotation : CurrentRotation;
+	FIntPoint RotatedRootOut;
+	TArray<FIntPoint> RotatedShape = UDieg_UtilityLibrary::Rotate2DArrayWithRoot(DraggingItemDefinition.DefaultShape, RotationToUse, RelativeCoordinates,RotatedRootOut);
+
+	// It should be the same index as the default shape
+	if (RotatedShape.IsValidIndex(Index))
+	{
+		FinalResult = RotatedShape[Index];
+	}
+	
+
+	// Extra check
+	if (FinalResult != RotatedRootOut)
+	{
+		// Something or calculation are wrong
+		if (bDebugLogs)
+			UPlugInv_DoubleLogger::Log("FinalResult != RotatedRootOut, in GetRotatedGrabCoordinates()");
+	}
+	
+	return FinalResult;
+}
+
+TArray<FIntPoint> UDieg_InventoryInputHandler::GetRelevantCoordinates() const
+{
+	TArray<FIntPoint> FinalResult = TArray<FIntPoint>();
+	// These are the coordinates we are moving within, are they valid
+	if (!DraggingItem.IsValid())
+	{
+		return FinalResult;
+	}
+
+	// In here technically the hovering and owning inventory should be the same
+	const FIntPoint ActualCoordinates = CurrentMouseCoordinates - GetRotatedGrabCoordinates(false);
+	const FDieg_ItemDefinition& DraggingItemDefinition = DraggingItem->GetItemInstance()->GetItemDefinition();
+
+	FIntPoint RotatedRootOut;
+	return HoveringInventoryComponent3D->GetInventoryComponent()->GetRelevantCoordinates(ActualCoordinates,
+		DraggingItemDefinition.DefaultShape, DraggingItemDefinition.DefaultShapeRoot, CurrentRotation,RotatedRootOut);
 }
 
 // Called every frame

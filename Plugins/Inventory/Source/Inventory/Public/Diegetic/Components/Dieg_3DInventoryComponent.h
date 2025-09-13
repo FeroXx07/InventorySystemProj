@@ -70,17 +70,26 @@ protected:
 
 	UFUNCTION(Category = "Constructor", BlueprintCallable)
 	void DeInitializeInventory();
+	
+	UFUNCTION(Category = "Event Handler", BlueprintCallable)
+	void WidgetSlotHover(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent, UDieg_Slot* GridSlot);
 
+	UFUNCTION(Category = "Event Handler", BlueprintCallable)
+	void WidgetSlotUnHovered(const FPointerEvent& InMouseEvent, UDieg_Slot* GridSlot);
+
+public:
 	UFUNCTION(Category = "Direct", BlueprintCallable)
 	void AddItemToInventory(ADieg_WorldItemActor* ItemActor);
 
 	UFUNCTION(Category = "Direct", BlueprintCallable)
 	void RemoveItemFromInventory(ADieg_WorldItemActor* ItemActor);
 
-	UFUNCTION(Category = "Event Handler", BlueprintCallable)
-	void WidgetSlotHover(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent, UDieg_Slot* GridSlot);
-
-	UFUNCTION(Category = "Event Handler", BlueprintCallable)
-	void WidgetSlotUnHovered(const FPointerEvent& InMouseEvent, UDieg_Slot* GridSlot);
 	
+	UFUNCTION(BlueprintCallable)
+	UDieg_Grid* GetGridWidget() {return GridWidget;}
+
+	TWeakObjectPtr<UWidgetComponent> GetWidgetComponent() {return WidgetComponentRef;}
+	TObjectPtr<UDieg_InventoryComponent> GetInventoryComponent() {return InventoryComponentRef;}
+
+	TArray<TWeakObjectPtr<ADieg_WorldItemActor>>& GetItems() {return Items;}
 };

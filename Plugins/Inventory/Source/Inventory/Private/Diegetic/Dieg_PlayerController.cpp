@@ -32,10 +32,28 @@ void ADieg_PlayerController::BeginPlay()
 	}
 
 	// Bind handlers to delegates
-	if (TracerComponent)
+	if (IsValid(TracerComponent))
 	{
-		TracerComponent->OnActorInTrace.AddDynamic(this, &ThisClass::HandleActorInTrace);
-		TracerComponent->OnActorOutTrace.AddDynamic(this, &ThisClass::HandleActorOutTrace);
+		if (!TracerComponent->OnActorInTrace.IsAlreadyBound(this, &ThisClass::HandleActorInTrace))
+		{
+			TracerComponent->OnActorInTrace.AddDynamic(this, &ThisClass::HandleActorInTrace);
+		}
+		if (!TracerComponent->OnActorOutTrace.IsAlreadyBound(this, &ThisClass::HandleActorOutTrace))
+		{
+			TracerComponent->OnActorOutTrace.AddDynamic(this, &ThisClass::HandleActorOutTrace);
+		}
+	}
+
+	if (IsValid(InventoryInputHandlerComponent))
+	{
+		if (!InventoryInputHandlerComponent->OnInventoryOpened.IsAlreadyBound(this, &ThisClass::HandleOnInventoryOpened))
+		{
+			InventoryInputHandlerComponent->OnInventoryOpened.AddDynamic(this, &ThisClass::HandleOnInventoryOpened);
+		}
+		if (!InventoryInputHandlerComponent->OnInventoryClosed.IsAlreadyBound(this, &ThisClass::HandleOnInventoryClosed))
+		{
+			InventoryInputHandlerComponent->OnInventoryClosed.AddDynamic(this, &ThisClass::HandleOnInventoryClosed);
+		}
 	}
 }
 
@@ -65,6 +83,16 @@ void ADieg_PlayerController::InitializeImcSubsystem()
 			Subsystem->AddMappingContext(CurrentContext, 0);
 		}
 	}
+}
+
+void ADieg_PlayerController::HandleOnInventoryClosed_Implementation()
+{
+	bInventoryOpened = false;
+}
+
+void ADieg_PlayerController::HandleOnInventoryOpened_Implementation()
+{
+	bInventoryOpened = true;
 }
 
 void ADieg_PlayerController::TryToggleInventory_Implementation()

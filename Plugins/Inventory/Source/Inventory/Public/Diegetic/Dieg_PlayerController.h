@@ -31,11 +31,7 @@ public:
 	// Primary IA for interaction. 
 	UPROPERTY(EditDefaultsOnly, Category = "Input Actions")
 	TObjectPtr<UInputAction> PrimaryInteractIA;
-
-	// IA for toggling inventory. 
-	UPROPERTY(EditDefaultsOnly, Category = "Input Actions")
-	TObjectPtr<UInputAction> ToggleInventoryIA;
-
+	
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Player|Dieg")
 	FHandleTraceActorIn OnHandleTraceActorIn;
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Player|Dieg")
@@ -71,6 +67,15 @@ protected:
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Game|Player|Dieg")
 	bool TryPickUpItem(ADieg_WorldItemActor* WorldItemActor);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Game|Player|Dieg")
+	void HandleOnInventoryOpened();
+	
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Game|Player|Dieg")
+	void HandleOnInventoryClosed();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category= "Game|Player|Dieg")
+	bool bInventoryOpened;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category= "Strong References")
 	TObjectPtr<UDieg_TracerComponent> TracerComponent;

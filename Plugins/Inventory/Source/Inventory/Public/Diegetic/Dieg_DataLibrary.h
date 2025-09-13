@@ -21,7 +21,7 @@ class INVENTORY_API UDieg_DataLibrary : public UBlueprintFunctionLibrary
 UENUM(BlueprintType)
 enum class EDieg_SlotStatus : uint8
 {
-	None,
+	None UMETA(DisplayName = "None"),
 	Hover UMETA(DisplayName = "Hover"),
 	Pressed UMETA(DisplayName = "Pressed"),
 	Locked UMETA(DisplayName = "Locked"),
@@ -31,7 +31,7 @@ enum class EDieg_SlotStatus : uint8
 UENUM(BlueprintType)
 enum class EDieg_TextLocation : uint8
 {
-	None,
+	None UMETA(DisplayName = "None"),
 	TopRight UMETA(DisplayName = "Top Right"),
 	TopLeft UMETA(DisplayName = "Top Left"),
 	BottomRight UMETA(DisplayName = "Bottom Right"),

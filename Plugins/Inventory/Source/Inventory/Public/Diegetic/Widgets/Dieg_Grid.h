@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "Dieg_Grid.generated.h"
 
+enum class EDieg_SlotStatus : uint8;
 class UCanvasPanel;
 class UDieg_Slot;
 class UGridPanel;
@@ -38,6 +39,10 @@ public:
 	FGridSlotPressed OnGridSlotPressed;
 	UPROPERTY(BlueprintAssignable, BlueprintCallable)
 	FGridSlotReleased OnGridSlotReleased;
+
+	void UpdateHoveringSlots(const TArray<FIntPoint>& NewCoordinates, EDieg_SlotStatus NewStatus, EDieg_SlotStatus ResetStatus);
+
+	void ModifyAllSlotsAppearance(bool IsAppearanceLocked, bool Override, EDieg_SlotStatus OverrideStatus);
 private:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UGridPanel> GridPanel;

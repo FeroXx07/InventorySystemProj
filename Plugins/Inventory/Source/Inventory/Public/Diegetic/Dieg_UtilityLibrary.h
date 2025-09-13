@@ -82,7 +82,7 @@ T* UDieg_UtilityLibrary::CacheComponentChecked(AActor* Owner, TObjectPtr<T>& Cac
 		CachedPtr = Owner->FindComponentByClass<T>();
 		if (!CachedPtr)
 		{
-			LOG_DOUBLE_WARNING_S(10.0f, "CacheComponentChecked: Could not find component on {1}", Owner->GetName());
+			UPlugInv_DoubleLogger::LogWarning(10.0f, TEXT("CacheComponentChecked: Could not find component on {0}"), Owner->GetName());
 		}
 	}
 	return CachedPtr.Get();
