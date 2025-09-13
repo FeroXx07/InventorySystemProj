@@ -15,8 +15,30 @@ class UComboBox;
 class UButton;
 class UCanvasPanel;
 class USizeBox;
+
 /**
+ * @brief Editor utility widget for creating item definitions in the diegetic inventory system.
  * 
+ * UDieg_ItemCreatorEuw is an editor utility widget that provides a user interface
+ * for creating and configuring item definitions in the Unreal Editor. It allows
+ * designers to set up item properties, visual assets, and inventory shapes
+ * without needing to modify code.
+ * 
+ * The widget provides:
+ * - Item definition creation and editing
+ * - Visual asset assignment
+ * - Inventory shape configuration
+ * - Property editing interface
+ * - Grid-based shape preview
+ * 
+ * @note This is an editor-only widget and is not available in packaged builds.
+ * @note This widget extends UEditorUtilityWidget for editor integration.
+ * 
+ * @see UEditorUtilityWidget
+ * @see UDieg_ItemDefinitionDataAsset
+ * @see FDieg_ItemDefinition
+ * 
+ * @since 1.0
  */
 UCLASS()
 class INVENTORY_API UDieg_ItemCreatorEuw : public UEditorUtilityWidget

@@ -15,12 +15,48 @@ class UDieg_InventoryComponent;
 class UInputAction;
 class UDieg_TracerComponent;
 class UInputMappingContext;
+
 /**
+ * @brief Delegate fired when an actor is traced in.
  * 
+ * @param CurrentActor The actor that was traced
+ * @param PreviousActor The previously traced actor
+ * @param TraceChannel The collision channel used for tracing
  */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FHandleTraceActorIn, AActor*, CurrentActor, AActor*, PreviousActor, TEnumAsByte<ECollisionChannel>, TraceChannel);
+
+/**
+ * @brief Delegate fired when an actor is traced out.
+ * 
+ * @param PreviousActor The actor that was traced out
+ * @param TraceChannel The collision channel used for tracing
+ */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHandleTraceActorOut,  AActor*, PreviousActor, TEnumAsByte<ECollisionChannel>, TraceChannel);
 
+/**
+ * @brief Player controller for the diegetic inventory system.
+ * 
+ * ADieg_PlayerController extends the base player controller with diegetic inventory
+ * functionality. It manages input handling, interaction with inventory items,
+ * tracing for interactable objects, and coordination between various inventory components.
+ * 
+ * The controller provides:
+ * - Input mapping context management for inventory interactions
+ * - Tracing system for detecting interactable objects
+ * - Integration with inventory input handlers
+ * - Interaction widget management
+ * - Support for multiple input mapping contexts (UE 5.6+)
+ * 
+ * @note This controller implements IDieg_Interactor for interaction functionality.
+ * @note This controller is designed to work with the diegetic inventory system.
+ * 
+ * @see IDieg_Interactor
+ * @see UDieg_InventoryInputHandler
+ * @see UDieg_TracerComponent
+ * @see UDieg_InteractWidget
+ * 
+ * @since 1.0
+ */
 UCLASS()
 class INVENTORY_API ADieg_PlayerController : public APlayerController, public IDieg_Interactor
 {

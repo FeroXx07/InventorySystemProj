@@ -13,12 +13,70 @@ class UWidgetComponent;
 class UDieg_Grid;
 class UDieg_InventoryComponent;
 
+/**
+ * @brief Delegate fired when linking an inventory reference externally.
+ * 
+ * @param NewInventoryRef Reference to the new inventory component
+ */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLinkInventoryRefExternally, UDieg_InventoryComponent*&, NewInventoryRef);
+/**
+ * @brief Delegate fired when hovering over a slot in the 3D inventory widget.
+ * 
+ * @param InGeometry The geometry of the slot widget
+ * @param InMouseEvent The mouse event that triggered the hover
+ * @param InventoryComponent3D The 3D inventory component containing the slot
+ * @param Slot The slot that was hovered
+ */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FWidgetSlotHover, const FGeometry&, InGeometry, const FPointerEvent&, InMouseEvent, UDieg_3DInventoryComponent*, InventoryComponent3D, UDieg_Slot*, Slot);
+/**
+ * @brief Delegate fired when unhovering a slot in the 3D inventory widget.
+ * 
+ * @param InMouseEvent The mouse event that triggered the unhover
+ * @param InventoryComponent3D The 3D inventory component containing the slot
+ * @param Slot The slot that was unhovered
+ */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FWidgetSlotUnHover, const FPointerEvent&, InMouseEvent, UDieg_3DInventoryComponent*, InventoryComponent3D, UDieg_Slot*, Slot);
+/**
+ * @brief Delegate fired when the input handler hovers over an item.
+ * 
+ * @param InventoryInputHandler The input handler managing the hover
+ * @param HoveredItem The item being hovered
+ */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHandlerHoverItem, UDieg_InventoryInputHandler*, InventoryInputHandler, AActor*, HoveredItem);
+
+/**
+ * @brief Delegate fired when the input handler unhovers an item.
+ * 
+ * @param InventoryInputHandler The input handler managing the unhover
+ * @param UnHoveredItem The item being unhovered
+ */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHandlerUnHoverItem, UDieg_InventoryInputHandler*, InventoryInputHandler, AActor*, HoveredItem);
 
+/**
+ * @brief 3D inventory management component for the diegetic inventory system.
+ * 
+ * UDieg_3DInventoryComponent manages the 3D representation of inventories in the game world.
+ * It handles the visual display of inventory grids, item placement, and interaction with
+ * the 3D world. This component bridges the gap between the 2D inventory system and the
+ * 3D world representation.
+ * 
+ * The component provides:
+ * - 3D widget display for inventory grids
+ * - Item actor management and positioning
+ * - Input handling for 3D interactions
+ * - Visual feedback for hover and selection states
+ * - Integration with the core inventory system
+ * 
+ * @note This component requires a UDieg_InventoryComponent reference to function.
+ * @note This component is designed to work with UDieg_InventoryInputHandler for input.
+ * 
+ * @see UDieg_InventoryComponent
+ * @see UDieg_InventoryInputHandler
+ * @see ADieg_WorldItemActor
+ * @see UDieg_Grid
+ * 
+ * @since 1.0
+ */
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class INVENTORY_API UDieg_3DInventoryComponent : public UActorComponent
 {

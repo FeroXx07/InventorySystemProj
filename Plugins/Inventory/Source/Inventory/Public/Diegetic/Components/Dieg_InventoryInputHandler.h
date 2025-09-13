@@ -17,27 +17,213 @@ class UInputAction;
 class UInputMappingContext;
 class ADieg_PlayerController;
 
+/**
+ * @brief Delegate fired when an inventory is opened.
+ */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FInventoryOpened);
+
+/**
+ * @brief Delegate fired when an inventory is closed.
+ */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FInventoryClosed);
+
+/**
+ * @brief Delegate fired when dragging an item over an inventory.
+ * 
+ * @param InventoryInputHandler The input handler managing the drag operation
+ * @param InventoryComponent3D The 3D inventory component being hovered
+ * @param DraggedItem The item being dragged
+ * @param GrabPoint The point where the item was grabbed
+ */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FDragHoverInventory, UDieg_InventoryInputHandler*, InventoryInputHandler, UDieg_3DInventoryComponent*, InventoryComponent3D, AActor*, DraggedItem, FIntPoint, GrabPoint);
+
+/**
+ * @brief Delegate fired when dragging an item away from an inventory.
+ * 
+ * @param InventoryInputHandler The input handler managing the drag operation
+ * @param InventoryComponent3D The 3D inventory component being unhovered
+ * @param DraggedItem The item being dragged
+ * @param GrabPoint The point where the item was grabbed
+ */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FDragUnHoverInventory, UDieg_InventoryInputHandler*, InventoryInputHandler, UDieg_3DInventoryComponent*, InventoryComponent3D, AActor*, DraggedItem, FIntPoint, GrabPoint);
+
+/**
+ * @brief Delegate fired when hovering over an inventory.
+ * 
+ * @param InventoryComponent3D The 3D inventory component being hovered
+ */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHoverInventory, UDieg_3DInventoryComponent*, InventoryComponent3D);
+
+/**
+ * @brief Delegate fired when unhovering an inventory.
+ * 
+ * @param InventoryComponent3D The 3D inventory component being unhovered
+ */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUnHoverInventory, UDieg_3DInventoryComponent*, InventoryComponent3D);
+
+/**
+ * @brief Delegate fired when hovering over a slot in an inventory.
+ * 
+ * @param InventoryComponent3D The 3D inventory component containing the slot
+ * @param Slot The slot being hovered
+ */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FStartHoverSlot, UDieg_3DInventoryComponent*, InventoryComponent3D, UDieg_Slot*, Slot);
+
+/**
+ * @brief Delegate fired when unhovering a slot in an inventory.
+ * 
+ * @param InventoryComponent3D The 3D inventory component containing the slot
+ * @param Slot The slot being unhovered
+ */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FStartUnHoverSlot, UDieg_3DInventoryComponent*, InventoryComponent3D, UDieg_Slot*, Slot);
+
+/**
+ * @brief Delegate fired when starting to drag an item from the world.
+ * 
+ * @param InventoryInputHandler The input handler managing the drag operation
+ * @param DraggedItem The item being dragged
+ * @param GrabPoint The point where the item was grabbed
+ * @param WorldLocation The world location of the item
+ */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FStartDragWorld, UDieg_InventoryInputHandler*, InventoryInputHandler, AActor*, DraggedItem, FIntPoint, GrabPoint, FVector, WorldLocation);
+
+/**
+ * @brief Delegate fired when starting to drag an item from an inventory.
+ * 
+ * @param InventoryInputHandler The input handler managing the drag operation
+ * @param DraggedItem The item being dragged
+ * @param GrabPoint The point where the item was grabbed
+ * @param Coordinates The grid coordinates of the item
+ */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FStartDragInventory, UDieg_InventoryInputHandler*, InventoryInputHandler, AActor*, DraggedItem, FIntPoint, GrabPoint, FIntPoint, Coordinates);
+
+/**
+ * @brief Delegate fired when updating drag slot information.
+ * 
+ * @param IsValid Whether the drag operation is valid
+ * @param InventoryInputHandler The input handler managing the drag operation
+ * @param DraggedItem The item being dragged
+ * @param RelevantSlots Array of slots that would be affected
+ * @param Coordinates The current grid coordinates
+ * @param Rotation The current rotation angle
+ */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_SixParams(FUpdateDragSlot, bool, IsValid, UDieg_InventoryInputHandler*, InventoryInputHandler, AActor*, DraggedItem, const TArray<FIntPoint>&, RelevantSlots, FIntPoint, Coordinates, float, Rotation);
+
+/**
+ * @brief Delegate fired when dropping an item in the world.
+ * 
+ * @param InventoryInputHandler The input handler managing the drop operation
+ * @param DroppedItem The item being dropped
+ * @param DroppedLocation The world location where the item was dropped
+ */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FDropWorld, UDieg_InventoryInputHandler*, InventoryInputHandler, AActor*, DroppedItem, FVector, DroppedLocation);
+
+/**
+ * @brief Delegate fired when merging items.
+ * 
+ * @param InventoryInputHandler The input handler managing the merge operation
+ * @param DroppedItem The item being dropped for merging
+ * @param MergedActors Array of actors that were merged
+ * @param OldQuantity The original quantity before merging
+ * @param NewQuantity The new quantity after merging
+ */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FMergeItem, UDieg_InventoryInputHandler*, InventoryInputHandler, AActor*, DroppedItem, TArray<AActor*>, MergedActors, int32, OldQuantity, int32, NewQuantity);
+
+/**
+ * @brief Delegate fired when an item is consumed during a merge operation.
+ * 
+ * @param InventoryInputHandler The input handler managing the merge operation
+ * @param InventoryComponent3D The 3D inventory component where the merge occurred
+ * @param ConsumedActor The actor that was consumed
+ */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FConsumedItemInMerge, UDieg_InventoryInputHandler*, InventoryInputHandler, UDieg_3DInventoryComponent*, InventoryComponent3D, AActor*, ConsumedActor);
+
+/**
+ * @brief Delegate fired when resetting a drag operation in the world.
+ * 
+ * @param InventoryInputHandler The input handler managing the reset operation
+ * @param ResetItem The item being reset
+ * @param ResetLocation The world location where the item was reset
+ */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FResetDragWorld, UDieg_InventoryInputHandler*, InventoryInputHandler, AActor*, ResetItem, FVector, ResetLocation);
+
+/**
+ * @brief Delegate fired when resetting a drag operation in an inventory.
+ * 
+ * @param InventoryInputHandler The input handler managing the reset operation
+ * @param InventoryComponent3D The 3D inventory component where the reset occurred
+ * @param RestItem The item being reset
+ * @param ResetCoordinates The grid coordinates where the item was reset
+ * @param ResetRotation The rotation angle where the item was reset
+ */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FResetDragInventory, UDieg_InventoryInputHandler*, InventoryInputHandler, UDieg_3DInventoryComponent*, InventoryComponent3D, AActor*, RestItem, FIntPoint, ResetCoordinates, float, ResetRotation);
+
+/**
+ * @brief Delegate fired when dropping an item in an inventory.
+ * 
+ * @param InventoryInputHandler The input handler managing the drop operation
+ * @param InventoryComponent3D The 3D inventory component where the item was dropped
+ * @param DroppedItem The item being dropped
+ * @param DroppedCoordinates The grid coordinates where the item was dropped
+ * @param DroppedRotation The rotation angle of the dropped item
+ */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FDropInInventory, UDieg_InventoryInputHandler*, InventoryInputHandler, UDieg_3DInventoryComponent*, InventoryComponent3D, AActor*, DroppedItem, FIntPoint, DroppedCoordinates, float, DroppedRotation);
+
+/**
+ * @brief Delegate fired when hovering over an item.
+ * 
+ * @param InventoryInputHandler The input handler managing the hover operation
+ * @param InventoryComponent3D The 3D inventory component containing the item
+ * @param HoveredItem The item being hovered
+ * @param IsInInventory Whether the item is currently in an inventory
+ */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FHoverItem, UDieg_InventoryInputHandler*, InventoryInputHandler, UDieg_3DInventoryComponent*, InventoryComponent3D, AActor*, HoveredItem, bool, IsInInventory);
+
+/**
+ * @brief Delegate fired when unhovering an item.
+ * 
+ * @param InventoryInputHandler The input handler managing the unhover operation
+ * @param InventoryComponent3D The 3D inventory component containing the item
+ * @param UnHoveredItem The item being unhovered
+ * @param IsInInventory Whether the item is currently in an inventory
+ */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FUnHoverItem, UDieg_InventoryInputHandler*, InventoryInputHandler, UDieg_3DInventoryComponent*, InventoryComponent3D, AActor*, UnHoveredItem, bool, IsInInventory);
+
+/**
+ * @brief Delegate fired when rotating an item.
+ * 
+ * @param InventoryInputHandler The input handler managing the rotation operation
+ * @param RotatedItem The item being rotated
+ * @param NewRotation The new rotation angle
+ * @param GripPoint The point where the item is being gripped
+ */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FRotateItem, UDieg_InventoryInputHandler*, InventoryInputHandler, AActor*, RotatedItem, float, NewRotation, FIntPoint, GripPoint);
 
+/**
+ * @brief Input handling component for the diegetic inventory system.
+ * 
+ * UDieg_InventoryInputHandler manages all input interactions for the diegetic inventory system,
+ * including drag-and-drop operations, item rotation, inventory opening/closing, and hover states.
+ * It serves as the central coordinator for all inventory-related input events and delegates.
+ * 
+ * The component handles:
+ * - Mouse and touch input for inventory interactions
+ * - Drag-and-drop operations between inventories and the world
+ * - Item rotation and placement validation
+ * - Hover states and visual feedback
+ * - Input mapping context management
+ * - Camera control during inventory operations
+ * 
+ * @note This component requires proper setup with input actions and mapping contexts.
+ * @note This component is designed to work with UDieg_3DInventoryComponent and ADieg_PlayerController.
+ * 
+ * @see UDieg_3DInventoryComponent
+ * @see ADieg_PlayerController
+ * @see UDieg_InventoryComponent
+ * @see ADieg_WorldItemActor
+ * 
+ * @since 1.0
+ */
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class INVENTORY_API UDieg_InventoryInputHandler : public UActorComponent
 {
