@@ -63,12 +63,12 @@ void ADieg_WorldItemActor::BeginPlay()
 }
 
 
-const TObjectPtr<UDieg_ItemInstance>& ADieg_WorldItemActor::GetItemInstance() const
+UDieg_ItemInstance* ADieg_WorldItemActor::GetItemInstance() const
 {
 	return ItemInstance;
 }
 
-TObjectPtr<UDieg_ItemInstance>& ADieg_WorldItemActor::GetItemInstanceMutable()
+UDieg_ItemInstance* ADieg_WorldItemActor::GetItemInstanceMutable()
 {
 	return ItemInstance;
 }

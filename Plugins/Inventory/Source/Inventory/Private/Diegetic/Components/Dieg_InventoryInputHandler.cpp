@@ -192,7 +192,7 @@ void UDieg_InventoryInputHandler::StartHoverInventory(UDieg_3DInventoryComponent
 		ConnectItemToInventory();
 
 		// Disable all currently placed items' collision.
-		TArray<TWeakObjectPtr<ADieg_WorldItemActor>> ItemsInInventory = HoveringInventoryComponent3D->GetItems();
+		TArray<ADieg_WorldItemActor*> ItemsInInventory = HoveringInventoryComponent3D->GetItems();
 		for (const TWeakObjectPtr<ADieg_WorldItemActor>& ItemActor : ItemsInInventory)
 		{
 			ItemActor->SetActorEnableCollision(false);
@@ -235,7 +235,7 @@ void UDieg_InventoryInputHandler::StopHoverInventory(UDieg_3DInventoryComponent*
 		DraggingItem->SetActorRotation(FRotator::ZeroRotator);
 
 		// Disable all currently placed items' collision.
-		TArray<TWeakObjectPtr<ADieg_WorldItemActor>> ItemsInInventory = HoveringInventoryComponent3D->GetItems();
+		TArray<ADieg_WorldItemActor*> ItemsInInventory = HoveringInventoryComponent3D->GetItems();
 		for (const TWeakObjectPtr<ADieg_WorldItemActor>& ItemActor : ItemsInInventory)
 		{
 			ItemActor->SetActorEnableCollision(true);
@@ -426,7 +426,7 @@ void UDieg_InventoryInputHandler::InternalHandleInventorySlotHover(UDieg_3DInven
 
 		if (bDebugLogs)
 			UPlugInv_DoubleLogger::Log(5.0f, TEXT("HoverSlotHandler: Checking if slots are available {0}"), FColor::Emerald, RelevantCoordinates);
-		const bool SlotsAreValid = Dieg_3DInventoryComponent->GetInventoryComponent()->AreSlotsAvailable(RelevantCoordinates);
+		const bool SlotsAreValid = Dieg_3DInventoryComponent->GetInventoryComponent()->AreSlotsAvailableSimple(RelevantCoordinates);
 		if (SlotsAreValid)
 		{
 			ValidCoordinates = CurrentMouseCoordinates - GetRotatedGrabCoordinates(false);
@@ -510,8 +510,8 @@ void UDieg_InventoryInputHandler::StartDraggingItem()
 			CurrentMouseSlot = nullptr;
 		}
 		
-		TArray<TWeakObjectPtr<ADieg_WorldItemActor>> Items = OwningInventory->GetItems();
-		for (TWeakObjectPtr<ADieg_WorldItemActor>& ItemActor : Items)
+		TArray<ADieg_WorldItemActor*>Items = OwningInventory->GetItems();
+		for (ADieg_WorldItemActor* ItemActor : Items)
 		{
 			ItemActor->SetActorEnableCollision(false);
 		}
@@ -586,8 +586,8 @@ void UDieg_InventoryInputHandler::StopDraggingItem()
 			}
 		}
 		
-		TArray<TWeakObjectPtr<ADieg_WorldItemActor>> Items = HoveringInventoryComponent3D->GetItems();
-		for (TWeakObjectPtr<ADieg_WorldItemActor>& ItemActor : Items)
+		TArray<ADieg_WorldItemActor*> Items = HoveringInventoryComponent3D->GetItems();
+		for (ADieg_WorldItemActor* ItemActor : Items)
 		{
 			ItemActor->SetActorEnableCollision(true);
 		}
@@ -620,21 +620,21 @@ bool UDieg_InventoryInputHandler::MergeItems(const TArray<FIntPoint>& RootSlotCo
 	int32 Quantity = 0;
 	int32 OldQuantity = Quantity = DraggingItem->GetItemInstance()->GetQuantity();
 	
-	TArray<TWeakObjectPtr<ADieg_WorldItemActor>> Items3D = HoveringInventoryComponent3D->GetItems();
+	TArray<ADieg_WorldItemActor*> Items3D = HoveringInventoryComponent3D->GetItems();
 	// TArray<FDieg_InventorySlot*> InventorySlots = HoveringInventoryComponent3D->GetInventoryComponent()->GetSlotsMutable();
 	TArray<FDieg_InventorySlot*> InventoryRootSlots = HoveringInventoryComponent3D->GetInventoryComponent()->GetRootSlotsMutable();
 	
 	TArray<AActor*> MergedActors;
 	for (FIntPoint RootCoordinate : RootSlotCoordinates)
 	{
-		if (TWeakObjectPtr<ADieg_WorldItemActor>* CurrentItem3D = Items3D.FindByPredicate(
-		[&](const TWeakObjectPtr<ADieg_WorldItemActor>& Item)
+		if (ADieg_WorldItemActor** CurrentItem3D = Items3D.FindByPredicate(
+			[&](const TWeakObjectPtr<ADieg_WorldItemActor>& Item)
+			{
+				return Item.IsValid() &&
+					Item->GetCoordinates() == RootCoordinate;
+			}))
 		{
-			return Item.IsValid() &&
-				   Item->GetCoordinates() == RootCoordinate;
-		}))
-		{
-			MergedActors.Add(CurrentItem3D->Get());
+			MergedActors.Add(*CurrentItem3D);
 
 			if (FDieg_InventorySlot** FoundSlot = InventoryRootSlots.FindByPredicate(
 			[&](FDieg_InventorySlot* S)
@@ -647,7 +647,7 @@ bool UDieg_InventoryInputHandler::MergeItems(const TArray<FIntPoint>& RootSlotCo
 				const int32 Added = HoveringInventoryComponent3D->GetInventoryComponent()
 										->AddQuantityToSlot(CurrentInventorySlot->ItemInstance, Quantity);
 
-				CurrentItem3D->Get()->SetQuantity(CurrentInventorySlot->ItemInstance->GetQuantity());
+				(*CurrentItem3D)->SetQuantity(CurrentInventorySlot->ItemInstance->GetQuantity());
 				Quantity -= Added;
 
 				if (Quantity <= 0)

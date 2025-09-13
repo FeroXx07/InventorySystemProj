@@ -237,14 +237,14 @@ void UDieg_ItemCreatorEuw::SelectDataAsset(const FString& Option)
 	SelectedSlots.Empty();
 	SetupGrid(ItemSize);
 
-	TMap<FIntPoint, TObjectPtr<UDieg_Slot>>& SlotMap = GridWidget->GetSlotMap();
+	TMap<FIntPoint, UDieg_Slot*> SlotMap = GridWidget->GetSlotMap();
 	UDieg_UtilityLibrary::ForEachSlotInShape(SlotMap, Shape, [&](UDieg_Slot* GridSlot)
 	{
 		HandleSlotPressed(GridSlot);
 	});
 }
 
-void UDieg_ItemCreatorEuw::AddDataAssetToMap(FString Name, TObjectPtr<UDieg_ItemDefinitionDataAsset> DataAsset)
+void UDieg_ItemCreatorEuw::AddDataAssetToMap(FString Name, UDieg_ItemDefinitionDataAsset* DataAsset)
 {
 	DataAssetMap.Add(FName(*Name), DataAsset);
 	ComboBox_DataAsset->AddOption(Name);

@@ -19,36 +19,43 @@ UCLASS(EditInlineNew, DefaultToInstanced)
 class INVENTORY_API UDieg_ItemInstance : public UObject
 {
 	GENERATED_BODY()
-protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Pre Populate Item" /*, Replicated */) 
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Game|Dieg|Item Instance|Pre Populate Item", meta = (AllowPrivateAccess = "true")) 
 	TObjectPtr<UDieg_ItemDefinitionDataAsset> ItemDefinitionDataAsset;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Item" /*, Replicated */) 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Game|Dieg|Item Instance|Item", meta = (AllowPrivateAccess = "true")) 
 	TArray<TObjectPtr<UDieg_ItemFragment>> ItemFragments; // Instantiated fragments
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Item", meta=(ClampMin="1") /*, Replicated */) 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Game|Dieg|Item Instance|Item", meta=(ClampMin="1", AllowPrivateAccess = "true")) 
 	int32 Quantity = 1;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Item" /*, Replicated */) 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Game|Dieg|Item Instance|Item" , meta = (AllowPrivateAccess = "true")) 
 	FGameplayTagContainer ItemTags;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Item" /*, Replicated */) 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Game|Dieg|Item Instance|Item", meta = (AllowPrivateAccess = "true")) 
 	bool bIsInitialized{false};
-public:
+
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Item Instance")
 	void Initialize(UDieg_ItemDefinitionDataAsset* Def, int32 InQuantity = 1); // Instantiates fragments
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Item Instance")
 	UDieg_ItemDefinitionDataAsset* GetItemDefinitionDataAsset() const;
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Item Instance")
 	const FDieg_ItemDefinition& GetItemDefinition() const;
 	
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Item Instance")
 	int32 GetQuantity() const { return Quantity; };
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Item Instance")
 	void SetQuantity(int32 InQuantity) {Quantity = InQuantity;};
 	template <typename T> T* GetFragment() const; // Gets a specific fragment instance
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Item Instance")
 	const FGameplayTagContainer& GetTags() const { return ItemTags; }
 	
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Item Instance")
 	bool IsEqual(const UDieg_ItemInstance* ToCheck) const;
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Item Instance")
 	bool CanStackWith(const UDieg_ItemInstance* ToCheck) const; // Compares fragment states
 };
 

@@ -148,3 +148,29 @@ ADieg_PlayerController* UDieg_TracerComponent::CacheOwningPlayerController()
 	}
 	return nullptr;
 }
+
+TArray<AActor*> UDieg_TracerComponent::GetCurrentTraceActors() const
+{
+	TArray<AActor*> CurrentActors;
+	for (const TPair<TEnumAsByte<ECollisionChannel>, TWeakObjectPtr<AActor>>& Pair : CurrentTraceActor)
+	{
+		if (AActor* Actor = Pair.Value.Get())
+		{
+			CurrentActors.Add(Actor);
+		}
+	}
+	return CurrentActors;
+}
+
+TArray<AActor*> UDieg_TracerComponent::GetPreviousTraceActors() const
+{
+	TArray<AActor*> PreviousActors;
+	for (const TPair<TEnumAsByte<ECollisionChannel>, TWeakObjectPtr<AActor>>& Pair : PreviousTraceActor)
+	{
+		if (AActor* Actor = Pair.Value.Get())
+		{
+			PreviousActors.Add(Actor);
+		}
+	}
+	return PreviousActors;
+}

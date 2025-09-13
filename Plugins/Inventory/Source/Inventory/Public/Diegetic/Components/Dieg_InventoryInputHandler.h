@@ -44,212 +44,237 @@ class INVENTORY_API UDieg_InventoryInputHandler : public UActorComponent
 	GENERATED_BODY()
 
 public:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Input Handler", meta = (AllowPrivateAccess = "true"))
+	float TraceTimer = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Input Handler", meta = (AllowPrivateAccess = "true"))
+	float TraceInterval = 0.05f; 
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Input Handler", meta = (AllowPrivateAccess = "true"))
+	bool bDebugLogs{false};
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Input Handler|Diegetic Inventory", meta = (AllowPrivateAccess = "true"))
+	bool bIsInventoryOpen{false};
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Input Handler|Diegetic Inventory", meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<ADieg_Briefcase> BriefCaseActorClass;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Input Handler|Strong References", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<ADieg_Briefcase> BriefcaseActor;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Input Handler|Briefcase Spawn", meta = (AllowPrivateAccess = "true"))
+	FVector RelativeSpawnLocation{0.0f, 0.0, 0.0f};
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Input Handler|Briefcase Spawn", meta = (AllowPrivateAccess = "true"))
+	FRotator RelativeSpawnRotation{0.0f, 0.0, 0.0f};
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Game|Dieg|Inventory Input Handler|Input Actions", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UInputAction> ToggleInventoryIA;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Game|Dieg|Inventory Input Handler|Input Actions", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UInputAction> RotateIA;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Game|Dieg|Inventory Input Handler|Input Actions", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UInputAction> DragIA;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Game|Dieg|Inventory Input Handler|Input Mapping Contexts", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UInputMappingContext> DefaultIMCs;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Input Handler|Weak References", meta = (AllowPrivateAccess = "true"))
+	TWeakObjectPtr<ADieg_PlayerController> OwningPlayerController;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Input Handler|Weak References", meta = (AllowPrivateAccess = "true"))
+	TWeakObjectPtr<UCameraComponent> PlayerCameraComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Input Handler|Weak References", meta = (AllowPrivateAccess = "true"))
+	TWeakObjectPtr<UDieg_3DInventoryComponent> HoveringInventoryComponent3D;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Input Handler|Weak References", meta = (AllowPrivateAccess = "true"))
+	TWeakObjectPtr<ADieg_WorldItemActor> HoveringItem;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Input Handler|Weak References", meta = (AllowPrivateAccess = "true"))
+	TWeakObjectPtr<ADieg_WorldItemActor> DraggingItem;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Input Handler|Weak References", meta = (AllowPrivateAccess = "true"))
+	TWeakObjectPtr<AActor> LastHitActor;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Input Handler|Dieg Inventory", meta = (AllowPrivateAccess = "true"))
+	FIntPoint RelativeCoordinates;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Input Handler|Dieg Inventory", meta = (AllowPrivateAccess = "true"))
+	float ValidRotation{0.0f};
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Input Handler|Dieg Inventory", meta = (AllowPrivateAccess = "true"))
+	float CurrentRotation{0.0f};
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Input Handler|Dieg Inventory", meta = (AllowPrivateAccess = "true"))
+	FVector ValidWorldLocation{0.0f};
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Input Handler|Dieg Inventory", meta = (AllowPrivateAccess = "true"))
+	FIntPoint ValidCoordinates{-1, -1};
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Input Handler|Dieg Inventory", meta = (AllowPrivateAccess = "true"))
+	FIntPoint CurrentMouseCoordinates{-1, -1};
+
+	// Only for visuals
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Input Handler|Dieg Inventory", meta = (AllowPrivateAccess = "true"))
+	TWeakObjectPtr<UDieg_Slot> CurrentMouseSlot;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Input Handler|Weak References", meta = (AllowPrivateAccess = "true"))
+	TWeakObjectPtr<UDieg_3DInventoryComponent> ValidInventory3D;
+
+	// Used for default return to origin cases
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Input Handler|Weak References", meta = (AllowPrivateAccess = "true"))
+	TWeakObjectPtr<UDieg_3DInventoryComponent> Default3DInventory;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game|Dieg|Inventory Input Handler|Properties", meta = (AllowPrivateAccess = "true"))
+	bool bDebugDraw{false};
+	
+	// Max distance for interaction.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game|Dieg|Inventory Input Handler|Properties", meta = (AllowPrivateAccess = "true"))
+	double TraceLength{500.0};
+
+	// Trace channel enabled for interactions
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game|Dieg|Inventory Input Handler|Properties", meta = (AllowPrivateAccess = "true"))
+	TArray<TEnumAsByte<ECollisionChannel>> TraceChannels;
+
 	// Sets default values for this component's properties
 	UDieg_InventoryInputHandler();
 
-	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	FInventoryOpened OnInventoryOpened;
 
-	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	FInventoryClosed OnInventoryClosed;
 
-	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	FDragHoverInventory OnDragHoverInventory;
 
-	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	FDragUnHoverInventory OnDragUnHoverInventory;
 
-	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	FHoverInventory OnHoverInventory;
 
-	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	FUnHoverInventory OnUnHoverInventory;
 
-	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	FStartDragWorld OnStartDragWorld;
 
-	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	FStartDragInventory OnStartDragInventory;
 
-	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	FStartHoverSlot OnStartHoverSlot;
 
-	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	FStartUnHoverSlot OnStartUnHoverSlot;
 
-	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	FUpdateDragSlot OnUpdateDragSlot;
 
-	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	FDropWorld OnDropWorld;
 
-	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	FMergeItem OnMergeItem;
 
-	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	FConsumedItemInMerge OnConsumedItemInMerge;
 
-	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	FResetDragWorld OnResetDragWorld;
 
-	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	FResetDragInventory OnResetDragInventory;
 
-	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	FDropInInventory OnDropInInventory;
 
-	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	FHoverItem OnHoverItem;
 
-	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	FUnHoverItem OnUnHoverItem;
 
-	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	FRotateItem OnRotateItem;
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
+	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
 	void InitializeImcSubsystem();
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory Component")
-	float TraceTimer = 0.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory Component")
-	float TraceInterval = 0.05f; 
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory Component")
-	bool bDebugLogs{false};
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Diegetic Inventory", meta = (AllowPrivateAccess = "true"))
-	bool bIsInventoryOpen{false};
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Diegetic Inventory", meta = (AllowPrivateAccess = "true"))
-	TSubclassOf<ADieg_Briefcase> BriefCaseActorClass;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Strong References", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<ADieg_Briefcase> BriefcaseActor;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Briefcase Spawn", meta = (AllowPrivateAccess = "true"))
-	FVector RelativeSpawnLocation{0.0f, 0.0, 0.0f};
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Briefcase Spawn", meta = (AllowPrivateAccess = "true"))
-	FRotator RelativeSpawnRotation{0.0f, 0.0, 0.0f};
-	
-	UPROPERTY(EditDefaultsOnly, Category = "Input Actions")
-	TObjectPtr<UInputAction> ToggleInventoryIA;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Input Actions")
-	TObjectPtr<UInputAction> RotateIA;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Input Actions")
-	TObjectPtr<UInputAction> DragIA;
-	
-	UPROPERTY(EditDefaultsOnly, Category = "Input Mapping Contexts")
-	TObjectPtr<UInputMappingContext> DefaultIMCs;
-	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weak References", meta = (AllowPrivateAccess = "true"))
-	TWeakObjectPtr<ADieg_PlayerController> OwningPlayerController;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weak References", meta = (AllowPrivateAccess = "true"))
-	TWeakObjectPtr<UCameraComponent> PlayerCameraComponent;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weak References", meta = (AllowPrivateAccess = "true"))
-	TWeakObjectPtr<UDieg_3DInventoryComponent> HoveringInventoryComponent3D;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weak References", meta = (AllowPrivateAccess = "true"))
-	TWeakObjectPtr<ADieg_WorldItemActor> HoveringItem;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weak References", meta = (AllowPrivateAccess = "true"))
-	TWeakObjectPtr<ADieg_WorldItemActor> DraggingItem;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weak References", meta = (AllowPrivateAccess = "true"))
-	TWeakObjectPtr<AActor> LastHitActor;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dieg Inventory", meta = (AllowPrivateAccess = "true"))
-	FIntPoint RelativeCoordinates;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dieg Inventory", meta = (AllowPrivateAccess = "true"))
-	float ValidRotation{0.0f};
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dieg Inventory", meta = (AllowPrivateAccess = "true"))
-	float CurrentRotation{0.0f};
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dieg Inventory", meta = (AllowPrivateAccess = "true"))
-	FVector ValidWorldLocation{0.0f};
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dieg Inventory", meta = (AllowPrivateAccess = "true"))
-	FIntPoint ValidCoordinates{-1, -1};
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dieg Inventory", meta = (AllowPrivateAccess = "true"))
-	FIntPoint CurrentMouseCoordinates{-1, -1};
-
-	// Only for visuals
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dieg Inventory", meta = (AllowPrivateAccess = "true"))
-	TWeakObjectPtr<UDieg_Slot> CurrentMouseSlot;
-	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weak References", meta = (AllowPrivateAccess = "true"))
-	TWeakObjectPtr<UDieg_3DInventoryComponent> ValidInventory3D;
-
-	// Used for default return to origin cases
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weak References", meta = (AllowPrivateAccess = "true"))
-	TWeakObjectPtr<UDieg_3DInventoryComponent> Default3DInventory;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Properties", meta = (AllowPrivateAccess = "true"))
-	bool bDebugDraw{false};
-	
-	// Max distance for interaction.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Properties", meta = (AllowPrivateAccess = "true"))
-	double TraceLength{500.0};
-
-	// Trace channel enabled for interactions
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Properties", meta = (AllowPrivateAccess = "true"))
-	TArray<TEnumAsByte<ECollisionChannel>> TraceChannels;
-	
+	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
 	void ToggleInventory();
+	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
 	void OpenUserInterface();
+	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
 	void CloseUserInterface();
+	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
 	bool LineTraceFromMouse(FHitResult& HitResult) const;
+	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
 	void StartHoverInventory(UDieg_3DInventoryComponent* NewHoveringInventory);
+	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
 	void StopHoverInventory(UDieg_3DInventoryComponent* HoveringInventory);
+	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
 	void StartHoverItem(ADieg_WorldItemActor* NewHoveringWorldItem);
+	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
 	void StopHoverItem(ADieg_WorldItemActor* HoveringWorldItem);
+	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
 	void HandleTraceHit(const FHitResult& HitResult, bool bIsBlockingHit);
 
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	bool IsDraggingItem() const { return DraggingItem.IsValid(); }
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	bool IsInInventory() const { return HoveringInventoryComponent3D.IsValid(); }
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	bool IsItemInInventory(const ADieg_WorldItemActor* ItemIn, UDieg_3DInventoryComponent*& Inventory3DOut);
 	
-	UFUNCTION(Category = "Game|Player|Dieg")
+	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
 	void TryDragItem();
-	UFUNCTION(Category = "Game|Player|Dieg")
+	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
 	void TryDropItem();
 
-	UFUNCTION(Category = "Game|Player|Dieg")
+	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
 	void HandleInputRotateItem();
 	
-	UFUNCTION(Category = "Game|Player|Dieg")
+	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
 	void TryRotateItem();
+	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
 	void InternalHandleInventorySlotHover(UDieg_3DInventoryComponent* Dieg_3DInventoryComponent, UDieg_Slot* Dieg_Slot);
 
-	UFUNCTION(Category = "Game|Player|Dieg")
+	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
 	void HandleHoveringInventorySlotHovered(const FGeometry& Geometry, const FPointerEvent& PointerEvent, UDieg_3DInventoryComponent* Dieg_3DInventoryComponent, UDieg_Slot* Dieg_Slot);
-	UFUNCTION(Category = "Game|Player|Dieg")
+	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
 	void HandleHoveringInventorySlotUnHovered(const FPointerEvent& PointerEvent, UDieg_3DInventoryComponent* Dieg_3DInventoryComponent, UDieg_Slot* Dieg_Slot);
 	
+	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
 	void StartDraggingItem();
+	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
 	void StopDraggingItem();
+	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
 	bool MergeItems(const TArray<FIntPoint>& RootSlotCoordinates);
+	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
 	void RotateItem();
 	// Connect dragging item to hovering inventory
+	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
 	void ConnectItemToInventory() const;
+	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
 	void DisconnectItemToInventory() const;
 
 	// Where we clicked in local space (shape coordinates)
+	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
 	FIntPoint GetGrabCoordinates() const;
+	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
 	FIntPoint GetRotatedGrabCoordinates(bool UseValidated) const;
+	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
 	TArray<FIntPoint> GetRelevantCoordinates() const;
+	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
 	bool GetCurrentSlot(UDieg_Slot*& SlotOut) const;
+
 public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,

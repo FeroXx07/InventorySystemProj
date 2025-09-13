@@ -11,18 +11,22 @@ class INVENTORY_API ADieg_Briefcase : public ADieg_WorldInventoryActor
 {
 	GENERATED_BODY()
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Briefcase|Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> SkeletalMeshComponent;
 
 public:
 	// Sets default values for this actor's properties
 	ADieg_Briefcase();
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Inventory")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Game|Dieg|Briefcase")
 	void OpenBriefcase();
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Inventory")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Game|Dieg|Briefcase")
 	void CloseBriefcase();
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Game|Dieg|Briefcase")
+	void Initialize(UDieg_InventoryComponent* ExternalInventoryComponent);
 
 protected:
 	virtual void PostInitializeComponents() override;
@@ -33,7 +37,4 @@ protected:
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-	
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Inventory")
-	void Initialize(UDieg_InventoryComponent* ExternalInventoryComponent);
 };

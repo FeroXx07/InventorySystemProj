@@ -15,11 +15,14 @@ UCLASS()
 class INVENTORY_API UDieg_ItemDefinitionDataAsset : public UPrimaryDataAsset
 {
 	GENERATED_BODY()
-	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
-	virtual void PostSaveRoot(FObjectPostSaveRootContext ObjectSaveContext) override;
+
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Definition")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Item Definition Data Asset|Definition", meta = (AllowPrivateAccess = "true"))
 	FDieg_ItemDefinition ItemDefinition;
 
+	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+	virtual void PostSaveRoot(FObjectPostSaveRootContext ObjectSaveContext) override;
+
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Item Definition Data Asset")
 	static void SetItemDefinitionShapeRoot(FDieg_ItemDefinition& ItemDef);
 };

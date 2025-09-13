@@ -55,7 +55,7 @@ FReply UDieg_Slot::NativeOnMouseButtonUp(const FGeometry& InGeometry, const FPoi
 	// return Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
 	return FReply::Handled();}
 
-void UDieg_Slot::SetParentGrid(const TObjectPtr<UDieg_Grid>& Grid)
+void UDieg_Slot::SetParentGrid(UDieg_Grid* Grid)
 {
 	ParentGrid = Grid;
 }

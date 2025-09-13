@@ -23,32 +23,21 @@ public:
 	UDieg_TracerComponent();
 
 	// Delegate methods
-	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Tracer Component")
 	FNewTraceActorIn OnActorInTrace;
-	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Tracer Component")
 	FOldTraceActorOut OnActorOutTrace;
-protected:
-	virtual void InitializeComponent() override;
-	virtual void BeginPlay() override;
-	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-	
-	FHitResult DoSingleTrace(const FVector& TraceStart, const FVector& TraceEnd,
-	                         TEnumAsByte<ECollisionChannel> Channel);
-private:
-	// Function to trace for collisions that have item trace channel
-	void DoMultipleTraces();
-	
-	ADieg_PlayerController* CacheOwningPlayerController();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Properties", meta = (AllowPrivateAccess = "true"))
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game|Dieg|Tracer Component|Properties", meta = (AllowPrivateAccess = "true"))
 	bool bDebugDraw{false};
 	
 	// Max distance for interaction.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Properties", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game|Dieg|Tracer Component|Properties", meta = (AllowPrivateAccess = "true"))
 	double TraceLength{100.0};
 
 	// Trace channel enabled for interactions
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Properties", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game|Dieg|Tracer Component|Properties", meta = (AllowPrivateAccess = "true"))
 	TArray<TEnumAsByte<ECollisionChannel>> TraceChannels;
 
 	// // The Actor currently in trace line.
@@ -59,14 +48,32 @@ private:
 	// UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weak References", meta = (AllowPrivateAccess = "true"))
 	// TMap<TEnumAsByte<ECollisionChannel>, TWeakObjectPtr<AActor>> PreviousTraceActor;
 
-	UPROPERTY(VisibleAnywhere, Category = "Weak References")
+	UPROPERTY(VisibleAnywhere, Category = "Game|Dieg|Tracer Component|Weak References", meta = (AllowPrivateAccess = "true"))
 	TMap<TEnumAsByte<ECollisionChannel>, TWeakObjectPtr<AActor>> CurrentTraceActor;
 
-	UPROPERTY(VisibleAnywhere, Category = "Weak References")
+	UPROPERTY(VisibleAnywhere, Category = "Game|Dieg|Tracer Component|Weak References", meta = (AllowPrivateAccess = "true"))
 	TMap<TEnumAsByte<ECollisionChannel>, TWeakObjectPtr<AActor>> PreviousTraceActor;
 
+	UPROPERTY(VisibleAnywhere, Category = "Game|Dieg|Tracer Component|Weak References", meta = (AllowPrivateAccess = "true"))
+	TWeakObjectPtr<ADieg_PlayerController> OwningPlayerController;
+	virtual void InitializeComponent() override;
+	virtual void BeginPlay() override;
+	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	
+	UFUNCTION(Category = "Game|Dieg|Tracer Component")
+	FHitResult DoSingleTrace(const FVector& TraceStart, const FVector& TraceEnd,
+	                         TEnumAsByte<ECollisionChannel> Channel);
+
+private:
+	// Function to trace for collisions that have item trace channel
+	UFUNCTION(Category = "Game|Dieg|Tracer Component")
+	void DoMultipleTraces();
+	
+	UFUNCTION(Category = "Game|Dieg|Tracer Component")
+	ADieg_PlayerController* CacheOwningPlayerController();
+
 	// Polling method
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Tracer Component")
 	AActor* GetCurrentTraceActor(const TEnumAsByte<ECollisionChannel> Channel) const
 	{
 		if (const TWeakObjectPtr<AActor>* Found = CurrentTraceActor.Find(Channel))
@@ -77,7 +84,7 @@ private:
 	};
 
 	// Polling method
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Tracer Component")
 	AActor* GetPreviousTraceActor(const TEnumAsByte<ECollisionChannel> Channel) const
 	{
 		if (const TWeakObjectPtr<AActor>* Found = PreviousTraceActor.Find(Channel))
@@ -87,6 +94,13 @@ private:
 		return nullptr;
 	};
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weak References", meta = (AllowPrivateAccess = "true"))
-	TWeakObjectPtr<ADieg_PlayerController> OwningPlayerController;
+	// Blueprint getter functions for private properties
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Tracer Component")
+	TArray<AActor*> GetCurrentTraceActors() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Tracer Component")
+	TArray<AActor*> GetPreviousTraceActors() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Tracer Component")
+	ADieg_PlayerController* GetOwningPlayerController() const { return OwningPlayerController.Get(); }
 };

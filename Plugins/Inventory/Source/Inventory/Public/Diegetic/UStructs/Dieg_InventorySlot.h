@@ -16,19 +16,19 @@ struct INVENTORY_API FDieg_InventorySlot
 {
 	GENERATED_BODY()
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Slot")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game|Dieg|Inventory Slot|Slot")
 	TObjectPtr<UDieg_ItemInstance> ItemInstance;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Slot")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game|Dieg|Inventory Slot|Slot")
 	FGameplayTagContainer SlotTags;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Slot")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game|Dieg|Inventory Slot|Slot")
 	FIntPoint Coordinates{-1, -1};
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Slot")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Game|Dieg|Inventory Slot|Slot")
 	FIntPoint RootSlot{-1, -1};
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Slot")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game|Dieg|Inventory Slot|Slot")
 	float Rotation{0.0f};
 
 	void Initialize(const FIntPoint& SlotPoint, const FGameplayTagContainer& Tags);

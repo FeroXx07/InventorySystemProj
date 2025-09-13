@@ -21,9 +21,26 @@ void UDieg_Grid::NativePreConstruct()
 	CreateEmptyGrid(TotalSlots, MaxColumns);
 }
 
-TMap<FIntPoint, TObjectPtr<UDieg_Slot>>& UDieg_Grid::GetSlotMap()
+TMap<FIntPoint, UDieg_Slot*>& UDieg_Grid::GetSlotMap()
 {
-	return SlotMap;
+	// Convert TObjectPtr to raw pointer for C++ efficiency
+	static TMap<FIntPoint, UDieg_Slot*> ConvertedMap;
+	ConvertedMap.Empty();
+	for (const TPair<FIntPoint, TObjectPtr<UDieg_Slot>>& Pair : SlotMap)
+	{
+		ConvertedMap.Add(Pair.Key, Pair.Value.Get());
+	}
+	return ConvertedMap;
+}
+
+TMap<FIntPoint, UDieg_Slot*> UDieg_Grid::GetSlotMapBP()
+{
+	TMap<FIntPoint, UDieg_Slot*> BlueprintMap;
+	for (const TPair<FIntPoint, TObjectPtr<UDieg_Slot>>& Pair : SlotMap)
+	{
+		BlueprintMap.Add(Pair.Key, Pair.Value.Get());
+	}
+	return BlueprintMap;
 }
 
 void UDieg_Grid::CreateEmptyGrid_Implementation(int32 TotalSlots_, int32 MaxColumns_)

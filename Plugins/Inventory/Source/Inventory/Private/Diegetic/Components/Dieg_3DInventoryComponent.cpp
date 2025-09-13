@@ -153,7 +153,7 @@ void UDieg_3DInventoryComponent::AddItemToInventorySlot(ADieg_WorldItemActor* It
 		return;
 	}
 
-	if (InventoryComponentRef->CanAddItemToSlot(SlotCoordinates, ItemActor->GetItemInstance(), RotationUsed))
+	if (InventoryComponentRef->CanAddItemInstanceToSlot(SlotCoordinates, ItemActor->GetItemInstance(), RotationUsed))
 	{
 		int32 Remaining = INT32_MAX;
 		InventoryComponentRef->AddItemToInventory(ItemActor->GetItemInstanceMutable(), SlotCoordinates, RotationUsed);

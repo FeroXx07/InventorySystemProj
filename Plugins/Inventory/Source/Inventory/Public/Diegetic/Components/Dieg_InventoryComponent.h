@@ -20,47 +20,47 @@ public:
 	// Sets default values for this component's properties
 	UDieg_InventoryComponent();
 
-	UPROPERTY(BlueprintAssignable)
+	UPROPERTY(BlueprintAssignable, Category = "Game|Dieg|Inventory Component")
 	FOnInventoryInitialized OnInventoryInitialized;
 
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory Component")
-	bool bDebugLogs{false};
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory Component")
-	bool bIsInitialized{false};
-
 	// All inventory slots containing metadata and item references
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory Component|Storage")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Component|Storage", meta = (AllowPrivateAccess = "true"))
 	TArray<FDieg_InventorySlot> InventorySlots;
 
 	// Quick lookup map to check if a slot exists and whether it's occupied
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory Component|Storage")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Component|Storage", meta = (AllowPrivateAccess = "true"))
 	TMap<FIntPoint, bool> SlotsOccupation;
 
 	// Default tags applied to all slots (e.g., for filtering or item restrictions)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory Component|Storage")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Game|Dieg|Inventory Component|Storage", meta = (AllowPrivateAccess = "true"))
 	FGameplayTagContainer SlotTags;
 
 	// Preferred rotation when placing items (degrees)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Inventory Component|Storage",
-		meta=(ClampMin="-90.0", ClampMax="180.0", UIMin="-90.0", UIMax="180.0"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Game|Dieg|Inventory Component|Storage",
+		meta=(ClampMin="-90.0", ClampMax="180.0", UIMin="-90.0", UIMax="180.0", AllowPrivateAccess = "true"))
 	float ItemRotationPriority{90.0};
 
 	// Total number of slots in the inventory grid
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory Component|Setup")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Component|Setup", meta = (AllowPrivateAccess = "true"))
 	int32 TotalSlots{35};
 	
 	// Number of columns in the inventory grid (used to calculate slot coordinates)
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory Component|Setup")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Component|Setup", meta = (AllowPrivateAccess = "true"))
 	int32 MaxColumns{10};
 
 	// Items to prepopulate in the inventory on initialization
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory Component|Setup")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Component|Setup", meta = (AllowPrivateAccess = "true"))
 	TArray<FDieg_PrePopulate> PrePopulateData;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Component")
+	bool bDebugLogs{false};
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Component")
+	bool bIsInitialized{false};
 
 public:
 	// Called every frame
@@ -68,67 +68,128 @@ public:
 	                           FActorComponentTickFunction* ThisTickFunction) override;
 	
 	// Initializes slots and prepopulates items
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
 	void Initialize(int32 NumSlots, int32 NumColumns, const FGameplayTagContainer& Tags);
 
 	// Attempts to add an item; updates Remaining quantity
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
 	bool TryAddItem(UDieg_ItemInstance* ItemToAdd, int32& Remaining);
 
 	// Attempts to remove an item.
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
 	bool TryRemoveItem(UDieg_ItemInstance* ItemToRemove);
 
 	// Checks if an item can be added (stackable or empty slots)
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
 	bool CanAddItem(const UDieg_ItemInstance* ItemToAdd);
 
 	// Checks if an item can be removed (exists in inventory)
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
 	bool CanRemoveItem(UDieg_ItemInstance* ItemToRemove);
 
 	// Returns true if inventory contains at least one instance of the item
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
 	bool DoesInventoryContainItem(const UDieg_ItemInstance* ItemToCheck) { return FindRootSlotByItemType(ItemToCheck).Num() > 0; }
 
 	// Returns all root slots containing items equal to the provided instance
-	TSet<FDieg_InventorySlot*> FindRootSlotByItemType(const UDieg_ItemInstance* ItemToCheck);
+	// C++ only - returns array of pointers for efficiency
+	TArray<FDieg_InventorySlot*> FindRootSlotByItemType(const UDieg_ItemInstance* ItemToCheck);
+	
+	// Blueprint compatible - returns array of structs by value
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
+	TArray<FDieg_InventorySlot> FindRootSlotByItemTypeBP(const UDieg_ItemInstance* ItemToCheck);
 
 	// Returns all root slots containing exactly the provided instance
-	TSet<FDieg_InventorySlot*> FindRootSlotByInstance(const UDieg_ItemInstance* ItemToCheck);
+	// C++ only - returns array of pointers for efficiency
+	TArray<FDieg_InventorySlot*> FindRootSlotByInstance(const UDieg_ItemInstance* ItemToCheck);
+	
+	// Blueprint compatible - returns array of structs by value
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
+	TArray<FDieg_InventorySlot> FindRootSlotByInstanceBP(const UDieg_ItemInstance* ItemToCheck);
 
+	// C++ only - returns pointer for efficiency
 	FDieg_InventorySlot* GetRootSlot(const FIntPoint& SlotCoordinates);
+	
+	// Blueprint compatible - returns struct by value
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
+	FDieg_InventorySlot GetRootSlotBP(const FIntPoint& SlotCoordinates);
+	// C++ only - returns pointer for efficiency
 	FDieg_InventorySlot* GetSlot(const FIntPoint& SlotCoordinates);
 	
+	// Blueprint compatible - returns struct by value
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
+	FDieg_InventorySlot GetSlotBP(const FIntPoint& SlotCoordinates);
+	
+	// C++ only - returns array of pointers for efficiency
 	TArray<FDieg_InventorySlot*> GetRootSlotsMutable();
+	
+	// Blueprint compatible - returns array of structs by value
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
+	TArray<FDieg_InventorySlot> GetRootSlotsMutableBP();
+	// C++ only - returns array of pointers for efficiency
 	TArray<FDieg_InventorySlot*> GetSlotsMutable();
+	
+	// Blueprint compatible - returns array of structs by value
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
+	TArray<FDieg_InventorySlot> GetSlotsMutableBP();
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
 	int32 GetTotalSlots() const { return TotalSlots; };
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
 	int32 GetMaxColumns() const { return MaxColumns; };
 
 	// Computes all coordinates the item would occupy based on root, shape, and rotation
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
 	static TArray<FIntPoint> GetRelevantCoordinates(const FIntPoint& SlotCoordinates, const TArray<FIntPoint>& Shape, const FIntPoint& ShapeRoot, float Rotation, FIntPoint& RootSlotOut);
 	
 	// Returns all inventory root slot coordinates containing items overlapping the given shape
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
 	TArray<FIntPoint> GetRelevantItems(const TArray<FIntPoint>& ShapeCoordinates, const UDieg_ItemInstance* Object);
 
 	// Checks if all slots in the shape are free; optionally ignores some slots
-	bool AreSlotsAvailable(const TArray<FIntPoint>& InputShape, const TArray<FIntPoint>* Ignore = nullptr);
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
+	bool AreSlotsAvailable(const TArray<FIntPoint>& InputShape, const TArray<FIntPoint>& Ignore);
+
+	// Checks if all slots in the shape are free
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
+	bool AreSlotsAvailableSimple(const TArray<FIntPoint>& InputShape);
 
 	// Adds quantity to an existing stackable slot; returns amount added
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
 	int32 AddQuantityToSlot(const UDieg_ItemInstance* ItemToAdd, int32 QuantityIn);
 
 	// Places an item in inventory starting at given slot with rotation; returns root slot
-	const FDieg_InventorySlot* AddItemToInventory(UDieg_ItemInstance* ItemToAdd, const FIntPoint& SlotCoordinates, float RotationUsed);
+	// C++ only - returns pointer for efficiency
+	FDieg_InventorySlot* AddItemToInventory(UDieg_ItemInstance* ItemToAdd, const FIntPoint& SlotCoordinates, float RotationUsed);
+	
+	// Blueprint compatible - returns struct by value
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
+	FDieg_InventorySlot AddItemToInventoryBP(UDieg_ItemInstance* ItemToAdd, const FIntPoint& SlotCoordinates, float RotationUsed);
 
 	// Removes an item from inventory, clearing all occupied slots; returns root slot
-	const FDieg_InventorySlot* RemoveItemFromInventory(UDieg_ItemInstance* ItemToRemove);
+	// C++ only - returns pointer for efficiency
+	FDieg_InventorySlot* RemoveItemFromInventory(UDieg_ItemInstance* ItemToRemove);
+	
+	// Blueprint compatible - returns struct by value
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
+	FDieg_InventorySlot RemoveItemFromInventoryBP(UDieg_ItemInstance* ItemToRemove);
 
 	// Checks if a given slot can accept the item shape (with optional rotation)
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
 	bool CanAddItemToSlot(const FIntPoint& SlotCoordinates, const TArray<FIntPoint>& ItemShape, const FIntPoint& ItemShapeRoot, int32& RotationUsedOut);
 
-	// Checks if a given slot can accept the item shape (with optional rotation)
-	bool CanAddItemToSlot(const FIntPoint& SlotCoordinates, UDieg_ItemInstance* ItemInstance, int32 Rotation);
+	// Checks if a given slot can accept the item instance (with rotation)
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
+	bool CanAddItemInstanceToSlot(const FIntPoint& SlotCoordinates, UDieg_ItemInstance* ItemInstance, int32 Rotation);
 
 	// Returns true if a coordinate is outside the inventory bounds
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
 	bool IsSlotPointOutOfBounds(const FIntPoint& SlotPoint); 
 
 	// Returns true if a coordinate is currently occupied
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
 	bool IsSlotPointOccupied(const FIntPoint& SlotPoint);
 
 	// Creates a new item instance from prepopulate data
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
 	UDieg_ItemInstance* MakeInstanceFromPrePopulateData(const FDieg_PrePopulate& PrePopData);
 };

@@ -61,6 +61,28 @@ TArray<FDieg_InventorySlot*> UDieg_InventoryComponent::GetSlotsMutable()
 	return RootSlots;
 }
 
+TArray<FDieg_InventorySlot> UDieg_InventoryComponent::GetRootSlotsMutableBP()
+{
+	TArray<FDieg_InventorySlot*> PointerArray = GetRootSlotsMutable();
+	TArray<FDieg_InventorySlot> StructArray;
+	for (FDieg_InventorySlot* SlotPtr : PointerArray)
+	{
+		StructArray.Add(*SlotPtr);
+	}
+	return StructArray;
+}
+
+TArray<FDieg_InventorySlot> UDieg_InventoryComponent::GetSlotsMutableBP()
+{
+	TArray<FDieg_InventorySlot*> PointerArray = GetSlotsMutable();
+	TArray<FDieg_InventorySlot> StructArray;
+	for (FDieg_InventorySlot* SlotPtr : PointerArray)
+	{
+		StructArray.Add(*SlotPtr);
+	}
+	return StructArray;
+}
+
 // Called every frame
 void UDieg_InventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType,
                                              FActorComponentTickFunction* ThisTickFunction)
@@ -148,7 +170,7 @@ bool UDieg_InventoryComponent::TryAddItem(UDieg_ItemInstance* ItemToAdd, int32& 
 	}
 
 	// First try stacking on existing items of same type
-	TSet<FDieg_InventorySlot*> FoundRootInstances = FindRootSlotByItemType(ItemToAdd);
+	TArray<FDieg_InventorySlot*> FoundRootInstances = FindRootSlotByItemType(ItemToAdd);
 	if (!FoundRootInstances.IsEmpty())
 	{
 		for (FDieg_InventorySlot* RootSlots : FoundRootInstances)
@@ -202,7 +224,7 @@ bool UDieg_InventoryComponent::CanAddItem(const UDieg_ItemInstance* ItemToAdd)
 	const int32 Quantity = FMath::Clamp(ItemToAdd->GetQuantity(), 1, ItemToAdd->GetItemDefinitionDataAsset()->ItemDefinition.StackSizeMax);
 
 	// Check stackable slots first
-	TSet<FDieg_InventorySlot*> FoundRootInstances = FindRootSlotByItemType(ItemToAdd);
+	TArray<FDieg_InventorySlot*> FoundRootInstances = FindRootSlotByItemType(ItemToAdd);
 	for (FDieg_InventorySlot* RootSlot : FoundRootInstances)
 	{
 		if (!RootSlot || !IsValid(RootSlot->ItemInstance)) continue;
@@ -230,6 +252,12 @@ bool UDieg_InventoryComponent::CanAddItem(const UDieg_ItemInstance* ItemToAdd)
 	}
 
 	return false; // No stacking or placement possible
+}
+
+bool UDieg_InventoryComponent::CanRemoveItem(UDieg_ItemInstance* ItemToRemove)
+{
+	// TODO
+	return true;
 }
 
 // Attempts to add quantity to a root slot (stackable)
@@ -271,8 +299,8 @@ bool UDieg_InventoryComponent::IsSlotPointOccupied(const FIntPoint& SlotPoint)
 }
 
 
-// Finds root slots matching the same item type
-TSet<FDieg_InventorySlot*> UDieg_InventoryComponent::FindRootSlotByItemType(const UDieg_ItemInstance* ItemToCheck)
+// Finds root slots matching the same item type - C++ version (returns pointers)
+TArray<FDieg_InventorySlot*> UDieg_InventoryComponent::FindRootSlotByItemType(const UDieg_ItemInstance* ItemToCheck)
 {
 	TSet<FDieg_InventorySlot*> InventorySlotsFound;
 	for (FDieg_InventorySlot& InventorySlot : InventorySlots)
@@ -282,11 +310,23 @@ TSet<FDieg_InventorySlot*> UDieg_InventoryComponent::FindRootSlotByItemType(cons
 			InventorySlotsFound.Add(&InventorySlot);
 		}
 	}
-	return InventorySlotsFound;	
+	return InventorySlotsFound.Array();
 }
 
-// Finds root slots containing a specific instance
-TSet<FDieg_InventorySlot*> UDieg_InventoryComponent::FindRootSlotByInstance(const UDieg_ItemInstance* ItemToCheck)
+// Finds root slots matching the same item type - Blueprint version (returns structs by value)
+TArray<FDieg_InventorySlot> UDieg_InventoryComponent::FindRootSlotByItemTypeBP(const UDieg_ItemInstance* ItemToCheck)
+{
+	TArray<FDieg_InventorySlot*> PointerArray = FindRootSlotByItemType(ItemToCheck);
+	TArray<FDieg_InventorySlot> StructArray;
+	for (FDieg_InventorySlot* SlotPtr : PointerArray)
+	{
+		StructArray.Add(*SlotPtr);
+	}
+	return StructArray;
+}
+
+// Finds root slots containing a specific instance - C++ version (returns pointers)
+TArray<FDieg_InventorySlot*> UDieg_InventoryComponent::FindRootSlotByInstance(const UDieg_ItemInstance* ItemToCheck)
 {
 	TSet<FDieg_InventorySlot*> InventorySlotsFound;
 	for (FDieg_InventorySlot& InventorySlot : InventorySlots)
@@ -296,7 +336,19 @@ TSet<FDieg_InventorySlot*> UDieg_InventoryComponent::FindRootSlotByInstance(cons
 			InventorySlotsFound.Add(&InventorySlot);
 		}
 	}
-	return InventorySlotsFound;	
+	return InventorySlotsFound.Array();
+}
+
+// Finds root slots containing a specific instance - Blueprint version (returns structs by value)
+TArray<FDieg_InventorySlot> UDieg_InventoryComponent::FindRootSlotByInstanceBP(const UDieg_ItemInstance* ItemToCheck)
+{
+	TArray<FDieg_InventorySlot*> PointerArray = FindRootSlotByInstance(ItemToCheck);
+	TArray<FDieg_InventorySlot> StructArray;
+	for (FDieg_InventorySlot* SlotPtr : PointerArray)
+	{
+		StructArray.Add(*SlotPtr);
+	}
+	return StructArray;
 }
 
 FDieg_InventorySlot* UDieg_InventoryComponent::GetRootSlot(const FIntPoint& SlotCoordinates)
@@ -310,6 +362,12 @@ FDieg_InventorySlot* UDieg_InventoryComponent::GetRootSlot(const FIntPoint& Slot
 	return nullptr;
 }
 
+FDieg_InventorySlot UDieg_InventoryComponent::GetRootSlotBP(const FIntPoint& SlotCoordinates)
+{
+	FDieg_InventorySlot* SlotPtr = GetRootSlot(SlotCoordinates);
+	return SlotPtr ? *SlotPtr : FDieg_InventorySlot();
+}
+
 FDieg_InventorySlot* UDieg_InventoryComponent::GetSlot(const FIntPoint& SlotCoordinates)
 {
 	if (FDieg_InventorySlot* Slot = InventorySlots.FindByPredicate([&](const FDieg_InventorySlot& S){
@@ -321,6 +379,12 @@ FDieg_InventorySlot* UDieg_InventoryComponent::GetSlot(const FIntPoint& SlotCoor
 	return nullptr;
 }
 
+FDieg_InventorySlot UDieg_InventoryComponent::GetSlotBP(const FIntPoint& SlotCoordinates)
+{
+	FDieg_InventorySlot* SlotPtr = GetSlot(SlotCoordinates);
+	return SlotPtr ? *SlotPtr : FDieg_InventorySlot();
+}
+
 // Checks if an item shape can fit starting from given slot
 bool UDieg_InventoryComponent::CanAddItemToSlot(const FIntPoint& SlotCoordinates,
                                                 const TArray<FIntPoint>& ItemShape,
@@ -328,9 +392,10 @@ bool UDieg_InventoryComponent::CanAddItemToSlot(const FIntPoint& SlotCoordinates
                                                 int32& RotationUsedOut)
 {
 	// Test default rotation first
+	TArray<FIntPoint> EmptyIgnore;
 	FIntPoint DefaultCoordsRoot;
 	const TArray<FIntPoint> DefaultCoords = GetRelevantCoordinates(SlotCoordinates, ItemShape, ItemShapeRoot, ItemRotationPriority, DefaultCoordsRoot);
-	if (DefaultCoords.Contains(SlotCoordinates) && AreSlotsAvailable(DefaultCoords, nullptr))
+	if (DefaultCoords.Contains(SlotCoordinates) && AreSlotsAvailable(DefaultCoords, EmptyIgnore))
 	{
 		RotationUsedOut = ItemRotationPriority;
 		return true;
@@ -344,7 +409,7 @@ bool UDieg_InventoryComponent::CanAddItemToSlot(const FIntPoint& SlotCoordinates
 
 		FIntPoint TestCoordsRoot;
 		TArray<FIntPoint> TestCoords = GetRelevantCoordinates(SlotCoordinates, ItemShape, ItemShapeRoot, TestAngle, TestCoordsRoot);
-		if (TestCoords.Contains(SlotCoordinates) && AreSlotsAvailable(TestCoords, nullptr))
+		if (TestCoords.Contains(SlotCoordinates) && AreSlotsAvailable(TestCoords, EmptyIgnore))
 		{
 			RotationUsedOut = TestAngle;
 			return true;
@@ -354,15 +419,17 @@ bool UDieg_InventoryComponent::CanAddItemToSlot(const FIntPoint& SlotCoordinates
 	return false;
 }
 
-bool UDieg_InventoryComponent::CanAddItemToSlot(const FIntPoint& SlotCoordinates, UDieg_ItemInstance* ItemInstance,
+bool UDieg_InventoryComponent::CanAddItemInstanceToSlot(const FIntPoint& SlotCoordinates, UDieg_ItemInstance* ItemInstance,
 	int32 Rotation)
 {
+	TArray<FIntPoint> EmptyIgnore;
+
 	const FDieg_ItemDefinition& ItemDefinition = ItemInstance->GetItemDefinition();
 	
 	// Test default rotation first
 	FIntPoint DefaultCoordsRoot;
 	const TArray<FIntPoint> DefaultCoords = GetRelevantCoordinates(SlotCoordinates, ItemDefinition.DefaultShape, ItemDefinition.DefaultShapeRoot, Rotation, DefaultCoordsRoot);
-	if (DefaultCoords.Contains(SlotCoordinates) && AreSlotsAvailable(DefaultCoords, nullptr))
+	if (DefaultCoords.Contains(SlotCoordinates) && AreSlotsAvailable(DefaultCoords, EmptyIgnore))
 	{
 		return true;
 	}
@@ -372,11 +439,11 @@ bool UDieg_InventoryComponent::CanAddItemToSlot(const FIntPoint& SlotCoordinates
 
 
 // Checks if all given slots are available (optionally ignoring some)
-bool UDieg_InventoryComponent::AreSlotsAvailable(const TArray<FIntPoint>& InputShape, const TArray<FIntPoint>* Ignore)
+bool UDieg_InventoryComponent::AreSlotsAvailable(const TArray<FIntPoint>& InputShape, const TArray<FIntPoint>& Ignore)
 {
 	for (const FIntPoint& Point : InputShape)
 	{
-		if (Ignore && Ignore->Contains(Point)) continue;
+		if (!Ignore.IsEmpty() && Ignore.Contains(Point)) continue;
 
 		if (IsSlotPointOutOfBounds(Point)) return false;
 
@@ -386,8 +453,20 @@ bool UDieg_InventoryComponent::AreSlotsAvailable(const TArray<FIntPoint>& InputS
 	return true;
 }
 
+bool UDieg_InventoryComponent::AreSlotsAvailableSimple(const TArray<FIntPoint>& InputShape)
+{
+	for (const FIntPoint& Point : InputShape)
+	{
+		if (IsSlotPointOutOfBounds(Point)) return false;
+
+		if (IsSlotPointOccupied(Point)) return false; // Slot already occupied
+	}
+
+	return true;
+}
+
 // Places an item into inventory and sets root/rotation
-const FDieg_InventorySlot* UDieg_InventoryComponent::AddItemToInventory(UDieg_ItemInstance* ItemToAdd, const FIntPoint& SlotCoordinates, const float RotationUsed)
+FDieg_InventorySlot* UDieg_InventoryComponent::AddItemToInventory(UDieg_ItemInstance* ItemToAdd, const FIntPoint& SlotCoordinates, const float RotationUsed)
 {
 	FString TempName = this->GetOwner()->GetActorNameOrLabel().Append(" " + this->GetName());
 	
@@ -431,7 +510,7 @@ const FDieg_InventorySlot* UDieg_InventoryComponent::AddItemToInventory(UDieg_It
 	return InventorySlots.FindByPredicate([&](const FDieg_InventorySlot& S) { return S.IsRootSlot(); });
 }
 
-const FDieg_InventorySlot* UDieg_InventoryComponent::RemoveItemFromInventory(UDieg_ItemInstance* ItemToRemove)
+FDieg_InventorySlot* UDieg_InventoryComponent::RemoveItemFromInventory(UDieg_ItemInstance* ItemToRemove)
 {
 	if (!IsValid(ItemToRemove))
 	{
@@ -462,6 +541,17 @@ const FDieg_InventorySlot* UDieg_InventoryComponent::RemoveItemFromInventory(UDi
 	return RootSlot; // Return root slot if found, else nullptr
 }
 
+FDieg_InventorySlot UDieg_InventoryComponent::AddItemToInventoryBP(UDieg_ItemInstance* ItemToAdd, const FIntPoint& SlotCoordinates, const float RotationUsed)
+{
+	FDieg_InventorySlot* SlotPtr = AddItemToInventory(ItemToAdd, SlotCoordinates, RotationUsed);
+	return SlotPtr ? *SlotPtr : FDieg_InventorySlot();
+}
+
+FDieg_InventorySlot UDieg_InventoryComponent::RemoveItemFromInventoryBP(UDieg_ItemInstance* ItemToRemove)
+{
+	FDieg_InventorySlot* SlotPtr = RemoveItemFromInventory(ItemToRemove);
+	return SlotPtr ? *SlotPtr : FDieg_InventorySlot();
+}
 
 // Returns all coordinates occupied by an item relative to a slot and rotation
 TArray<FIntPoint> UDieg_InventoryComponent::GetRelevantCoordinates(const FIntPoint& SlotCoordinates, const TArray<FIntPoint>& Shape, const FIntPoint& ShapeRoot, float Rotation, FIntPoint& RootSlotOut)

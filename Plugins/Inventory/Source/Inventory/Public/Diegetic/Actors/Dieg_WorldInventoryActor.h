@@ -16,11 +16,11 @@ class INVENTORY_API ADieg_WorldInventoryActor : public AActor
 {
 	GENERATED_BODY()
 
-protected:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components",  meta = (AllowPrivateAccess = "true"))
+public:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|World Inventory Actor|Components",  meta = (AllowPrivateAccess = "true"))
 	USceneComponent* Root;
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|World Inventory Actor|Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UStaticMeshComponent> StaticMeshComponent;
 
 	// // It will change OnConstruction().
@@ -31,18 +31,18 @@ protected:
 	// UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Properties", meta = (AllowPrivateAccess = "true"))
 	// bool bAttachWidgetToMesh = false;
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|World Inventory Actor|Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UWidgetComponent> WidgetComponent;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|World Inventory Actor|Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UWidgetInteractionComponent> WidgetInteractionComponent;
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|World Inventory Actor|Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UDieg_InventoryComponent> InventoryComponent;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|World Inventory Actor|Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UDieg_3DInventoryComponent> InventoryComponent3D;
-public:
+
 	// Sets default values for this actor's properties
 	ADieg_WorldInventoryActor();
 
@@ -56,6 +56,7 @@ public:
 	// 		? Cast<UMeshComponent>(SkeletalMeshComponent)
 	// 		: Cast<UMeshComponent>(StaticMeshComponent);
 	// }
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -63,6 +64,6 @@ protected:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	UFUNCTION()
+	UFUNCTION(Category = "Game|Dieg|World Inventory Actor")
 	virtual void Handle3DInventoryBindRequest(UDieg_InventoryComponent*& OutInventoryRef);	
 };

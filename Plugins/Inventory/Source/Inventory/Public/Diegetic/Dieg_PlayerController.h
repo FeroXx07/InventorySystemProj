@@ -25,25 +25,48 @@ UCLASS()
 class INVENTORY_API ADieg_PlayerController : public APlayerController, public IDieg_Interactor
 {
 	GENERATED_BODY()
+
 public:
+	// Multiple Input Mapping Contexts required from UE 5.6 onwards.
+	UPROPERTY(EditDefaultsOnly, Category = "Game|Dieg|Player Controller|Input Mapping Contexts", meta = (AllowPrivateAccess = "true"))
+	TArray<TObjectPtr<UInputMappingContext>> DefaultIMCs;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category= "Game|Dieg|Player Controller|Strong References", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UDieg_TracerComponent> TracerComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category= "Game|Dieg|Player Controller|Strong References", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UDieg_InventoryComponent> InventoryComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category= "Game|Dieg|Player Controller|Strong References", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UDieg_InventoryInputHandler> InventoryInputHandlerComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category= "Game|Dieg|Player Controller|Weak References", meta = (AllowPrivateAccess = "true"))
+	TWeakObjectPtr<AActor> HoveredActor;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category= "Game|Dieg|Player Controller|Strong References", meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<UDieg_InteractWidget> InteractWidgetClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category= "Game|Dieg|Player Controller|Strong References", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UDieg_InteractWidget> InteractWidget;
+
 	ADieg_PlayerController();
 	
 	// Primary IA for interaction. 
-	UPROPERTY(EditDefaultsOnly, Category = "Input Actions")
+	UPROPERTY(EditDefaultsOnly, Category = "Game|Dieg|Player Controller|Input Actions")
 	TObjectPtr<UInputAction> PrimaryInteractIA;
 	
-	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Player|Dieg")
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Player Controller")
 	FHandleTraceActorIn OnHandleTraceActorIn;
-	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Player|Dieg")
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Player Controller")
 	FHandleTraceActorOut OnHandleTraceActorOut;
 
-	UFUNCTION(Category = "Game|Player|Dieg")
+	UFUNCTION(Category = "Game|Dieg|Player Controller")
 	void HandleActorInTrace(AActor* CurrentActor, AActor* PreviousActor, TEnumAsByte<ECollisionChannel> TraceChannel);
 
-	UFUNCTION(Category = "Game|Player|Dieg")
+	UFUNCTION(Category = "Game|Dieg|Player Controller")
 	void HandleActorOutTrace(AActor* PreviousActor, TEnumAsByte<ECollisionChannel> TraceChannel);
 	
-	UFUNCTION(BlueprintCallable, Category="Inventory")
+	UFUNCTION(BlueprintCallable, Category="Game|Dieg|Player Controller")
 	UDieg_InventoryComponent* GetInventoryComponent() {return InventoryComponent;};
 
 protected:
@@ -53,52 +76,32 @@ protected:
 	virtual void SetupInputComponent() override;
 	
 	// Initiating all stored Input Mapping Contexts.
+	UFUNCTION(Category = "Game|Dieg|Player Controller")
 	void InitializeImcSubsystem();
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Game|Player|Dieg")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Game|Dieg|Player Controller")
 	void TryToggleInventory();
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Game|Player|Dieg")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Game|Dieg|Player Controller")
 	void TryInteract();
 
 	// Optional
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Game|Player|Dieg")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Game|Dieg|Player Controller")
 	void PlayPickUpMontage();
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Game|Player|Dieg")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Game|Dieg|Player Controller")
 	bool TryPickUpItem(ADieg_WorldItemActor* WorldItemActor);
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Game|Player|Dieg")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Game|Dieg|Player Controller")
 	void HandleOnInventoryOpened();
 	
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Game|Player|Dieg")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Game|Dieg|Player Controller")
 	void HandleOnInventoryClosed();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category= "Game|Player|Dieg")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category= "Game|Dieg|Player Controller", meta = (AllowPrivateAccess = "true"))
 	bool bInventoryOpened;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category= "Strong References")
-	TObjectPtr<UDieg_TracerComponent> TracerComponent;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category= "Strong References")
-	TObjectPtr<UDieg_InventoryComponent> InventoryComponent;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category= "Strong References")
-	TObjectPtr<UDieg_InventoryInputHandler> InventoryInputHandlerComponent;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category= "Weak References")
-	TWeakObjectPtr<AActor> HoveredActor;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category= "Strong References")
-	TSubclassOf<UDieg_InteractWidget> InteractWidgetClass;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category= "Strong References")
-	TObjectPtr<UDieg_InteractWidget> InteractWidget;
 private:
-	// Multiple Input Mapping Contexts required from UE 5.6 onwards.
-	UPROPERTY(EditDefaultsOnly, Category = "Input Mapping Contexts")
-	TArray<TObjectPtr<UInputMappingContext>> DefaultIMCs;
-
 	virtual void NotifyInteractionStarted_Implementation(UObject* Interactable) override;
 	virtual void NotifyInteractionEnded_Implementation(UObject* Interactable) override;
 	virtual void OnInteraction_Implementation(UObject* Interactable) override;

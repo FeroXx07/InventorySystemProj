@@ -47,7 +47,7 @@ protected:
 	TObjectPtr<UDieg_InventoryComponent> InventoryComponentRef;
 
 	UPROPERTY(VisibleAnywhere, Category = "Inventory", meta = (AllowPrivateAccess = "true"))
-	TArray<TWeakObjectPtr<ADieg_WorldItemActor>> Items;
+	TArray<ADieg_WorldItemActor*> Items;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<ADieg_WorldItemActor> ItemClass;
@@ -102,5 +102,5 @@ public:
 	TWeakObjectPtr<UWidgetComponent> GetWidgetComponent() {return WidgetComponentRef;}
 	TObjectPtr<UDieg_InventoryComponent> GetInventoryComponent() {return InventoryComponentRef;}
 
-	TArray<TWeakObjectPtr<ADieg_WorldItemActor>>& GetItems() {return Items;}
+	TArray<ADieg_WorldItemActor*>& GetItems() {return Items;}
 };

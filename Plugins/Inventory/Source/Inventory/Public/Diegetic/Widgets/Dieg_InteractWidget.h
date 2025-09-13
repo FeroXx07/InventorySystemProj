@@ -17,24 +17,25 @@ class INVENTORY_API UDieg_InteractWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
-	UFUNCTION(BlueprintCallable)
-	void SetWorldPosition(const FVector& NewPosition);
-
-	UFUNCTION(BlueprintCallable)
-	void SetInteractText(const FText& Text);
-protected:
-	virtual void NativeConstruct() override;
-	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
-
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	bool SetWidgetPositionFromWorldPosition(const FVector& WorldPosition);
-	
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UOverlay> Overlay_Root;
 	
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> TextBlock_InteractText;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Properties")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Interact Widget|Properties", meta = (AllowPrivateAccess = "true"))
 	FVector WorldLocation;
+
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Interact Widget")
+	void SetWorldPosition(const FVector& NewPosition);
+
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Interact Widget")
+	void SetInteractText(const FText& Text);
+
+protected:
+	virtual void NativeConstruct() override;
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Game|Dieg|Interact Widget")
+	bool SetWidgetPositionFromWorldPosition(const FVector& WorldPosition);
 };
