@@ -16,6 +16,8 @@ class UDieg_InventoryComponent;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLinkInventoryRefExternally, UDieg_InventoryComponent*&, NewInventoryRef);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FWidgetSlotHover, const FGeometry&, InGeometry, const FPointerEvent&, InMouseEvent, UDieg_3DInventoryComponent*, InventoryComponent3D, UDieg_Slot*, Slot);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FWidgetSlotUnHover, const FPointerEvent&, InMouseEvent, UDieg_3DInventoryComponent*, InventoryComponent3D, UDieg_Slot*, Slot);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHandlerHoverItem, UDieg_InventoryInputHandler*, InventoryInputHandler, AActor*, HoveredItem);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHandlerUnHoverItem, UDieg_InventoryInputHandler*, InventoryInputHandler, AActor*, HoveredItem);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class INVENTORY_API UDieg_3DInventoryComponent : public UActorComponent
@@ -34,6 +36,12 @@ public:
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable)
 	FWidgetSlotUnHover On3DWidgetSlotUnHovered;
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	FHandlerHoverItem OnHoverItem;
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	FHandlerUnHoverItem OnUnHoverItem;
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UDieg_InventoryComponent> InventoryComponentRef;
@@ -80,6 +88,9 @@ protected:
 public:
 	UFUNCTION(Category = "Direct", BlueprintCallable)
 	void AddItemToInventory(ADieg_WorldItemActor* ItemActor);
+
+	UFUNCTION(Category = "Direct", BlueprintCallable)
+	void AddItemToInventorySlot(ADieg_WorldItemActor* ItemActor, const FIntPoint& SlotCoordinates, int32 RotationUsed);
 
 	UFUNCTION(Category = "Direct", BlueprintCallable)
 	void RemoveItemFromInventory(ADieg_WorldItemActor* ItemActor);

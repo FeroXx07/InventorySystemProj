@@ -146,6 +146,21 @@ void UDieg_3DInventoryComponent::AddItemToInventory(ADieg_WorldItemActor* ItemAc
 	Items.Add(ItemActor);
 }
 
+void UDieg_3DInventoryComponent::AddItemToInventorySlot(ADieg_WorldItemActor* ItemActor, const FIntPoint& SlotCoordinates, int32 RotationUsed)
+{
+	if (!IsValid(ItemActor) || !IsValid(InventoryComponentRef))
+	{
+		return;
+	}
+
+	if (InventoryComponentRef->CanAddItemToSlot(SlotCoordinates, ItemActor->GetItemInstance(), RotationUsed))
+	{
+		int32 Remaining = INT32_MAX;
+		InventoryComponentRef->AddItemToInventory(ItemActor->GetItemInstanceMutable(), SlotCoordinates, RotationUsed);
+		Items.Add(ItemActor);
+	}
+}
+
 void UDieg_3DInventoryComponent::RemoveItemFromInventory(ADieg_WorldItemActor* ItemActor)
 {
 	if (!IsValid(ItemActor) || !IsValid(InventoryComponentRef))

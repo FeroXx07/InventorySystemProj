@@ -91,30 +91,37 @@ public:
 	// Returns all root slots containing exactly the provided instance
 	TSet<FDieg_InventorySlot*> FindRootSlotByInstance(const UDieg_ItemInstance* ItemToCheck);
 
+	FDieg_InventorySlot* GetRootSlot(const FIntPoint& SlotCoordinates);
+	FDieg_InventorySlot* GetSlot(const FIntPoint& SlotCoordinates);
+	
 	TArray<FDieg_InventorySlot*> GetRootSlotsMutable();
+	TArray<FDieg_InventorySlot*> GetSlotsMutable();
 	int32 GetTotalSlots() const { return TotalSlots; };
 	int32 GetMaxColumns() const { return MaxColumns; };
 
 	// Computes all coordinates the item would occupy based on root, shape, and rotation
 	static TArray<FIntPoint> GetRelevantCoordinates(const FIntPoint& SlotCoordinates, const TArray<FIntPoint>& Shape, const FIntPoint& ShapeRoot, float Rotation, FIntPoint& RootSlotOut);
 	
-	// Returns all inventory slot indices containing items overlapping the given shape
-	TArray<int32> GetRelevantItems(const TArray<FIntPoint>& ShapeCoordinates, const UDieg_ItemInstance* Object);
+	// Returns all inventory root slot coordinates containing items overlapping the given shape
+	TArray<FIntPoint> GetRelevantItems(const TArray<FIntPoint>& ShapeCoordinates, const UDieg_ItemInstance* Object);
 
 	// Checks if all slots in the shape are free; optionally ignores some slots
 	bool AreSlotsAvailable(const TArray<FIntPoint>& InputShape, const TArray<FIntPoint>* Ignore = nullptr);
-private:
+
+	// Adds quantity to an existing stackable slot; returns amount added
+	int32 AddQuantityToSlot(const UDieg_ItemInstance* ItemToAdd, int32 QuantityIn);
+
 	// Places an item in inventory starting at given slot with rotation; returns root slot
 	const FDieg_InventorySlot* AddItemToInventory(UDieg_ItemInstance* ItemToAdd, const FIntPoint& SlotCoordinates, float RotationUsed);
 
 	// Removes an item from inventory, clearing all occupied slots; returns root slot
 	const FDieg_InventorySlot* RemoveItemFromInventory(UDieg_ItemInstance* ItemToRemove);
 
-	// Adds quantity to an existing stackable slot; returns amount added
-	int32 AddQuantityToSlot(const UDieg_ItemInstance* ItemToAdd, int32 QuantityIn);
-
 	// Checks if a given slot can accept the item shape (with optional rotation)
 	bool CanAddItemToSlot(const FIntPoint& SlotCoordinates, const TArray<FIntPoint>& ItemShape, const FIntPoint& ItemShapeRoot, int32& RotationUsedOut);
+
+	// Checks if a given slot can accept the item shape (with optional rotation)
+	bool CanAddItemToSlot(const FIntPoint& SlotCoordinates, UDieg_ItemInstance* ItemInstance, int32 Rotation);
 
 	// Returns true if a coordinate is outside the inventory bounds
 	bool IsSlotPointOutOfBounds(const FIntPoint& SlotPoint); 

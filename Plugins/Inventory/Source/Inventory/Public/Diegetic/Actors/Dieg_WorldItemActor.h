@@ -4,12 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "Diegetic/Dieg_DataLibrary.h"
+#include "Diegetic/Components/Dieg_3DInventoryComponent.h"
 #include "Diegetic/Interfaces/Dieg_Interactable.h"
 #include "Diegetic/UStructs/Dieg_InventorySlot.h"
 #include "Diegetic/UStructs/Dieg_PrePopulate.h"
 #include "GameFramework/Actor.h"
 #include "Dieg_WorldItemActor.generated.h"
 
+class UDieg_InventoryInputHandler;
 class UTextRenderComponent;
 class UDieg_ItemInstance;
 class UDieg_ItemDefinitionDataAsset;
@@ -63,40 +65,77 @@ protected:
 	FIntPoint GetTextCoordinates(const TArray<FIntPoint>& Shape, EDieg_TextLocation TextLocation) const;
 
 	// Transform
-	void AdjustLocation(const FIntPoint& Coordinates);
-	void AdjustRotation() const;
+	void AdjustActorLocation();
+	void AdjustMeshRelativeRotation() const; // Previously named adjust rotation
 	void AdjustForGrabPoint(const FVector2D& GrabPoint) const;
-	void AdjustTransformForGrid() const;
-	void AdjustTransformForWorld();
+	void AdjustRootTransformForGrid() const;
+	void AdjustRootTransformForWorld();
 	float GetUnitScaled() const;
 	FVector GetLocationMultiplier() const;
-	
-	void HandleDragEnterInventory(const FVector2D& GrabPoint);
-	void HandleDragLeaveInventory();
-	
-	void HandleStartDragInventory();
-	void HandleStartDragWorld();
-	void HandleStopDragInventory();
-	void HandleStopDragWorld();
 
-	void HandleResetDragInventory();
-	void HandleResetDragWorld();
+	UFUNCTION()
+	void HandleDragHoverEnterInventory(UDieg_InventoryInputHandler* InventoryInputHandler, UDieg_3DInventoryComponent* InventoryComponent3D, AActor*
+	                              DraggedItem, FIntPoint GrabPoint);
+	UFUNCTION()
+	void HandleDragHoverLeaveInventory(UDieg_InventoryInputHandler* InventoryInputHandler, UDieg_3DInventoryComponent* InventoryComponent3D, AActor*
+	                              DraggedItem, FIntPoint GrabPoint);
 
-	void HandleRotateItemInventory();
-	void HandleMergeItemInventory();
-	void HandleConsumedItemInventory();
+	UFUNCTION()
+	void HandleStartDragInventory(UDieg_InventoryInputHandler* InventoryInputHandler, AActor* DraggedItem, FIntPoint GrabPoint, FIntPoint Coordinates);
+	
+	UFUNCTION()
+	void HandleStartDragWorld(UDieg_InventoryInputHandler* InventoryInputHandler, AActor* DraggedItem, FIntPoint GrabPoint, FVector WorldLocation);
+
+	UFUNCTION()
+	void HandleStopDragInventory(UDieg_InventoryInputHandler* InventoryInputHandler, UDieg_3DInventoryComponent* InventoryComponent3D, AActor*
+	                             DroppedItem, FIntPoint DroppedCoordinates, float DroppedRotation);
+
+	UFUNCTION()
+	void HandleStopDragWorld(UDieg_InventoryInputHandler* InventoryInputHandler, AActor* DroppedItem, FVector DroppedLocation);
+
+	UFUNCTION()
+	void HandleResetDragInventory(UDieg_InventoryInputHandler* InventoryInputHandler, UDieg_3DInventoryComponent* InventoryComponent3D, AActor* RestItem, FIntPoint
+	                              ResetCoordinates, float ResetRotation);
+	
+	UFUNCTION()
+	void HandleResetDragWorld(UDieg_InventoryInputHandler* InventoryInputHandler, AActor* ResetItem, FVector ResetLocation);
+
+	UFUNCTION()
+	void HandleRotateItemInventory(UDieg_InventoryInputHandler* InventoryInputHandler, AActor* RotatedItem, float NewRotation, FIntPoint GripPoint);
+
+	UFUNCTION()
+	void HandleMergeItemInventory(UDieg_InventoryInputHandler* InventoryInputHandler, AActor* DroppedItem, TArray<AActor*> MergedActors, int32
+	                              OldQuantity, int32 NewQuantity);
+
+	UFUNCTION()
+	void HandleConsumedItemInventory(UDieg_InventoryInputHandler* InventoryInputHandler, UDieg_3DInventoryComponent* InventoryComponent3D, AActor*
+	                                 ConsumedActor);
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 	virtual void OnInteract_Implementation(UObject* Interactor) override;
+	
+	UFUNCTION(BlueprintNativeEvent)
+	void BindEventsToHandler(UDieg_InventoryInputHandler* Handler);
 
+	UFUNCTION(BlueprintNativeEvent)
+	void UnBindEventsFromHandler(UDieg_InventoryInputHandler* Handler);
+	
 	bool IsOwnedByInventory() const;
-
+	bool IsInInventory() const;
+	const UDieg_3DInventoryComponent* GetOwnerComponent() const;
+	
 	const TObjectPtr<UDieg_ItemInstance>& GetItemInstance() const;
 	TObjectPtr<UDieg_ItemInstance>& GetItemInstanceMutable();
 
+	int32 GetQuantity() const;
+	void SetQuantity(const int32 Value);
+	void SetCurrentRotation(float Value) { CurrentRotation = Value; }
 	float GetCurrentRotation() const { return CurrentRotation; }
+	void SetCoordinates(const FIntPoint& Value) { LastInventorySlotData.Coordinates = Value; }
 	FIntPoint GetCoordinates() const { return LastInventorySlotData.Coordinates; }
+	void SetLastSlotData(const FDieg_InventorySlot& Slot) { LastInventorySlotData = Slot; }
+	const FDieg_InventorySlot& GetLastSlotData() const { return LastInventorySlotData; }
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Item")
 	void UpdateFromDataAsset(UDieg_ItemDefinitionDataAsset* InItemDataAsset);

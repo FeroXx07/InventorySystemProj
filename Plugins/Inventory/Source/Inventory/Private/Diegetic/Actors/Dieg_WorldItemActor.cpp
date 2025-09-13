@@ -6,6 +6,8 @@
 #include "BPF_PlugInv_DoubleLogger.h"
 #include "Components/TextRenderComponent.h"
 #include "Diegetic/Dieg_UtilityLibrary.h"
+#include "Diegetic/Components/Dieg_3DInventoryComponent.h"
+#include "Diegetic/Components/Dieg_InventoryInputHandler.h"
 #include "Diegetic/Interfaces/Dieg_Interactor.h"
 #include "Diegetic/UObjects/Dieg_ItemInstance.h"
 #include "Diegetic/Widgets/Dieg_Slot.h"
@@ -71,6 +73,16 @@ TObjectPtr<UDieg_ItemInstance>& ADieg_WorldItemActor::GetItemInstanceMutable()
 	return ItemInstance;
 }
 
+int32 ADieg_WorldItemActor::GetQuantity() const
+{
+	return Quantity;
+}
+
+void ADieg_WorldItemActor::SetQuantity(const int32 Value)
+{
+	this->Quantity = Value;
+}
+
 void ADieg_WorldItemActor::SetFromItemInstance_Implementation(UDieg_ItemInstance* Instance)
 {
 	if (IsValid(Instance))
@@ -84,14 +96,14 @@ void ADieg_WorldItemActor::SetFromItemInstance_Implementation(UDieg_ItemInstance
 
 void ADieg_WorldItemActor::SetFromInventorySlot_Implementation(const FDieg_InventorySlot& InventorySlot)
 {
-	LastInventorySlotData = InventorySlot;
+	SetLastSlotData(InventorySlot);
 	SetFromItemInstance(InventorySlot.ItemInstance);
 	const FDieg_ItemDefinition& ItemDefinition = ItemInstance->GetItemDefinitionDataAsset()->ItemDefinition;
 	CurrentRotation = InventorySlot.Rotation;
-	HandleDragEnterInventory({0,0});
-	AdjustRotation();
+	HandleDragHoverEnterInventory(nullptr, nullptr, nullptr, {0,0});
+	AdjustMeshRelativeRotation();
 	ModifyTextQuantity();
-	AdjustLocation(InventorySlot.Coordinates);
+	AdjustActorLocation();
 }
 
 bool ADieg_WorldItemActor::SetMesh(const UDieg_ItemDefinitionDataAsset* InItemDataAsset) const
@@ -165,16 +177,17 @@ FIntPoint ADieg_WorldItemActor::GetTextCoordinates(const TArray<FIntPoint>& Shap
 	return FIntPoint::ZeroValue;
 }
 
-void ADieg_WorldItemActor::AdjustLocation(const FIntPoint& Coordinates)
+void ADieg_WorldItemActor::AdjustActorLocation()
 {
+	const FIntPoint Coordinates = GetCoordinates();
 	const UDieg_Slot* DefaultSlot = GetDefault<UDieg_Slot>();
 	const float InventoryScale3D = DefaultSlot->GetInventoryScale3D();
 	const float UnitScaled = InventoryScale3D * GetUnitScaled();
 	const FVector Location = FVector(0.0f, Coordinates.X * UnitScaled * -1.0, Coordinates.Y * UnitScaled * -1.0);
-	SetActorLocation(Location);
+	SetActorRelativeLocation(Location);
 }
 
-void ADieg_WorldItemActor::AdjustRotation() const
+void ADieg_WorldItemActor::AdjustMeshRelativeRotation() const
 {
 	const FRotator Rotation = FRotator(0, CurrentRotation, 0);
 	StaticMeshComponent->SetRelativeRotation(Rotation);
@@ -205,8 +218,8 @@ void ADieg_WorldItemActor::AdjustRotation() const
 
 void ADieg_WorldItemActor::AdjustForGrabPoint(const FVector2D& GrabPoint) const
 {
-	FVector2D LocalGrabPoint = GrabPoint;
-	LocalGrabPoint = FVector2D{0.5, 0.5} * GetUnitScaled();
+	FVector2D LocalGrabPoint = GrabPoint + FVector2D{0.5, 0.5};
+	LocalGrabPoint = LocalGrabPoint * GetUnitScaled();
 
 	// Convert 2D coordinates to 3D space. X and Y are not the same in both.
 	FVector LocationGrabPoint = FVector{LocalGrabPoint.Y, -LocalGrabPoint.X, 0.0f};
@@ -215,10 +228,10 @@ void ADieg_WorldItemActor::AdjustForGrabPoint(const FVector2D& GrabPoint) const
 		LocationGrabPoint.Z = OffsetZ;
 	}
 	
-	StaticMeshComponent->AddRelativeLocation(LocationGrabPoint);
+	StaticMeshComponent->AddRelativeLocation(-LocationGrabPoint);
 }
 
-void ADieg_WorldItemActor::AdjustTransformForGrid() const
+void ADieg_WorldItemActor::AdjustRootTransformForGrid() const
 {
 	TextRendererComponent->SetHiddenInGame(false,false);
 
@@ -232,56 +245,220 @@ void ADieg_WorldItemActor::AdjustTransformForGrid() const
 	Root->SetRelativeScale3D(FVector(InventoryScale3D));
 }
 
-void ADieg_WorldItemActor::AdjustTransformForWorld()
+void ADieg_WorldItemActor::AdjustRootTransformForWorld()
 {
+	TextRendererComponent->SetHiddenInGame(true,false);
+	SetActorScale3D(FVector::OneVector);
+	StaticMeshComponent->SetRelativeScale3D(FVector::OneVector);
 }
 
-void ADieg_WorldItemActor::HandleDragEnterInventory(const FVector2D& GrabPoint)
+void ADieg_WorldItemActor::BindEventsToHandler_Implementation(UDieg_InventoryInputHandler* Handler)
 {
-	AdjustTransformForGrid();
-	AdjustRotation(); 
+	if (!IsValid(Handler))
+	{
+		return;
+	}
+
+	if (!Handler->OnDragHoverInventory.IsAlreadyBound(this, &ThisClass::HandleDragHoverEnterInventory))
+	{
+		Handler->OnDragHoverInventory.AddDynamic(this, &ThisClass::HandleDragHoverEnterInventory);
+	}
+	if (!Handler->OnDragUnHoverInventory.IsAlreadyBound(this, &ThisClass::HandleDragHoverLeaveInventory))
+	{
+		Handler->OnDragUnHoverInventory.AddDynamic(this, &ThisClass::HandleDragHoverLeaveInventory);
+	}
+
+	if (!Handler->OnStartDragInventory.IsAlreadyBound(this, &ThisClass::HandleStartDragInventory))
+	{
+		Handler->OnStartDragInventory.AddDynamic(this, &ThisClass::HandleStartDragInventory);
+	}
+	if (!Handler->OnStartDragWorld.IsAlreadyBound(this, &ThisClass::HandleStartDragWorld))
+	{
+		Handler->OnStartDragWorld.AddDynamic(this, &ThisClass::HandleStartDragWorld);
+	}
+
+	if (!Handler->OnDropInInventory.IsAlreadyBound(this, &ThisClass::HandleStopDragInventory))
+	{
+		Handler->OnDropInInventory.AddDynamic(this, &ThisClass::HandleStopDragInventory);
+	}
+	if (!Handler->OnDropWorld.IsAlreadyBound(this, &ThisClass::HandleStopDragWorld))
+	{
+		Handler->OnDropWorld.AddDynamic(this, &ThisClass::HandleStopDragWorld);
+	}
+
+	if (!Handler->OnResetDragInventory.IsAlreadyBound(this, &ThisClass::HandleResetDragInventory))
+	{
+		Handler->OnResetDragInventory.AddDynamic(this, &ThisClass::HandleResetDragInventory);
+	}
+	if (!Handler->OnResetDragWorld.IsAlreadyBound(this, &ThisClass::HandleResetDragWorld))
+	{
+		Handler->OnResetDragWorld.AddDynamic(this, &ThisClass::HandleResetDragWorld);
+	}
+
+	if (!Handler->OnRotateItem.IsAlreadyBound(this, &ThisClass::HandleRotateItemInventory))
+	{
+		Handler->OnRotateItem.AddDynamic(this, &ThisClass::HandleRotateItemInventory);
+	}
+	if (!Handler->OnMergeItem.IsAlreadyBound(this, &ThisClass::HandleMergeItemInventory))
+	{
+		Handler->OnMergeItem.AddDynamic(this, &ThisClass::HandleMergeItemInventory);
+	}
+	if (!Handler->OnConsumedItemInMerge.IsAlreadyBound(this, &ThisClass::HandleConsumedItemInventory))
+	{
+		Handler->OnConsumedItemInMerge.AddDynamic(this, &ThisClass::HandleConsumedItemInventory);
+	}
+
+}
+
+void ADieg_WorldItemActor::UnBindEventsFromHandler_Implementation(UDieg_InventoryInputHandler* Handler)
+{
+	if (!IsValid(Handler))
+	{
+		return;
+	}
+
+	if (Handler->OnDragHoverInventory.IsAlreadyBound(this, &ThisClass::HandleDragHoverEnterInventory))
+	{
+		Handler->OnDragHoverInventory.RemoveDynamic(this, &ThisClass::HandleDragHoverEnterInventory);
+	}
+	if (Handler->OnDragUnHoverInventory.IsAlreadyBound(this, &ThisClass::HandleDragHoverLeaveInventory))
+	{
+		Handler->OnDragUnHoverInventory.RemoveDynamic(this, &ThisClass::HandleDragHoverLeaveInventory);
+	}
+
+	if (Handler->OnStartDragInventory.IsAlreadyBound(this, &ThisClass::HandleStartDragInventory))
+	{
+		Handler->OnStartDragInventory.RemoveDynamic(this, &ThisClass::HandleStartDragInventory);
+	}
+	if (Handler->OnStartDragWorld.IsAlreadyBound(this, &ThisClass::HandleStartDragWorld))
+	{
+		Handler->OnStartDragWorld.RemoveDynamic(this, &ThisClass::HandleStartDragWorld);
+	}
+
+	if (Handler->OnDropInInventory.IsAlreadyBound(this, &ThisClass::HandleStopDragInventory))
+	{
+		Handler->OnDropInInventory.RemoveDynamic(this, &ThisClass::HandleStopDragInventory);
+	}
+	if (Handler->OnDropWorld.IsAlreadyBound(this, &ThisClass::HandleStopDragWorld))
+	{
+		Handler->OnDropWorld.RemoveDynamic(this, &ThisClass::HandleStopDragWorld);
+	}
+
+	if (Handler->OnResetDragInventory.IsAlreadyBound(this, &ThisClass::HandleResetDragInventory))
+	{
+		Handler->OnResetDragInventory.RemoveDynamic(this, &ThisClass::HandleResetDragInventory);
+	}
+	if (Handler->OnResetDragWorld.IsAlreadyBound(this, &ThisClass::HandleResetDragWorld))
+	{
+		Handler->OnResetDragWorld.RemoveDynamic(this, &ThisClass::HandleResetDragWorld);
+	}
+
+	if (Handler->OnRotateItem.IsAlreadyBound(this, &ThisClass::HandleRotateItemInventory))
+	{
+		Handler->OnRotateItem.RemoveDynamic(this, &ThisClass::HandleRotateItemInventory);
+	}
+	if (Handler->OnMergeItem.IsAlreadyBound(this, &ThisClass::HandleMergeItemInventory))
+	{
+		Handler->OnMergeItem.RemoveDynamic(this, &ThisClass::HandleMergeItemInventory);
+	}
+	if (Handler->OnConsumedItemInMerge.IsAlreadyBound(this, &ThisClass::HandleConsumedItemInventory))
+	{
+		Handler->OnConsumedItemInMerge.RemoveDynamic(this, &ThisClass::HandleConsumedItemInventory);
+	}
+}
+
+void ADieg_WorldItemActor::HandleDragHoverEnterInventory(UDieg_InventoryInputHandler* InventoryInputHandler, UDieg_3DInventoryComponent* InventoryComponent3D, AActor* DraggedItem, FIntPoint GrabPoint)
+{
+	AdjustRootTransformForGrid();
+	AdjustMeshRelativeRotation(); 
 	AdjustForGrabPoint(GrabPoint);
 	AdjustText();
 }
 
-void ADieg_WorldItemActor::HandleDragLeaveInventory()
+void ADieg_WorldItemActor::HandleDragHoverLeaveInventory(UDieg_InventoryInputHandler* InventoryInputHandler, UDieg_3DInventoryComponent* InventoryComponent3D, AActor* DraggedItem, FIntPoint GrabPoint)
+{
+	AdjustRootTransformForWorld();
+	AdjustMeshRelativeRotation();
+	AdjustForGrabPoint(GrabPoint);
+}
+
+void ADieg_WorldItemActor::HandleStartDragInventory(UDieg_InventoryInputHandler* InventoryInputHandler, AActor* DraggedItem, FIntPoint GrabPoint, FIntPoint Coordinates)
+{
+	AdjustMeshRelativeRotation();
+	AdjustForGrabPoint(GrabPoint);
+	AdjustText();
+}
+
+void ADieg_WorldItemActor::HandleStartDragWorld(UDieg_InventoryInputHandler* InventoryInputHandler, AActor* DraggedItem, FIntPoint GrabPoint, FVector WorldLocation)
+{
+	AdjustMeshRelativeRotation();
+	AdjustForGrabPoint(GrabPoint);
+}
+
+void ADieg_WorldItemActor::HandleStopDragInventory(UDieg_InventoryInputHandler* InventoryInputHandler, UDieg_3DInventoryComponent* InventoryComponent3D, AActor* DroppedItem, FIntPoint DroppedCoordinates, float DroppedRotation)
+{
+	const UDieg_3DInventoryComponent* OwningInventory3dComponent = GetOwnerComponent();
+	if (IsValid(OwningInventory3dComponent) && OwningInventory3dComponent != InventoryComponent3D)
+	{
+		
+	}
+	
+	AdjustActorLocation();
+	AdjustMeshRelativeRotation();
+	AdjustText();
+}
+
+void ADieg_WorldItemActor::HandleStopDragWorld(UDieg_InventoryInputHandler* InventoryInputHandler, AActor* DroppedItem, FVector DroppedLocation)
+{
+	SetCoordinates(FIntPoint(-1, -1));
+	SetCurrentRotation(0.0f);
+}
+
+void ADieg_WorldItemActor::HandleResetDragInventory(UDieg_InventoryInputHandler* InventoryInputHandler, UDieg_3DInventoryComponent* InventoryComponent3D, AActor* RestItem, FIntPoint ResetCoordinates, float ResetRotation)
+{
+	const UDieg_3DInventoryComponent* OwningInventory3dComponent = GetOwnerComponent();
+	if (IsValid(OwningInventory3dComponent) && OwningInventory3dComponent != InventoryComponent3D)
+	{
+		
+	}
+
+	SetCurrentRotation(GetLastSlotData().Rotation);
+	AdjustActorLocation();
+	AdjustMeshRelativeRotation();
+	AdjustText();
+}
+
+void ADieg_WorldItemActor::HandleResetDragWorld(UDieg_InventoryInputHandler* InventoryInputHandler, AActor* ResetItem, FVector ResetLocation)
+{
+	SetActorLocation(ResetLocation);
+	
+	TextRendererComponent->SetHiddenInGame(false,false);
+	DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+	SetActorScale3D(FVector::OneVector);
+	SetActorRelativeScale3D(FVector::OneVector);
+	SetActorRotation(FRotator::ZeroRotator);
+	AdjustMeshRelativeRotation();
+
+	SetActorEnableCollision(true);
+	SetCoordinates(FIntPoint(-1, -1));
+	SetCurrentRotation(0.0f);
+}
+
+void ADieg_WorldItemActor::HandleRotateItemInventory(UDieg_InventoryInputHandler* InventoryInputHandler, AActor* RotatedItem, float NewRotation, FIntPoint GripPoint)
+{
+	SetCurrentRotation(NewRotation);
+	AdjustMeshRelativeRotation();
+	AdjustForGrabPoint(GripPoint);
+	AdjustText();
+}
+
+void ADieg_WorldItemActor::HandleMergeItemInventory(UDieg_InventoryInputHandler* InventoryInputHandler, AActor* DroppedItem, TArray<AActor*> MergedActors, int32 OldQuantity, int32 NewQuantity)
 {
 }
 
-void ADieg_WorldItemActor::HandleStartDragInventory()
+void ADieg_WorldItemActor::HandleConsumedItemInventory(UDieg_InventoryInputHandler* InventoryInputHandler, UDieg_3DInventoryComponent* InventoryComponent3D, AActor* ConsumedActor)
 {
-}
-
-void ADieg_WorldItemActor::HandleStartDragWorld()
-{
-}
-
-void ADieg_WorldItemActor::HandleStopDragInventory()
-{
-}
-
-void ADieg_WorldItemActor::HandleStopDragWorld()
-{
-}
-
-void ADieg_WorldItemActor::HandleResetDragInventory()
-{
-}
-
-void ADieg_WorldItemActor::HandleResetDragWorld()
-{
-}
-
-void ADieg_WorldItemActor::HandleRotateItemInventory()
-{
-}
-
-void ADieg_WorldItemActor::HandleMergeItemInventory()
-{
-}
-
-void ADieg_WorldItemActor::HandleConsumedItemInventory()
-{
+	Destroy();
 }
 
 float ADieg_WorldItemActor::GetUnitScaled() const
@@ -319,5 +496,21 @@ bool ADieg_WorldItemActor::IsOwnedByInventory() const
 {
 	return IsValid(GetOwner());
 }
+
+bool ADieg_WorldItemActor::IsInInventory() const
+{
+	return IsValid(GetOwner());
+}
+
+const UDieg_3DInventoryComponent* ADieg_WorldItemActor::GetOwnerComponent() const
+{
+	if (IsOwnedByInventory())
+	{
+		return GetOwner()->FindComponentByClass<UDieg_3DInventoryComponent>();
+	}
+	return nullptr;
+}
+
+
 
 

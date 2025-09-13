@@ -51,6 +51,16 @@ TArray<FDieg_InventorySlot*> UDieg_InventoryComponent::GetRootSlotsMutable()
 	return RootSlots;
 }
 
+TArray<FDieg_InventorySlot*> UDieg_InventoryComponent::GetSlotsMutable()
+{
+	TArray<FDieg_InventorySlot*> RootSlots;
+	for (FDieg_InventorySlot& Slot : InventorySlots)
+	{
+		RootSlots.Add(&Slot);
+	}
+	return RootSlots;
+}
+
 // Called every frame
 void UDieg_InventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType,
                                              FActorComponentTickFunction* ThisTickFunction)
@@ -289,6 +299,28 @@ TSet<FDieg_InventorySlot*> UDieg_InventoryComponent::FindRootSlotByInstance(cons
 	return InventorySlotsFound;	
 }
 
+FDieg_InventorySlot* UDieg_InventoryComponent::GetRootSlot(const FIntPoint& SlotCoordinates)
+{
+	if (FDieg_InventorySlot* Slot = InventorySlots.FindByPredicate([&](const FDieg_InventorySlot& S){
+		return S.Coordinates == SlotCoordinates && S.RootSlot == SlotCoordinates;
+	}))
+	{
+		return Slot;
+	}
+	return nullptr;
+}
+
+FDieg_InventorySlot* UDieg_InventoryComponent::GetSlot(const FIntPoint& SlotCoordinates)
+{
+	if (FDieg_InventorySlot* Slot = InventorySlots.FindByPredicate([&](const FDieg_InventorySlot& S){
+		return S.Coordinates == SlotCoordinates;
+	}))
+	{
+		return Slot;
+	}
+	return nullptr;
+}
+
 // Checks if an item shape can fit starting from given slot
 bool UDieg_InventoryComponent::CanAddItemToSlot(const FIntPoint& SlotCoordinates,
                                                 const TArray<FIntPoint>& ItemShape,
@@ -317,6 +349,22 @@ bool UDieg_InventoryComponent::CanAddItemToSlot(const FIntPoint& SlotCoordinates
 			RotationUsedOut = TestAngle;
 			return true;
 		}
+	}
+
+	return false;
+}
+
+bool UDieg_InventoryComponent::CanAddItemToSlot(const FIntPoint& SlotCoordinates, UDieg_ItemInstance* ItemInstance,
+	int32 Rotation)
+{
+	const FDieg_ItemDefinition& ItemDefinition = ItemInstance->GetItemDefinition();
+	
+	// Test default rotation first
+	FIntPoint DefaultCoordsRoot;
+	const TArray<FIntPoint> DefaultCoords = GetRelevantCoordinates(SlotCoordinates, ItemDefinition.DefaultShape, ItemDefinition.DefaultShapeRoot, Rotation, DefaultCoordsRoot);
+	if (DefaultCoords.Contains(SlotCoordinates) && AreSlotsAvailable(DefaultCoords, nullptr))
+	{
+		return true;
 	}
 
 	return false;
@@ -427,10 +475,10 @@ TArray<FIntPoint> UDieg_InventoryComponent::GetRelevantCoordinates(const FIntPoi
 	return RotatedShape;
 }
 
-TArray<int32> UDieg_InventoryComponent::GetRelevantItems(const TArray<FIntPoint>& ShapeCoordinates,
+TArray<FIntPoint> UDieg_InventoryComponent::GetRelevantItems(const TArray<FIntPoint>& ShapeCoordinates,
 	const UDieg_ItemInstance* ItemInstance)
 {
-	TArray<int32> Result;
+	TSet<FIntPoint> Result;
 
 	// Convert input shape coordinates to a set for fast intersection checks
 	TSet<FIntPoint> InputCoordinates;
@@ -442,8 +490,7 @@ TArray<int32> UDieg_InventoryComponent::GetRelevantItems(const TArray<FIntPoint>
 		const int32 CurrentIndex = i;
 		FDieg_InventorySlot& CurrentSlot = InventorySlots[CurrentIndex];
 		
-		// Skip non-root slots; only root slots represent unique items
-		if (!CurrentSlot.IsRootSlot())
+		if (!CurrentSlot.IsOccupied())
 		{
 			continue;
 		}
@@ -452,7 +499,7 @@ TArray<int32> UDieg_InventoryComponent::GetRelevantItems(const TArray<FIntPoint>
 		FIntPoint CurrentSlotRoot;
 		TSet<FIntPoint> CurrentInventoryItemCoordinates;
 		TArray<FIntPoint> CurrentRelevantCoordinates = GetRelevantCoordinates(
-			CurrentSlot.RootSlot,
+			CurrentSlot.Coordinates,
 			CurrentSlot.ItemInstance->GetItemDefinitionDataAsset()->ItemDefinition.DefaultShape,
 			CurrentSlot.ItemInstance->GetItemDefinitionDataAsset()->ItemDefinition.DefaultShapeRoot, 
 			CurrentSlot.Rotation, 
@@ -473,11 +520,11 @@ TArray<int32> UDieg_InventoryComponent::GetRelevantItems(const TArray<FIntPoint>
 		// If conditions met, add the slot index to result
 		if (bIsSameAndHasQuantitySpace)
 		{
-			Result.Add(CurrentIndex);
+			Result.Add(CurrentSlot.RootSlot);
 		}
 	}
 	
-	return Result; // Return all slot indices with matching items and overlapping coordinates
+	return Result.Array(); // Return all slot indices with matching items and overlapping coordinates
 }
 
 
