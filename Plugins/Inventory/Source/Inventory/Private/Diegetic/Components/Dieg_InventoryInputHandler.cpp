@@ -405,6 +405,7 @@ void UDieg_InventoryInputHandler::TryDropItem()
 
 void UDieg_InventoryInputHandler::HandleInputRotateItem()
 {
+	TryRotateItem();
 }
 
 void UDieg_InventoryInputHandler::TryRotateItem()
