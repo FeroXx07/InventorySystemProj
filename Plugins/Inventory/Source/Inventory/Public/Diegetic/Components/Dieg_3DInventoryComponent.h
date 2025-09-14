@@ -83,45 +83,132 @@ class INVENTORY_API UDieg_3DInventoryComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this component's properties
+	/**
+	 * @brief Default constructor for the 3D inventory component.
+	 * 
+	 * Initializes the component with default values and enables ticking
+	 * for continuous updates of the 3D inventory representation.
+	 */
 	UDieg_3DInventoryComponent();
 
+	/**
+	 * @brief Delegate fired when requesting external inventory reference linking.
+	 * 
+	 * This delegate is triggered when the component needs to establish
+	 * a connection to an external inventory component. Bind to this
+	 * delegate to provide the inventory reference.
+	 */
 	UPROPERTY(BlueprintAssignable, Category = "Inventory")
 	FLinkInventoryRefExternally OnInventoryExternalLinkRequest;
 
+	/**
+	 * @brief Delegate fired when hovering over a slot in the 3D widget.
+	 * 
+	 * This delegate is triggered when the mouse hovers over a slot
+	 * in the 3D inventory widget. Provides geometry and mouse event information.
+	 */
 	UPROPERTY(BlueprintAssignable, BlueprintCallable)
 	FWidgetSlotHover On3DWidgetSlotHovered;
 
+	/**
+	 * @brief Delegate fired when unhovering a slot in the 3D widget.
+	 * 
+	 * This delegate is triggered when the mouse stops hovering over a slot
+	 * in the 3D inventory widget. Provides mouse event information.
+	 */
 	UPROPERTY(BlueprintAssignable, BlueprintCallable)
 	FWidgetSlotUnHover On3DWidgetSlotUnHovered;
 
+	/**
+	 * @brief Delegate fired when the input handler hovers over an item.
+	 * 
+	 * This delegate is triggered when the input handler detects hovering
+	 * over an item in the 3D inventory. Provides input handler and item references.
+	 */
 	UPROPERTY(BlueprintAssignable, BlueprintCallable)
 	FHandlerHoverItem OnHoverItem;
 
+	/**
+	 * @brief Delegate fired when the input handler unhovers an item.
+	 * 
+	 * This delegate is triggered when the input handler stops hovering
+	 * over an item in the 3D inventory. Provides input handler and item references.
+	 */
 	UPROPERTY(BlueprintAssignable, BlueprintCallable)
 	FHandlerUnHoverItem OnUnHoverItem;
 protected:
+	/**
+	 * @brief Reference to the core inventory component.
+	 * 
+	 * The inventory component that this 3D component represents.
+	 * This reference is required for the 3D component to function properly.
+	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UDieg_InventoryComponent> InventoryComponentRef;
 
+	/**
+	 * @brief Array of world item actors in this inventory.
+	 * 
+	 * Contains all the 3D item actors currently displayed in this
+	 * 3D inventory component. Used for management and positioning.
+	 */
 	UPROPERTY(VisibleAnywhere, Category = "Inventory", meta = (AllowPrivateAccess = "true"))
 	TArray<ADieg_WorldItemActor*> Items;
 
+	/**
+	 * @brief Class for creating new world item actors.
+	 * 
+	 * The class to instantiate when creating new 3D item actors
+	 * for this inventory component.
+	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<ADieg_WorldItemActor> ItemClass;
 
+	/**
+	 * @brief The grid widget for displaying the inventory.
+	 * 
+	 * The 3D widget component that displays the inventory grid
+	 * and handles slot interactions in the 3D world.
+	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widget", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UDieg_Grid> GridWidget;
 
+	/**
+	 * @brief Reference to the widget component.
+	 * 
+	 * Weak reference to the widget component that contains the
+	 * 3D inventory grid widget.
+	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widget", meta = (AllowPrivateAccess = "true"))
 	TWeakObjectPtr<UWidgetComponent> WidgetComponentRef;
 	
-	// Called when the game starts
+	/**
+	 * @brief Begin play for the component.
+	 * 
+	 * Called when the game starts. Initializes the 3D inventory
+	 * component and prepares it for use.
+	 */
 	virtual void BeginPlay() override;
-	// Called every frame
+	
+	/**
+	 * @brief Tick the component.
+	 * 
+	 * Called every frame. Updates the 3D inventory representation
+	 * and handles any ongoing operations.
+	 * 
+	 * @param DeltaTime Time elapsed since last tick
+	 * @param TickType Type of tick being performed
+	 * @param ThisTickFunction The tick function for this component
+	 */
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 	                           FActorComponentTickFunction* ThisTickFunction) override;
 
+	/**
+	 * @brief Whether the component has been initialized.
+	 * 
+	 * Tracks whether the 3D inventory component has been properly
+	 * initialized and is ready for use.
+	 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory Component")
 	bool bIsInitialized{false};
 

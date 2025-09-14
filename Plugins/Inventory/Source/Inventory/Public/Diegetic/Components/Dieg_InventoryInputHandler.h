@@ -230,57 +230,165 @@ class INVENTORY_API UDieg_InventoryInputHandler : public UActorComponent
 	GENERATED_BODY()
 
 public:
+	/**
+	 * @brief Timer for trace operations.
+	 * 
+	 * Tracks the time elapsed since the last trace operation.
+	 * Used to control the frequency of trace updates.
+	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Input Handler", meta = (AllowPrivateAccess = "true"))
 	float TraceTimer = 0.0f;
 
+	/**
+	 * @brief Interval between trace operations.
+	 * 
+	 * The time interval (in seconds) between consecutive trace operations.
+	 * Controls the update frequency for input detection.
+	 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Input Handler", meta = (AllowPrivateAccess = "true"))
 	float TraceInterval = 0.05f; 
 
+	/**
+	 * @brief Whether to enable debug logging.
+	 * 
+	 * When enabled, this component will output debug information
+	 * to the log for troubleshooting purposes.
+	 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Input Handler", meta = (AllowPrivateAccess = "true"))
 	bool bDebugLogs{false};
 	
+	/**
+	 * @brief Whether the inventory is currently open.
+	 * 
+	 * Tracks the current state of the inventory interface.
+	 * Used for state management and UI updates.
+	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Input Handler|Diegetic Inventory", meta = (AllowPrivateAccess = "true"))
 	bool bIsInventoryOpen{false};
 
+	/**
+	 * @brief Class for the briefcase actor.
+	 * 
+	 * The class to instantiate when creating the briefcase
+	 * actor for the diegetic inventory system.
+	 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Input Handler|Diegetic Inventory", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<ADieg_Briefcase> BriefCaseActorClass;
 	
+	/**
+	 * @brief Reference to the briefcase actor.
+	 * 
+	 * The actual briefcase actor instance used for the
+	 * diegetic inventory system.
+	 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Input Handler|Strong References", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<ADieg_Briefcase> BriefcaseActor;
 
+	/**
+	 * @brief Relative spawn location for the briefcase.
+	 * 
+	 * The relative position where the briefcase actor should be spawned
+	 * in relation to the owning actor.
+	 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Input Handler|Briefcase Spawn", meta = (AllowPrivateAccess = "true"))
 	FVector RelativeSpawnLocation{0.0f, 0.0, 0.0f};
 
+	/**
+	 * @brief Relative spawn rotation for the briefcase.
+	 * 
+	 * The relative rotation for the briefcase actor when spawned
+	 * in relation to the owning actor.
+	 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Input Handler|Briefcase Spawn", meta = (AllowPrivateAccess = "true"))
 	FRotator RelativeSpawnRotation{0.0f, 0.0, 0.0f};
 	
+	/**
+	 * @brief Input action for toggling inventory.
+	 * 
+	 * The input action that triggers opening and closing
+	 * of the inventory interface.
+	 */
 	UPROPERTY(EditDefaultsOnly, Category = "Game|Dieg|Inventory Input Handler|Input Actions", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> ToggleInventoryIA;
 
+	/**
+	 * @brief Input action for rotating items.
+	 * 
+	 * The input action that triggers item rotation
+	 * during drag operations.
+	 */
 	UPROPERTY(EditDefaultsOnly, Category = "Game|Dieg|Inventory Input Handler|Input Actions", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> RotateIA;
 
+	/**
+	 * @brief Input action for drag operations.
+	 * 
+	 * The input action that triggers drag and drop
+	 * operations for inventory items.
+	 */
 	UPROPERTY(EditDefaultsOnly, Category = "Game|Dieg|Inventory Input Handler|Input Actions", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> DragIA;
 	
+	/**
+	 * @brief Default input mapping context.
+	 * 
+	 * The input mapping context that defines how input actions
+	 * are mapped to player input for inventory operations.
+	 */
 	UPROPERTY(EditDefaultsOnly, Category = "Game|Dieg|Inventory Input Handler|Input Mapping Contexts", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputMappingContext> DefaultIMCs;
 	
+	/**
+	 * @brief Weak reference to the owning player controller.
+	 * 
+	 * Reference to the player controller that owns this input handler.
+	 * Used for input processing and component coordination.
+	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Input Handler|Weak References", meta = (AllowPrivateAccess = "true"))
 	TWeakObjectPtr<ADieg_PlayerController> OwningPlayerController;
 
+	/**
+	 * @brief Weak reference to the player camera component.
+	 * 
+	 * Reference to the camera component used for viewport-to-world
+	 * projection and input ray casting.
+	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Input Handler|Weak References", meta = (AllowPrivateAccess = "true"))
 	TWeakObjectPtr<UCameraComponent> PlayerCameraComponent;
 
+	/**
+	 * @brief Weak reference to the currently hovering inventory component.
+	 * 
+	 * Reference to the 3D inventory component that the mouse is currently
+	 * hovering over during input operations.
+	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Input Handler|Weak References", meta = (AllowPrivateAccess = "true"))
 	TWeakObjectPtr<UDieg_3DInventoryComponent> HoveringInventoryComponent3D;
 
+	/**
+	 * @brief Weak reference to the currently hovering item.
+	 * 
+	 * Reference to the world item actor that the mouse is currently
+	 * hovering over during input operations.
+	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Input Handler|Weak References", meta = (AllowPrivateAccess = "true"))
 	TWeakObjectPtr<ADieg_WorldItemActor> HoveringItem;
 
+	/**
+	 * @brief Weak reference to the currently dragging item.
+	 * 
+	 * Reference to the world item actor that is currently being
+	 * dragged during drag and drop operations.
+	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Input Handler|Weak References", meta = (AllowPrivateAccess = "true"))
 	TWeakObjectPtr<ADieg_WorldItemActor> DraggingItem;
 
+	/**
+	 * @brief Weak reference to the last hit actor.
+	 * 
+	 * Reference to the last actor that was hit during trace operations.
+	 * Used for input processing and interaction detection.
+	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Input Handler|Weak References", meta = (AllowPrivateAccess = "true"))
 	TWeakObjectPtr<AActor> LastHitActor;
 
@@ -324,109 +432,371 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game|Dieg|Inventory Input Handler|Properties", meta = (AllowPrivateAccess = "true"))
 	TArray<TEnumAsByte<ECollisionChannel>> TraceChannels;
 
-	// Sets default values for this component's properties
+	/**
+	 * @brief Default constructor for the inventory input handler.
+	 * 
+	 * Initializes the component with default values and prepares it
+	 * for input handling operations.
+	 */
 	UDieg_InventoryInputHandler();
 
+	/**
+	 * @brief Delegate fired when the inventory is opened.
+	 * 
+	 * This delegate is triggered when the inventory interface is opened.
+	 * Bind to this delegate to respond to inventory opening events.
+	 */
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	FInventoryOpened OnInventoryOpened;
 
+	/**
+	 * @brief Delegate fired when the inventory is closed.
+	 * 
+	 * This delegate is triggered when the inventory interface is closed.
+	 * Bind to this delegate to respond to inventory closing events.
+	 */
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	FInventoryClosed OnInventoryClosed;
 
+	/**
+	 * @brief Delegate fired when dragging an item over an inventory.
+	 * 
+	 * This delegate is triggered when dragging an item over a 3D inventory.
+	 * Provides information about the drag operation and target inventory.
+	 */
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	FDragHoverInventory OnDragHoverInventory;
 
+	/**
+	 * @brief Delegate fired when dragging an item away from an inventory.
+	 * 
+	 * This delegate is triggered when dragging an item away from a 3D inventory.
+	 * Provides information about the drag operation and source inventory.
+	 */
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	FDragUnHoverInventory OnDragUnHoverInventory;
 
+	/**
+	 * @brief Delegate fired when hovering over an inventory.
+	 * 
+	 * This delegate is triggered when the mouse hovers over a 3D inventory.
+	 * Provides information about the hovered inventory component.
+	 */
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	FHoverInventory OnHoverInventory;
 
+	/**
+	 * @brief Delegate fired when unhovering an inventory.
+	 * 
+	 * This delegate is triggered when the mouse stops hovering over a 3D inventory.
+	 * Provides information about the unhovered inventory component.
+	 */
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	FUnHoverInventory OnUnHoverInventory;
 
+	/**
+	 * @brief Delegate fired when starting to drag an item from the world.
+	 * 
+	 * This delegate is triggered when starting to drag an item from the 3D world.
+	 * Provides information about the dragged item and drag operation.
+	 */
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	FStartDragWorld OnStartDragWorld;
 
+	/**
+	 * @brief Delegate fired when starting to drag an item from an inventory.
+	 * 
+	 * This delegate is triggered when starting to drag an item from a 3D inventory.
+	 * Provides information about the dragged item and source inventory.
+	 */
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	FStartDragInventory OnStartDragInventory;
 
+	/**
+	 * @brief Delegate fired when starting to hover over a slot.
+	 * 
+	 * This delegate is triggered when the mouse starts hovering over an inventory slot.
+	 * Provides information about the hovered slot and inventory.
+	 */
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	FStartHoverSlot OnStartHoverSlot;
 
+	/**
+	 * @brief Delegate fired when stopping hover over a slot.
+	 * 
+	 * This delegate is triggered when the mouse stops hovering over an inventory slot.
+	 * Provides information about the unhovered slot and inventory.
+	 */
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	FStartUnHoverSlot OnStartUnHoverSlot;
 
+	/**
+	 * @brief Delegate fired when updating drag slot information.
+	 * 
+	 * This delegate is triggered during drag operations to update slot information.
+	 * Provides current drag state and slot coordinates.
+	 */
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	FUpdateDragSlot OnUpdateDragSlot;
 
+	/**
+	 * @brief Delegate fired when dropping an item in the world.
+	 * 
+	 * This delegate is triggered when dropping a dragged item in the 3D world.
+	 * Provides information about the dropped item and drop location.
+	 */
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	FDropWorld OnDropWorld;
 
+	/**
+	 * @brief Delegate fired when merging items.
+	 * 
+	 * This delegate is triggered when two items are merged together.
+	 * Provides information about the merged items and result.
+	 */
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	FMergeItem OnMergeItem;
 
+	/**
+	 * @brief Delegate fired when an item is consumed during merge.
+	 * 
+	 * This delegate is triggered when an item is consumed as part of a merge operation.
+	 * Provides information about the consumed item and merge context.
+	 */
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	FConsumedItemInMerge OnConsumedItemInMerge;
 
+	/**
+	 * @brief Delegate fired when resetting drag from world.
+	 * 
+	 * This delegate is triggered when resetting a drag operation from the world.
+	 * Provides information about the reset operation and item.
+	 */
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	FResetDragWorld OnResetDragWorld;
 
+	/**
+	 * @brief Delegate fired when resetting drag from inventory.
+	 * 
+	 * This delegate is triggered when resetting a drag operation from an inventory.
+	 * Provides information about the reset operation and source inventory.
+	 */
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	FResetDragInventory OnResetDragInventory;
 
+	/**
+	 * @brief Delegate fired when dropping an item in an inventory.
+	 * 
+	 * This delegate is triggered when dropping a dragged item into a 3D inventory.
+	 * Provides information about the dropped item and target inventory.
+	 */
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	FDropInInventory OnDropInInventory;
 
+	/**
+	 * @brief Delegate fired when hovering over an item.
+	 * 
+	 * This delegate is triggered when the mouse hovers over a world item actor.
+	 * Provides information about the hovered item and input handler.
+	 */
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	FHoverItem OnHoverItem;
 
+	/**
+	 * @brief Delegate fired when unhovering an item.
+	 * 
+	 * This delegate is triggered when the mouse stops hovering over a world item actor.
+	 * Provides information about the unhovered item and input handler.
+	 */
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	FUnHoverItem OnUnHoverItem;
 
+	/**
+	 * @brief Delegate fired when rotating an item.
+	 * 
+	 * This delegate is triggered when an item is rotated during drag operations.
+	 * Provides information about the rotated item and new rotation angle.
+	 */
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	FRotateItem OnRotateItem;
 protected:
-	// Called when the game starts
+	/**
+	 * @brief Begin play for the component.
+	 * 
+	 * Called when the game starts. Initializes the input handler
+	 * and sets up input bindings and component references.
+	 */
 	virtual void BeginPlay() override;
 
+	/**
+	 * @brief Initialize the input mapping context subsystem.
+	 * 
+	 * Sets up the enhanced input subsystem and adds the default
+	 * input mapping context for inventory operations.
+	 */
 	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
 	void InitializeImcSubsystem();
 	
+	/**
+	 * @brief Toggle the inventory state.
+	 * 
+	 * Switches between opening and closing the inventory interface.
+	 * Updates the inventory state and triggers appropriate delegates.
+	 */
 	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
 	void ToggleInventory();
+	
+	/**
+	 * @brief Open the user interface.
+	 * 
+	 * Opens the inventory user interface and updates the inventory state.
+	 * Called when the inventory should be displayed to the player.
+	 */
 	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
 	void OpenUserInterface();
+	
+	/**
+	 * @brief Close the user interface.
+	 * 
+	 * Closes the inventory user interface and updates the inventory state.
+	 * Called when the inventory should be hidden from the player.
+	 */
 	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
 	void CloseUserInterface();
+	
+	/**
+	 * @brief Perform a line trace from the mouse position.
+	 * 
+	 * Casts a ray from the mouse position into the 3D world to detect
+	 * objects that can be interacted with.
+	 * 
+	 * @param HitResult Output parameter containing hit information
+	 * @return True if something was hit, false otherwise
+	 */
 	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
 	bool LineTraceFromMouse(FHitResult& HitResult) const;
+	
+	/**
+	 * @brief Start hovering over an inventory component.
+	 * 
+	 * Called when the mouse starts hovering over a 3D inventory component.
+	 * Updates hover state and triggers appropriate delegates.
+	 * 
+	 * @param NewHoveringInventory The inventory component being hovered
+	 */
 	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
 	void StartHoverInventory(UDieg_3DInventoryComponent* NewHoveringInventory);
+	
+	/**
+	 * @brief Stop hovering over an inventory component.
+	 * 
+	 * Called when the mouse stops hovering over a 3D inventory component.
+	 * Clears hover state and triggers appropriate delegates.
+	 * 
+	 * @param HoveringInventory The inventory component being unhovered
+	 */
 	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
 	void StopHoverInventory(UDieg_3DInventoryComponent* HoveringInventory);
+	
+	/**
+	 * @brief Start hovering over a world item actor.
+	 * 
+	 * Called when the mouse starts hovering over a world item actor.
+	 * Updates hover state and triggers appropriate delegates.
+	 * 
+	 * @param NewHoveringWorldItem The item actor being hovered
+	 */
 	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
 	void StartHoverItem(ADieg_WorldItemActor* NewHoveringWorldItem);
+	
+	/**
+	 * @brief Stop hovering over a world item actor.
+	 * 
+	 * Called when the mouse stops hovering over a world item actor.
+	 * Clears hover state and triggers appropriate delegates.
+	 * 
+	 * @param HoveringWorldItem The item actor being unhovered
+	 */
 	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
 	void StopHoverItem(ADieg_WorldItemActor* HoveringWorldItem);
+	
+	/**
+	 * @brief Handle trace hit results.
+	 * 
+	 * Processes the results of a trace operation and determines
+	 * what actions to take based on what was hit.
+	 * 
+	 * @param HitResult The hit result from the trace
+	 * @param bIsBlockingHit Whether the hit was blocking
+	 */
 	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
 	void HandleTraceHit(const FHitResult& HitResult, bool bIsBlockingHit);
 
+	/**
+	 * @brief Check if currently dragging an item.
+	 * 
+	 * Returns whether the input handler is currently in a drag operation.
+	 * 
+	 * @return True if dragging an item, false otherwise
+	 */
 	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	bool IsDraggingItem() const { return DraggingItem.IsValid(); }
+	
+	/**
+	 * @brief Check if currently hovering over an inventory.
+	 * 
+	 * Returns whether the mouse is currently hovering over a 3D inventory component.
+	 * 
+	 * @return True if hovering over an inventory, false otherwise
+	 */
 	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	bool IsInInventory() const { return HoveringInventoryComponent3D.IsValid(); }
+	
+	/**
+	 * @brief Check if an item is in an inventory.
+	 * 
+	 * Determines whether the specified item is currently in a 3D inventory component.
+	 * 
+	 * @param ItemIn The item to check
+	 * @param Inventory3DOut Output parameter for the inventory containing the item
+	 * @return True if the item is in an inventory, false otherwise
+	 */
 	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Input Handler")
 	bool IsItemInInventory(const ADieg_WorldItemActor* ItemIn, UDieg_3DInventoryComponent*& Inventory3DOut);
 	
+	/**
+	 * @brief Attempt to start dragging an item.
+	 * 
+	 * Initiates a drag operation with the currently hovered item.
+	 * Called when the drag input action is triggered.
+	 */
 	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
 	void TryDragItem();
+	
+	/**
+	 * @brief Attempt to drop the currently dragged item.
+	 * 
+	 * Completes a drag operation by dropping the item at the current location.
+	 * Called when the drag input action is released.
+	 */
 	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
 	void TryDropItem();
 
+	/**
+	 * @brief Handle input for item rotation.
+	 * 
+	 * Processes input for rotating items during drag operations.
+	 * Called when the rotate input action is triggered.
+	 */
 	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
 	void HandleInputRotateItem();
 	
+	/**
+	 * @brief Attempt to rotate the currently dragged item.
+	 * 
+	 * Rotates the currently dragged item by 90 degrees.
+	 * Called during drag operations to change item orientation.
+	 */
 	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
 	void TryRotateItem();
 	UFUNCTION(Category = "Game|Dieg|Inventory Input Handler")
@@ -462,7 +832,16 @@ protected:
 	bool GetCurrentSlot(UDieg_Slot*& SlotOut) const;
 
 public:
-	// Called every frame
+	/**
+	 * @brief Tick the component.
+	 * 
+	 * Called every frame. Performs continuous input processing,
+	 * trace operations, and updates the input handler state.
+	 * 
+	 * @param DeltaTime Time elapsed since last tick
+	 * @param TickType Type of tick being performed
+	 * @param ThisTickFunction The tick function for this component
+	 */
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 	                           FActorComponentTickFunction* ThisTickFunction) override;
 };
