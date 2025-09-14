@@ -102,16 +102,16 @@ void ADieg_PlayerController::TryToggleInventory_Implementation()
 void ADieg_PlayerController::TryInteract_Implementation()
 {
 	// Early return if invalid members
-	if (!HoveredActor.IsValid() || !IsValid(InventoryComponent))
+	if (!HoveredActor || !IsValid(InventoryComponent))
 	{
 		return;
 	}
 
 	// Interface interactable execution
-	if (HoveredActor.Get()->Implements<UDieg_Interactable>())
+	if (HoveredActor->Implements<UDieg_Interactable>())
 	{
-		IDieg_Interactable::Execute_OnInteract(HoveredActor.Get(), this);
-		IDieg_Interactor::Execute_OnInteraction(this, HoveredActor.Get());
+		IDieg_Interactable::Execute_OnInteract(HoveredActor, this);
+		IDieg_Interactor::Execute_OnInteraction(this, HoveredActor);
 	}
 }
 
@@ -168,7 +168,6 @@ void ADieg_PlayerController::HandleActorOutTrace(AActor* PreviousActor, TEnumAsB
 	if (HoveredActor == PreviousActor)
 	{
 		HoveredActor = nullptr;
-		HoveredActor.Reset();
 	}
 
 	OnHandleTraceActorOut.Broadcast(PreviousActor, TraceChannel);

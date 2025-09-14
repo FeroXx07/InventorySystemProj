@@ -55,7 +55,7 @@ public:
 	 * 
 	 * @see USceneComponent
 	 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|World Item Actor|Components", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game|Dieg|WorldItemActor|Components", meta = (AllowPrivateAccess = "true"))
 	USceneComponent* Root;
 	
 	/**
@@ -68,7 +68,7 @@ public:
 	 * @see SetMesh
 	 * @see UDieg_ItemDefinition::WorldMesh
 	 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|World Item Actor|Components", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game|Dieg|WorldItemActor|Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UStaticMeshComponent> StaticMeshComponent;
 
 	/**
@@ -81,7 +81,7 @@ public:
 	 * @see AdjustText
 	 * @see ModifyTextQuantity
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game|Dieg|World Item Actor|Components", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game|Dieg|WorldItemActor|Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UTextRenderComponent> TextRendererComponent;
 	
 	/**
@@ -94,7 +94,7 @@ public:
 	 * @see FDieg_PrePopulate
 	 * @see UDieg_ItemInstance
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Game|Dieg|World Item Actor|Items" , meta = (AllowPrivateAccess = "true")) 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Game|Dieg|World Item Actor|Items", meta = (AllowPrivateAccess = "true")) 
 	FDieg_PrePopulate PrePopulateData;
 	
 	/**
@@ -108,7 +108,7 @@ public:
 	 * @see GetItemInstance
 	 * @see SetFromItemInstance
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game|Dieg|World Item Actor|Items", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, Category = "Game|Dieg|World Item Actor|Items", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UDieg_ItemInstance> ItemInstance;
 
 	/**
@@ -134,7 +134,7 @@ public:
 	 * @see SetLastSlotData
 	 * @see GetLastSlotData
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Game|Dieg|World Item Actor|Item", meta = (AllowPrivateAccess = "true")) 
+	UPROPERTY(VisibleAnywhere, Category="Game|Dieg|World Item Actor|Item", meta = (AllowPrivateAccess = "true")) 
 	FDieg_InventorySlot LastInventorySlotData;
 
 	/**

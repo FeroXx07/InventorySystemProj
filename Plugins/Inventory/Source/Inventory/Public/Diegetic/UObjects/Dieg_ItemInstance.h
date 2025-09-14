@@ -219,5 +219,12 @@ public:
 template <typename T>
 T* UDieg_ItemInstance::GetFragment() const
 {
+	for (UDieg_ItemFragment* Fragment : ItemFragments)
+	{
+		if (T* CastedFragment = Cast<T>(Fragment))
+		{
+			return CastedFragment;
+		}
+	}
 	return nullptr;
 }

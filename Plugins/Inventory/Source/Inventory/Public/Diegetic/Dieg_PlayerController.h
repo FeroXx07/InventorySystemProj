@@ -69,8 +69,8 @@ public:
 	 * Multiple Input Mapping Contexts are required from UE 5.6 onwards.
 	 * These contexts define how input actions are mapped to player input.
 	 */
-	UPROPERTY(EditDefaultsOnly, Category = "Game|Dieg|Player Controller|Input Mapping Contexts", meta = (AllowPrivateAccess = "true"))
-	TArray<TObjectPtr<UInputMappingContext>> DefaultIMCs;
+	UPROPERTY(EditDefaultsOnly, Category = "Game|Dieg|PlayerController|InputMappingContexts")
+	TArray<UInputMappingContext*> DefaultIMCs;
 
 	/**
 	 * @brief Component responsible for tracing interactable objects.
@@ -78,8 +78,8 @@ public:
 	 * The tracer component performs line traces to detect objects that
 	 * the player can interact with, such as inventory items and containers.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category= "Game|Dieg|Player Controller|Strong References", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UDieg_TracerComponent> TracerComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category= "Game|Dieg|PlayerController|StrongReferences")
+	UDieg_TracerComponent* TracerComponent;
 
 	/**
 	 * @brief Component managing the player's inventory.
@@ -87,8 +87,8 @@ public:
 	 * The inventory component handles item storage, retrieval, and
 	 * inventory state management for the player.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category= "Game|Dieg|Player Controller|Strong References", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UDieg_InventoryComponent> InventoryComponent;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category= "Game|Dieg|PlayerController|StrongReferences")
+	UDieg_InventoryComponent* InventoryComponent;
 
 	/**
 	 * @brief Component handling input for inventory interactions.
@@ -96,17 +96,18 @@ public:
 	 * The inventory input handler manages all input-related functionality
 	 * for the diegetic inventory system, including drag-and-drop operations.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category= "Game|Dieg|Player Controller|Strong References", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UDieg_InventoryInputHandler> InventoryInputHandlerComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category= "Game|Dieg|PlayerController|StrongReferences")
+	UDieg_InventoryInputHandler* InventoryInputHandlerComponent;
 
 	/**
 	 * @brief Currently hovered actor reference.
 	 * 
-	 * Weak reference to the actor currently being hovered over by the player.
+	 * Reference to the actor currently being hovered over by the player.
 	 * Used for interaction feedback and UI display.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category= "Game|Dieg|Player Controller|Weak References", meta = (AllowPrivateAccess = "true"))
-	TWeakObjectPtr<AActor> HoveredActor;
+	UPROPERTY(VisibleAnywhere, Category= "Game|Dieg|PlayerController|WeakReferences")
+	AActor* HoveredActor;
+	
 
 	/**
 	 * @brief Class for the interaction widget.
@@ -114,7 +115,7 @@ public:
 	 * The widget class to instantiate for displaying interaction prompts
 	 * and feedback to the player.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category= "Game|Dieg|Player Controller|Strong References", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category= "Game|Dieg|PlayerController|StrongReferences")
 	TSubclassOf<UDieg_InteractWidget> InteractWidgetClass;
 
 	/**
@@ -123,8 +124,8 @@ public:
 	 * The actual widget instance displayed to the player for interaction
 	 * feedback and prompts.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category= "Game|Dieg|Player Controller|Strong References", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UDieg_InteractWidget> InteractWidget;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category= "Game|Dieg|PlayerController|StrongReferences")
+	UDieg_InteractWidget* InteractWidget;
 
 	/**
 	 * @brief Default constructor for the player controller.
@@ -140,8 +141,8 @@ public:
 	 * The input action that triggers primary interaction attempts,
 	 * such as picking up items or opening containers.
 	 */
-	UPROPERTY(EditDefaultsOnly, Category = "Game|Dieg|Player Controller|Input Actions")
-	TObjectPtr<UInputAction> PrimaryInteractIA;
+	UPROPERTY(EditDefaultsOnly, Category = "Game|Dieg|PlayerController|InputActions")
+	UInputAction* PrimaryInteractIA;
 	
 	/**
 	 * @brief Delegate fired when an actor enters the trace.
@@ -149,7 +150,7 @@ public:
 	 * This delegate is triggered when the tracer component detects
 	 * a new actor that can be interacted with.
 	 */
-	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Player Controller")
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|PlayerController")
 	FHandleTraceActorIn OnHandleTraceActorIn;
 	
 	/**
@@ -158,7 +159,7 @@ public:
 	 * This delegate is triggered when the tracer component no longer
 	 * detects an actor that was previously being traced.
 	 */
-	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|Player Controller")
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Game|Dieg|PlayerController")
 	FHandleTraceActorOut OnHandleTraceActorOut;
 
 	/**
@@ -285,7 +286,7 @@ protected:
 	 * Tracks the current state of the inventory interface for
 	 * state management and UI updates.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category= "Game|Dieg|Player Controller", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category= "Game|Dieg|PlayerController")
 	bool bInventoryOpened;
 
 private:

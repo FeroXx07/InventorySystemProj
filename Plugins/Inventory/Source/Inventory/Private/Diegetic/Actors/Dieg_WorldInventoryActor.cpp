@@ -59,8 +59,16 @@ void ADieg_WorldInventoryActor::PostInitializeComponents()
 
 	UDieg_UtilityLibrary::CacheComponent(this, this->InventoryComponent);
 	UDieg_UtilityLibrary::CacheComponent(this, this->StaticMeshComponent);
-	UDieg_UtilityLibrary::CacheComponentChecked(this, this->WidgetComponent);
-	UDieg_UtilityLibrary::CacheComponentChecked(this, this->WidgetInteractionComponent);
+	
+	// Only cache widget components if they exist
+	if (IsValid(WidgetComponent))
+	{
+		UDieg_UtilityLibrary::CacheComponentChecked(this, this->WidgetComponent);
+	}
+	if (IsValid(WidgetInteractionComponent))
+	{
+		UDieg_UtilityLibrary::CacheComponentChecked(this, this->WidgetInteractionComponent);
+	}
 	
 	if (!InventoryComponent3D->OnInventoryExternalLinkRequest.IsAlreadyBound(this, &ThisClass::Handle3DInventoryBindRequest))
 	{

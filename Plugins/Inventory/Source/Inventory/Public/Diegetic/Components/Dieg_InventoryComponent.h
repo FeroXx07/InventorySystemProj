@@ -65,7 +65,7 @@ public:
 	 * Bind to this delegate to receive notifications when the inventory is ready for use.
 	 * This is fired after Initialize() completes successfully.
 	 */
-	UPROPERTY(BlueprintAssignable, Category = "Game|Dieg|Inventory Component")
+	UPROPERTY(BlueprintAssignable, Category = "Game|Dieg|InventoryComponent")
 	FOnInventoryInitialized OnInventoryInitialized;
 
 protected:
@@ -84,7 +84,7 @@ protected:
 	 * 
 	 * @see FDieg_InventorySlot
 	 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Component|Storage", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|InventoryComponent|Storage", meta = (AllowPrivateAccess = "true"))
 	TArray<FDieg_InventorySlot> InventorySlots;
 
 	/**
@@ -95,7 +95,7 @@ protected:
 	 * 
 	 * @note This is automatically maintained by the inventory system.
 	 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Component|Storage", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|InventoryComponent|Storage", meta = (AllowPrivateAccess = "true"))
 	TMap<FIntPoint, bool> SlotsOccupation;
 
 	/**
@@ -106,7 +106,7 @@ protected:
 	 * 
 	 * @see FGameplayTagContainer
 	 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Game|Dieg|Inventory Component|Storage", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game|Dieg|InventoryComponent|Storage", meta = (AllowPrivateAccess = "true"))
 	FGameplayTagContainer SlotTags;
 
 	/**
@@ -118,7 +118,7 @@ protected:
 	 * @note This is a hint - the system may use different rotations if the preferred
 	 * rotation doesn't result in a valid placement.
 	 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Game|Dieg|Inventory Component|Storage",
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Game|Dieg|InventoryComponent|Storage",
 		meta=(ClampMin="-90.0", ClampMax="180.0", UIMin="-90.0", UIMax="180.0", AllowPrivateAccess = "true"))
 	float ItemRotationPriority{90.0};
 
@@ -130,7 +130,7 @@ protected:
 	 * 
 	 * @see MaxColumns
 	 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Component|Setup", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Game|Dieg|InventoryComponent|Setup", meta = (AllowPrivateAccess = "true"))
 	int32 TotalSlots{35};
 	
 	/**
@@ -141,7 +141,7 @@ protected:
 	 * 
 	 * @see TotalSlots
 	 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Component|Setup", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Game|Dieg|InventoryComponent|Setup", meta = (AllowPrivateAccess = "true"))
 	int32 MaxColumns{10};
 
 	/**
@@ -152,7 +152,7 @@ protected:
 	 * 
 	 * @see FDieg_PrePopulate
 	 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Component|Setup", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Game|Dieg|InventoryComponent|Setup", meta = (AllowPrivateAccess = "true"))
 	TArray<FDieg_PrePopulate> PrePopulateData;
 
 	/**
@@ -161,7 +161,7 @@ protected:
 	 * When enabled, the inventory component will log detailed information about
 	 * item placement, removal, and other operations for debugging purposes.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Component")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game|Dieg|InventoryComponent")
 	bool bDebugLogs{false};
 	
 	/**
@@ -170,7 +170,7 @@ protected:
 	 * Set to true after successful initialization. Used to prevent operations
 	 * on uninitialized inventories.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game|Dieg|Inventory Component")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game|Dieg|InventoryComponent")
 	bool bIsInitialized{false};
 
 public:
@@ -199,7 +199,7 @@ public:
 	 * @see OnInventoryInitialized
 	 * @see PrePopulateData
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|InventoryComponent")
 	void Initialize(int32 NumSlots, int32 NumColumns, const FGameplayTagContainer& Tags);
 
 	/**
@@ -216,7 +216,7 @@ public:
 	 * @see CanAddItem
 	 * @see AddQuantityToSlot
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|InventoryComponent")
 	bool TryAddItem(UDieg_ItemInstance* ItemToAdd, int32& Remaining);
 
 	/**
@@ -231,7 +231,7 @@ public:
 	 * @note The item instance is not destroyed - the caller gains ownership.
 	 * @see CanRemoveItem
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|InventoryComponent")
 	bool TryRemoveItem(UDieg_ItemInstance* ItemToRemove);
 
 	/**
@@ -246,7 +246,7 @@ public:
 	 * @see TryAddItem
 	 * @see AreSlotsAvailable
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory omponent")
 	bool CanAddItem(const UDieg_ItemInstance* ItemToAdd);
 
 	/**
@@ -259,7 +259,7 @@ public:
 	 * 
 	 * @see TryRemoveItem
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|InventoryComponent")
 	bool CanRemoveItem(UDieg_ItemInstance* ItemToRemove);
 
 	/**
@@ -273,7 +273,7 @@ public:
 	 * 
 	 * @see FindRootSlotByItemType
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|InventoryComponent")
 	bool DoesInventoryContainItem(const UDieg_ItemInstance* ItemToCheck) { return FindRootSlotByItemType(ItemToCheck).Num() > 0; }
 
 	/**
@@ -299,7 +299,7 @@ public:
 	 * 
 	 * @see FindRootSlotByItemType
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|InventoryComponent")
 	TArray<FDieg_InventorySlot> FindRootSlotByItemTypeBP(const UDieg_ItemInstance* ItemToCheck);
 
 	/**
@@ -325,7 +325,7 @@ public:
 	 * 
 	 * @see FindRootSlotByInstance
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|InventoryComponent")
 	TArray<FDieg_InventorySlot> FindRootSlotByInstanceBP(const UDieg_ItemInstance* ItemToCheck);
 
 	/**
@@ -350,7 +350,7 @@ public:
 	 * 
 	 * @see GetRootSlot
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|InventoryComponent")
 	FDieg_InventorySlot GetRootSlotBP(const FIntPoint& SlotCoordinates);
 	
 	/**
@@ -376,7 +376,7 @@ public:
 	 * 
 	 * @see GetSlot
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|InventoryComponent")
 	FDieg_InventorySlot GetSlotBP(const FIntPoint& SlotCoordinates);
 	
 	/**
@@ -399,7 +399,7 @@ public:
 	 * 
 	 * @see GetRootSlotsMutable
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|InventoryComponent")
 	TArray<FDieg_InventorySlot> GetRootSlotsMutableBP();
 	
 	/**
@@ -422,7 +422,7 @@ public:
 	 * 
 	 * @see GetSlotsMutable
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|InventoryComponent")
 	TArray<FDieg_InventorySlot> GetSlotsMutableBP();
 	
 	/**
@@ -432,7 +432,7 @@ public:
 	 * 
 	 * @see MaxColumns
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|InventoryComponent")
 	int32 GetTotalSlots() const { return TotalSlots; };
 	
 	/**
@@ -442,7 +442,7 @@ public:
 	 * 
 	 * @see TotalSlots
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|InventoryComponent")
 	int32 GetMaxColumns() const { return MaxColumns; };
 
 	/**
@@ -461,7 +461,7 @@ public:
 	 * 
 	 * @note This is a static utility function that doesn't modify the inventory.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|InventoryComponent")
 	static TArray<FIntPoint> GetRelevantCoordinates(const FIntPoint& SlotCoordinates, const TArray<FIntPoint>& Shape, const FIntPoint& ShapeRoot, float Rotation, FIntPoint& RootSlotOut);
 	
 	/**
@@ -476,7 +476,7 @@ public:
 	 * 
 	 * @see GetRelevantCoordinates
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|InventoryComponent")
 	TArray<FIntPoint> GetRelevantItems(const TArray<FIntPoint>& ShapeCoordinates, const UDieg_ItemInstance* Object);
 
 	/**
@@ -493,7 +493,7 @@ public:
 	 * @see AreSlotsAvailableSimple
 	 * @see CanAddItemToSlot
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|InventoryComponent")
 	bool AreSlotsAvailable(const TArray<FIntPoint>& InputShape, const TArray<FIntPoint>& Ignore);
 
 	/**
@@ -507,7 +507,7 @@ public:
 	 * 
 	 * @see AreSlotsAvailable
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|InventoryComponent")
 	bool AreSlotsAvailableSimple(const TArray<FIntPoint>& InputShape);
 
 	/**
@@ -522,7 +522,7 @@ public:
 	 * 
 	 * @see TryAddItem
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|InventoryComponent")
 	int32 AddQuantityToSlot(const UDieg_ItemInstance* ItemToAdd, int32 QuantityIn);
 
 	/**
@@ -553,7 +553,7 @@ public:
 	 * 
 	 * @see AddItemToInventory
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|InventoryComponent")
 	FDieg_InventorySlot AddItemToInventoryBP(UDieg_ItemInstance* ItemToAdd, const FIntPoint& SlotCoordinates, float RotationUsed);
 
 	/**
@@ -580,7 +580,7 @@ public:
 	 * 
 	 * @see RemoveItemFromInventory
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|InventoryComponent")
 	FDieg_InventorySlot RemoveItemFromInventoryBP(UDieg_ItemInstance* ItemToRemove);
 
 	/**
@@ -598,7 +598,7 @@ public:
 	 * @see CanAddItemInstanceToSlot
 	 * @see AreSlotsAvailable
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|InventoryComponent")
 	bool CanAddItemToSlot(const FIntPoint& SlotCoordinates, const TArray<FIntPoint>& ItemShape, const FIntPoint& ItemShapeRoot, int32& RotationUsedOut);
 
 	/**
@@ -614,7 +614,7 @@ public:
 	 * 
 	 * @see CanAddItemToSlot
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|InventoryComponent")
 	bool CanAddItemInstanceToSlot(const FIntPoint& SlotCoordinates, UDieg_ItemInstance* ItemInstance, int32 Rotation);
 
 	/**
@@ -625,7 +625,7 @@ public:
 	 * 
 	 * @see IsSlotPointOccupied
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|InventoryComponent")
 	bool IsSlotPointOutOfBounds(const FIntPoint& SlotPoint); 
 
 	/**
@@ -637,7 +637,7 @@ public:
 	 * @see IsSlotPointOutOfBounds
 	 * @see SlotsOccupation
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|InventoryComponent")
 	bool IsSlotPointOccupied(const FIntPoint& SlotPoint);
 
 	/**
@@ -652,6 +652,6 @@ public:
 	 * @see PrePopulateData
 	 * @see Initialize
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|Inventory Component")
+	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|InventoryComponent")
 	UDieg_ItemInstance* MakeInstanceFromPrePopulateData(const FDieg_PrePopulate& PrePopData);
 };

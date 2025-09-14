@@ -52,7 +52,7 @@ public:
 	 * 
 	 * @see USceneComponent
 	 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|World Inventory Actor|Components",  meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game|Dieg|WorldInventoryActor|Components",  meta = (AllowPrivateAccess = "true"))
 	USceneComponent* Root;
 	
 	/**
@@ -63,7 +63,7 @@ public:
 	 * 
 	 * @see UStaticMeshComponent
 	 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|World Inventory Actor|Components", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game|Dieg|WorldInventoryActor|Components")
 	TObjectPtr<UStaticMeshComponent> StaticMeshComponent;
 
 	// // It will change OnConstruction().
@@ -74,16 +74,16 @@ public:
 	// UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Properties", meta = (AllowPrivateAccess = "true"))
 	// bool bAttachWidgetToMesh = false;
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|World Inventory Actor|Components", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game|Dieg|WorldInventoryActor|Components")
 	TObjectPtr<UWidgetComponent> WidgetComponent;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|World Inventory Actor|Components", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game|Dieg|WorldInventoryActor|Components")
 	TObjectPtr<UWidgetInteractionComponent> WidgetInteractionComponent;
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|World Inventory Actor|Components", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game|Dieg|WorldInventoryActor|Components")
 	TObjectPtr<UDieg_InventoryComponent> InventoryComponent;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|World Inventory Actor|Components", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game|Dieg|WorldInventoryActor|Components")
 	TObjectPtr<UDieg_3DInventoryComponent> InventoryComponent3D;
 
 	// Sets default values for this actor's properties
