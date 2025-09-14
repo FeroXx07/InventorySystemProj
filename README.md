@@ -36,7 +36,7 @@ This project was developed as part of a final degree project (TFG).
 
 ---
 
-## 🚀 Installation
+##  Installation
 
 1. Clone the repository:  
    ```bash
