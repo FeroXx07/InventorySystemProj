@@ -44,25 +44,25 @@ void FPlugInv_ConsumableFragment::Manifest()
 void FPlugInv_HealthPotionFragment::OnConsume(APlayerController* PC)
 {
 	FPlugInv_ConsumeModifier::OnConsume(PC);
-	LOG_DOUBLE_S(5, FColor::Green, "Health potion consumed! Healing by: {0} (FPlugInv_HealthPotionFragment)", this->GetValue());
+	UPlugInv_DoubleLogger::Log(5.0f, TEXT("Health potion consumed! Healing by: {0} (FPlugInv_HealthPotionFragment)"), FColor::Green, this->GetValue());
 }
 
 void FPlugInv_ManaPotionFragment::OnConsume(APlayerController* PC)
 {
 	FPlugInv_ConsumeModifier::OnConsume(PC);
-	LOG_DOUBLE_S(5, FColor::Cyan, "Mana potion consumed! Restored by: {0} (FPlugInv_ManaPotionFragment)", this->GetValue());
+	UPlugInv_DoubleLogger::Log(5.0f, TEXT("Mana potion consumed! Restored by: {0} (FPlugInv_ManaPotionFragment)"), FColor::Cyan, this->GetValue());
 }
 
 void FPlugInv_StrengthModifier::OnEquip(APlayerController* PC)
 {
 	FPlugInv_EquipModifier::OnEquip(PC);
-	LOG_DOUBLE_S(5, FColor::Green, "Strength increased by: {0} (FPlugInv_StrengthModifier)", this->GetValue());
+	UPlugInv_DoubleLogger::Log(5.0f, TEXT("Strength increased by: {0} (FPlugInv_StrengthModifier)"), FColor::Green, this->GetValue());
 }
 
 void FPlugInv_StrengthModifier::OnUnequip(APlayerController* PC)
 {
 	FPlugInv_EquipModifier::OnUnequip(PC);
-	LOG_DOUBLE_S(5, FColor::Orange, "Strength decreased by: {0} (FPlugInv_StrengthModifier)", this->GetValue());
+	UPlugInv_DoubleLogger::Log(5.0f, TEXT("Strength decreased by: {0} (FPlugInv_StrengthModifier)"), FColor::Orange, this->GetValue());
 }
 
 void FPlugInv_EquipmentFragment::OnEquip(APlayerController* PC)

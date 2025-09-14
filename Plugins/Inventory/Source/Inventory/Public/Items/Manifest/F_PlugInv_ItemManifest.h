@@ -56,7 +56,7 @@ struct INVENTORY_API FPlugInv_ItemManifest
 	TArray<const T*> GetAllFragmentsOfType() const;
 	
 	void SpawnPickupActor(const UObject* WorldContextObject, const FVector& SpawnLocation, const FRotator& SpawnRotation);
-private:
+protected:
 
 	// Item category.
 	UPROPERTY(EditAnywhere, Category = "Inventory")
