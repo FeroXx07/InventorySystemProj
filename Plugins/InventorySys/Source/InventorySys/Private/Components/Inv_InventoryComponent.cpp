@@ -1,59 +1,107 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Components/Inv_InventoryComponent.h"
+#include "Controllers/Inv_InventoryController.h"
 #include "UObjects/Inv_InventoryContainer.h"
 #include "UObjects/Inv_ItemInstance.h"
-#include "UObjects/Inv_ItemDefinition.h"
-#include "Engine/Engine.h"
 
-
-// Sets default values for this component's properties
 UInv_InventoryComponent::UInv_InventoryComponent()
 {
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
-	PrimaryComponentTick.bCanEverTick = true;
-
-	// ...
+	PrimaryComponentTick.bCanEverTick = false; // Controller handles logic, no need to tick
+	bIsInitialized = false;
 }
 
+// ============================================
+// LIFECYCLE
+// ============================================
 
-// Called when the game starts
-void UInv_InventoryComponent::BeginPlay()
+void UInv_InventoryComponent::InitializeComponent()
 {
-	Super::BeginPlay();
+	Super::InitializeComponent();
 
-	// ...
-	
-}
-
-
-// Called every frame
-void UInv_InventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType,
-                                            FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	// ...
-}
-
-// Spatial inventory initialization
-void UInv_InventoryComponent::InitializeSpatialInventory()
-{
 	if (bIsInitialized)
 	{
 		return;
 	}
 
-	// Create default container
-	CreateContainer(DefaultContainerName, FText::FromName(DefaultContainerName), 
-					DefaultContainerWidth, DefaultContainerHeight, InventoryTags);
+	// Create Controller with THIS as outer (for proper garbage collection)
+	Controller = NewObject<UInv_InventoryController>(this, TEXT("InventoryController"));
+	Controller->Initialize(this);
+
+	// Create default container if needed
+	if (bCreateDefaultContainer)
+	{
+		CreateContainer(DefaultContainerName, FText::FromName(DefaultContainerName), 
+						DefaultContainerWidth, DefaultContainerHeight, InventoryTags);
+		
+		// Set as current container in controller
+		if (InventoryContainers.Num() > 0)
+		{
+			Controller->SetCurrentContainer(InventoryContainers[0]);
+		}
+	}
 
 	bIsInitialized = true;
 }
 
-// Container management
-UInv_InventoryContainer* UInv_InventoryComponent::CreateContainer(const FName& ContainerName, const FText& DisplayName, int32 Width, int32 Height, const FGameplayTagContainer& Tags)
+void UInv_InventoryComponent::UninitializeComponent()
+{
+	// Cleanup controller
+	if (Controller)
+	{
+		Controller->Shutdown();
+		Controller = nullptr;
+	}
+
+	// Cleanup containers
+	InventoryContainers.Empty();
+	
+	bIsInitialized = false;
+
+	Super::UninitializeComponent();
+}
+
+void UInv_InventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+}
+
+// ============================================
+// FORWARDING API (Optional convenience methods)
+// ============================================
+
+bool UInv_InventoryComponent::TryPickupItem(UInv_ItemInstance* Item)
+{
+	if (!Controller)
+	{
+		return false;
+	}
+	return Controller->TryPickupItem(Item);
+}
+
+bool UInv_InventoryComponent::TryPlaceItem(UInv_ItemInstance* Item, FIntPoint Position, float Rotation)
+{
+	if (!Controller)
+	{
+		return false;
+	}
+	return Controller->TryPlaceItem(Item, Position, Rotation);
+}
+
+bool UInv_InventoryComponent::TryRemoveItem(UInv_ItemInstance* Item)
+{
+	if (!Controller)
+	{
+		return false;
+	}
+	return Controller->TryRemoveItem(Item);
+}
+
+// ============================================
+// CONTAINER MANAGEMENT
+// ============================================
+
+UInv_InventoryContainer* UInv_InventoryComponent::CreateContainer(FName ContainerName, FText DisplayName, int32 Width, int32 Height, const FGameplayTagContainer& Tags)
 {
 	// Check if container already exists
 	if (GetContainer(ContainerName) != nullptr)
@@ -61,7 +109,7 @@ UInv_InventoryContainer* UInv_InventoryComponent::CreateContainer(const FName& C
 		return nullptr;
 	}
 
-	// Create new container
+	// Create new container with THIS as outer (for proper GC)
 	UInv_InventoryContainer* NewContainer = NewObject<UInv_InventoryContainer>(this);
 	if (NewContainer)
 	{
@@ -72,7 +120,7 @@ UInv_InventoryContainer* UInv_InventoryComponent::CreateContainer(const FName& C
 	return NewContainer;
 }
 
-bool UInv_InventoryComponent::RemoveContainer(const FName& ContainerName)
+bool UInv_InventoryComponent::RemoveContainer(FName ContainerName)
 {
 	for (int32 i = InventoryContainers.Num() - 1; i >= 0; --i)
 	{
@@ -85,7 +133,7 @@ bool UInv_InventoryComponent::RemoveContainer(const FName& ContainerName)
 	return false;
 }
 
-UInv_InventoryContainer* UInv_InventoryComponent::GetContainer(const FName& ContainerName) const
+UInv_InventoryContainer* UInv_InventoryComponent::GetContainer(FName ContainerName) const
 {
 	for (UInv_InventoryContainer* Container : InventoryContainers)
 	{
@@ -111,8 +159,24 @@ int32 UInv_InventoryComponent::GetContainerCount() const
 	return InventoryContainers.Num();
 }
 
-// Spatial item management
-bool UInv_InventoryComponent::TryAddItemToContainer(UInv_ItemInstance* ItemToAdd, const FName& ContainerName, const FIntPoint& GridPosition, float Rotation)
+TArray<FName> UInv_InventoryComponent::GetContainerNames() const
+{
+	TArray<FName> Names;
+	for (UInv_InventoryContainer* Container : InventoryContainers)
+	{
+		if (Container)
+		{
+			Names.Add(Container->ContainerName);
+		}
+	}
+	return Names;
+}
+
+// ============================================
+// ITEM OPERATIONS
+// ============================================
+
+bool UInv_InventoryComponent::TryAddItemToContainer(UInv_ItemInstance* ItemToAdd, FName ContainerName, FIntPoint GridPosition, float Rotation)
 {
 	UInv_InventoryContainer* Container = GetContainer(ContainerName);
 	if (!Container || !ItemToAdd)
@@ -130,6 +194,9 @@ bool UInv_InventoryComponent::TryAddItemToAnyContainer(UInv_ItemInstance* ItemTo
 		return false;
 	}
 
+	// Try different rotations
+	TArray<float> RotationsToTry = {Rotation, Rotation + 90.0f, Rotation + 180.0f, Rotation + 270.0f};
+
 	// Try to find a suitable position in any container
 	for (UInv_InventoryContainer* Container : InventoryContainers)
 	{
@@ -138,17 +205,24 @@ bool UInv_InventoryComponent::TryAddItemToAnyContainer(UInv_ItemInstance* ItemTo
 			continue;
 		}
 
-		// Try to find an available position
-		TArray<FIntPoint> AvailablePositions = Container->GetAvailablePositions();
-		for (const FIntPoint& Position : AvailablePositions)
+		// Try each rotation
+		for (float TestRotation : RotationsToTry)
 		{
-			if (Container->CanPlaceItemAt(ItemToAdd, Position, Rotation))
+			// Try each position
+			for (int32 Y = 0; Y < Container->GridHeight; ++Y)
 			{
-				if (Container->TryPlaceItem(ItemToAdd, Position, Rotation))
+				for (int32 X = 0; X < Container->GridWidth; ++X)
 				{
-					OutContainerName = Container->ContainerName;
-					OutGridPosition = Position;
-					return true;
+					FIntPoint Position(X, Y);
+					if (Container->CanPlaceItemAt(ItemToAdd, Position, TestRotation))
+					{
+						if (Container->TryPlaceItem(ItemToAdd, Position, TestRotation))
+						{
+							OutContainerName = Container->ContainerName;
+							OutGridPosition = Position;
+							return true;
+						}
+					}
 				}
 			}
 		}
@@ -157,7 +231,7 @@ bool UInv_InventoryComponent::TryAddItemToAnyContainer(UInv_ItemInstance* ItemTo
 	return false;
 }
 
-bool UInv_InventoryComponent::TryRemoveItemFromContainer(UInv_ItemInstance* ItemToRemove, const FName& ContainerName)
+bool UInv_InventoryComponent::TryRemoveItemFromContainer(UInv_ItemInstance* ItemToRemove, FName ContainerName)
 {
 	UInv_InventoryContainer* Container = GetContainer(ContainerName);
 	if (!Container || !ItemToRemove)
@@ -168,7 +242,7 @@ bool UInv_InventoryComponent::TryRemoveItemFromContainer(UInv_ItemInstance* Item
 	return Container->TryRemoveItem(ItemToRemove);
 }
 
-bool UInv_InventoryComponent::TryMoveItemBetweenContainers(UInv_ItemInstance* Item, const FName& FromContainer, const FName& ToContainer, const FIntPoint& NewPosition, float NewRotation)
+bool UInv_InventoryComponent::TryMoveItemBetweenContainers(UInv_ItemInstance* Item, FName FromContainer, FName ToContainer, FIntPoint NewPosition, float NewRotation)
 {
 	UInv_InventoryContainer* SourceContainer = GetContainer(FromContainer);
 	UInv_InventoryContainer* TargetContainer = GetContainer(ToContainer);
@@ -177,6 +251,16 @@ bool UInv_InventoryComponent::TryMoveItemBetweenContainers(UInv_ItemInstance* It
 	{
 		return false;
 	}
+
+	// Store original placement for rollback
+	FInv_ItemPlacement* OriginalPlacement = SourceContainer->FindItemPlacement(Item);
+	if (!OriginalPlacement)
+	{
+		return false;
+	}
+
+	FIntPoint OriginalPosition = OriginalPlacement->GridPosition;
+	float OriginalRotation = OriginalPlacement->Rotation;
 
 	// Remove from source container
 	if (!SourceContainer->TryRemoveItem(Item))
@@ -191,13 +275,17 @@ bool UInv_InventoryComponent::TryMoveItemBetweenContainers(UInv_ItemInstance* It
 	}
 	else
 	{
-		// If placement failed, try to restore to source container
-		// This is simplified - in a full implementation, you'd want to store the original position
+		// Rollback - restore to source container
+		SourceContainer->TryPlaceItem(Item, OriginalPosition, OriginalRotation);
 		return false;
 	}
 }
 
-bool UInv_InventoryComponent::CanPlaceItemInContainer(const UInv_ItemInstance* ItemToAdd, const FName& ContainerName, const FIntPoint& GridPosition, float Rotation) const
+// ============================================
+// QUERIES
+// ============================================
+
+bool UInv_InventoryComponent::CanPlaceItemInContainer(UInv_ItemInstance* ItemToAdd, FName ContainerName, FIntPoint GridPosition, float Rotation) const
 {
 	UInv_InventoryContainer* Container = GetContainer(ContainerName);
 	if (!Container || !ItemToAdd)
@@ -205,10 +293,10 @@ bool UInv_InventoryComponent::CanPlaceItemInContainer(const UInv_ItemInstance* I
 		return false;
 	}
 
-	return Container->CanPlaceItemAt(const_cast<UInv_ItemInstance*>(ItemToAdd), GridPosition, Rotation);
+	return Container->CanPlaceItemAt(ItemToAdd, GridPosition, Rotation);
 }
 
-bool UInv_InventoryComponent::CanPlaceItemInAnyContainer(const UInv_ItemInstance* ItemToAdd, FName& OutContainerName, FIntPoint& OutGridPosition, float Rotation) const
+bool UInv_InventoryComponent::CanPlaceItemInAnyContainer(UInv_ItemInstance* ItemToAdd, FName& OutContainerName, FIntPoint& OutGridPosition, float Rotation) const
 {
 	if (!ItemToAdd)
 	{
@@ -223,14 +311,17 @@ bool UInv_InventoryComponent::CanPlaceItemInAnyContainer(const UInv_ItemInstance
 			continue;
 		}
 
-		TArray<FIntPoint> AvailablePositions = Container->GetAvailablePositions();
-		for (const FIntPoint& Position : AvailablePositions)
+		for (int32 Y = 0; Y < Container->GridHeight; ++Y)
 		{
-			if (Container->CanPlaceItemAt(const_cast<UInv_ItemInstance*>(ItemToAdd), Position, Rotation))
+			for (int32 X = 0; X < Container->GridWidth; ++X)
 			{
-				OutContainerName = Container->ContainerName;
-				OutGridPosition = Position;
-				return true;
+				FIntPoint Position(X, Y);
+				if (Container->CanPlaceItemAt(ItemToAdd, Position, Rotation))
+				{
+					OutContainerName = Container->ContainerName;
+					OutGridPosition = Position;
+					return true;
+				}
 			}
 		}
 	}
@@ -238,21 +329,7 @@ bool UInv_InventoryComponent::CanPlaceItemInAnyContainer(const UInv_ItemInstance
 	return false;
 }
 
-// Utility functions
-TArray<FName> UInv_InventoryComponent::GetContainerNames() const
-{
-	TArray<FName> Names;
-	for (UInv_InventoryContainer* Container : InventoryContainers)
-	{
-		if (Container)
-		{
-			Names.Add(Container->ContainerName);
-		}
-	}
-	return Names;
-}
-
-bool UInv_InventoryComponent::DoesInventoryContainItem(const UInv_ItemInstance* ItemToCheck) const
+bool UInv_InventoryComponent::DoesInventoryContainItem(UInv_ItemInstance* ItemToCheck) const
 {
 	if (!ItemToCheck)
 	{
@@ -270,4 +347,3 @@ bool UInv_InventoryComponent::DoesInventoryContainItem(const UInv_ItemInstance* 
 
 	return false;
 }
-

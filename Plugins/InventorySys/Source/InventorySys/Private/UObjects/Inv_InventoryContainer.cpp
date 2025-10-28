@@ -3,6 +3,7 @@
 #include "UObjects/Inv_InventoryContainer.h"
 #include "UObjects/Inv_ItemInstance.h"
 #include "UObjects/Inv_ItemDefinition.h"
+#include "Inv_SpatialUtilityLibrary.h"
 #include "Engine/Engine.h"
 
 UInv_InventoryContainer::UInv_InventoryContainer()
@@ -37,6 +38,7 @@ void UInv_InventoryContainer::InitializeGrid()
 		GridOccupancy[Y].SetNum(GridWidth);
 		for (int32 X = 0; X < GridWidth; ++X)
 		{
+			// Row : Y , Col: X
 			GridOccupancy[Y][X] = false;
 		}
 	}
@@ -145,6 +147,16 @@ bool UInv_InventoryContainer::TryMoveItem(UInv_ItemInstance* Item, const FIntPoi
 		return false;
 	}
 
+	// ✅ FIX: Store original placement before removing
+	FInv_ItemPlacement* OriginalPlacement = FindItemPlacement(Item);
+	if (!OriginalPlacement)
+	{
+		return false; // Item doesn't exist in container
+	}
+
+	FIntPoint OriginalPosition = OriginalPlacement->GridPosition;
+	float OriginalRotation = OriginalPlacement->Rotation;
+
 	// Temporarily remove the item
 	if (!TryRemoveItem(Item))
 	{
@@ -158,8 +170,8 @@ bool UInv_InventoryContainer::TryMoveItem(UInv_ItemInstance* Item, const FIntPoi
 	}
 	else
 	{
-		// If placement failed, try to restore the original position
-		// This is a simplified approach - in a full implementation, you'd want to store the original position
+		// ✅ FIX: Restore item to original position on failure
+		TryPlaceItem(Item, OriginalPosition, OriginalRotation);
 		return false;
 	}
 }
@@ -192,10 +204,10 @@ TArray<FIntPoint> UInv_InventoryContainer::GetItemShapeAtPosition(const UInv_Ite
 		}
 	}
 
-	// Apply rotation if needed
+	// Apply rotation if needed (use utility library to avoid duplication)
 	if (!FMath::IsNearlyZero(Rotation))
 	{
-		Shape = RotateShape(Shape, Rotation);
+		Shape = UInv_SpatialUtilityLibrary::RotateShape(Shape, Rotation);
 	}
 
 	// Offset by the grid position
@@ -227,7 +239,7 @@ bool UInv_InventoryContainer::ContainsItem(const UInv_ItemInstance* Item) const
 	return ContainedItems.Contains(Item);
 }
 
-UInv_InventoryContainer::FInv_ItemPlacement* UInv_InventoryContainer::FindItemPlacement(const UInv_ItemInstance* Item)
+FInv_ItemPlacement* UInv_InventoryContainer::FindItemPlacement(const UInv_ItemInstance* Item)
 {
 	for (FInv_ItemPlacement& Placement : ItemPlacements)
 	{
@@ -290,7 +302,7 @@ float UInv_InventoryContainer::GetFillPercentage() const
 	}
 	
 	int32 OccupiedSlots = TotalSlots - GetAvailableSlotCount();
-	return (float)OccupiedSlots / (float)TotalSlots;
+	return static_cast<float>(OccupiedSlots) / static_cast<float>(TotalSlots);
 }
 
 void UInv_InventoryContainer::SetLocked(bool bLocked)
@@ -380,28 +392,4 @@ bool UInv_InventoryContainer::ValidateItemShape(const UInv_ItemInstance* Item, c
 	}
 	
 	return true;
-}
-
-TArray<FIntPoint> UInv_InventoryContainer::RotateShape(const TArray<FIntPoint>& OriginalShape, float Rotation) const
-{
-	TArray<FIntPoint> RotatedShape = OriginalShape;
-	
-	// Normalize rotation to 0, 90, 180, 270 degrees
-	int32 RotationSteps = FMath::RoundToInt(Rotation / 90.0f) % 4;
-	if (RotationSteps < 0) RotationSteps += 4;
-	
-	// Apply rotation steps
-	for (int32 Step = 0; Step < RotationSteps; ++Step)
-	{
-		for (FIntPoint& Point : RotatedShape)
-		{
-			// 90-degree rotation: (x, y) -> (-y, x)
-			int32 NewX = -Point.Y;
-			int32 NewY = Point.X;
-			Point.X = NewX;
-			Point.Y = NewY;
-		}
-	}
-	
-	return RotatedShape;
 }

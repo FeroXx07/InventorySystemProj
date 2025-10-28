@@ -9,86 +9,128 @@
 
 class UInv_InventoryContainer;
 class UInv_ItemInstance;
+class UInv_InventoryController;
 
-UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
+UCLASS(ClassGroup=(Inventory), meta=(BlueprintSpawnableComponent))
 class INVENTORYSYS_API UInv_InventoryComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this component's properties
 	UInv_InventoryComponent();
 
-	// Spatial inventory containers
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game|Dieg|InventoryComponent|Containers", meta = (AllowPrivateAccess = "true"))
+	// ============================================
+	// DATA LAYER (Containers)
+	// ============================================
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory|Data")
 	TArray<TObjectPtr<UInv_InventoryContainer>> InventoryContainers;
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game|Dieg|InventoryComponent|Storage", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Inventory|Settings")
 	FGameplayTagContainer InventoryTags;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Game|Dieg|InventoryComponent|Storage",
-		meta=(ClampMin="-90.0", ClampMax="180.0", UIMin="-90.0", UIMax="180.0", AllowPrivateAccess = "true"))
-	float ItemRotationPriority{90.0};
+	// ============================================
+	// INTERACTION LAYER (Controller - owned by this component)
+	// ============================================
 	
-	// Container system properties
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game|Dieg|InventoryComponent|Containers", meta = (AllowPrivateAccess = "true"))
-	FName DefaultContainerName{TEXT("MainContainer")};
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory|Controller")
+	TObjectPtr<UInv_InventoryController> Controller;
+
+	// ============================================
+	// DEFAULT SETTINGS
+	// ============================================
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game|Dieg|InventoryComponent|Containers", meta = (AllowPrivateAccess = "true"))
-	int32 DefaultContainerWidth{10};
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Inventory|Settings")
+	FName DefaultContainerName = TEXT("MainContainer");
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Game|Dieg|InventoryComponent|Containers", meta = (AllowPrivateAccess = "true"))
-	int32 DefaultContainerHeight{10};
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Inventory|Settings")
+	int32 DefaultContainerWidth = 10;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game|Dieg|InventoryComponent")
-	bool bIsInitialized{false};
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Inventory|Settings")
+	int32 DefaultContainerHeight = 10;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Inventory|Settings")
+	bool bCreateDefaultContainer = true;
 	
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
-	                           FActorComponentTickFunction* ThisTickFunction) override;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
+	bool bIsInitialized = false;
+	
+	// ============================================
+	// LIFECYCLE
+	// ============================================
+	
+	virtual void InitializeComponent() override;
+	virtual void UninitializeComponent() override;
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	// Spatial inventory initialization
-	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|InventoryComponent")
-	void InitializeSpatialInventory();
+	// ============================================
+	// CONTROLLER ACCESS
+	// ============================================
+	
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	UInv_InventoryController* GetController() const { return Controller; }
 
-	// Container management
-	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|InventoryComponent")
-	UInv_InventoryContainer* CreateContainer(const FName& ContainerName, const FText& DisplayName, int32 Width, int32 Height, const FGameplayTagContainer& Tags = FGameplayTagContainer());
+	// ============================================
+	// FORWARDING API (Optional - provides cleaner interface)
+	// ============================================
+	
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	bool TryPickupItem(UInv_ItemInstance* Item);
 
-	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|InventoryComponent")
-	bool RemoveContainer(const FName& ContainerName);
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	bool TryPlaceItem(UInv_ItemInstance* Item, FIntPoint Position, float Rotation = 0.0f);
 
-	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|InventoryComponent")
-	UInv_InventoryContainer* GetContainer(const FName& ContainerName) const;
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	bool TryRemoveItem(UInv_ItemInstance* Item);
 
-	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|InventoryComponent")
+	// ============================================
+	// CONTAINER MANAGEMENT
+	// ============================================
+	
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Containers")
+	UInv_InventoryContainer* CreateContainer(FName ContainerName, FText DisplayName, int32 Width, int32 Height, const FGameplayTagContainer& Tags = FGameplayTagContainer());
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Containers")
+	bool RemoveContainer(FName ContainerName);
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Containers")
+	UInv_InventoryContainer* GetContainer(FName ContainerName) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Containers")
 	UInv_InventoryContainer* GetContainerAtIndex(int32 Index) const;
 
-	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|InventoryComponent")
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Containers")
 	int32 GetContainerCount() const;
 
-	// Spatial item management
-	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|InventoryComponent")
-	bool TryAddItemToContainer(UInv_ItemInstance* ItemToAdd, const FName& ContainerName, const FIntPoint& GridPosition, float Rotation = 0.0f);
-
-	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|InventoryComponent")
-	bool TryAddItemToAnyContainer(UInv_ItemInstance* ItemToAdd, FName& OutContainerName, FIntPoint& OutGridPosition, float Rotation = 0.0f);
-
-	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|InventoryComponent")
-	bool TryRemoveItemFromContainer(UInv_ItemInstance* ItemToRemove, const FName& ContainerName);
-
-	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|InventoryComponent")
-	bool TryMoveItemBetweenContainers(UInv_ItemInstance* Item, const FName& FromContainer, const FName& ToContainer, const FIntPoint& NewPosition, float NewRotation = 0.0f);
-
-	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|InventoryComponent")
-	bool CanPlaceItemInContainer(const UInv_ItemInstance* ItemToAdd, const FName& ContainerName, const FIntPoint& GridPosition, float Rotation = 0.0f) const;
-
-	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|InventoryComponent")
-	bool CanPlaceItemInAnyContainer(const UInv_ItemInstance* ItemToAdd, FName& OutContainerName, FIntPoint& OutGridPosition, float Rotation = 0.0f) const;
-
-	// Utility functions
-	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|InventoryComponent")
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Containers")
 	TArray<FName> GetContainerNames() const;
 
-	UFUNCTION(BlueprintCallable, Category = "Game|Dieg|InventoryComponent")
-	bool DoesInventoryContainItem(const UInv_ItemInstance* ItemToCheck) const;
+	// ============================================
+	// ITEM OPERATIONS
+	// ============================================
+	
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Items")
+	bool TryAddItemToContainer(UInv_ItemInstance* ItemToAdd, FName ContainerName, FIntPoint GridPosition, float Rotation = 0.0f);
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Items")
+	bool TryAddItemToAnyContainer(UInv_ItemInstance* ItemToAdd, FName& OutContainerName, FIntPoint& OutGridPosition, float Rotation = 0.0f);
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Items")
+	bool TryRemoveItemFromContainer(UInv_ItemInstance* ItemToRemove, FName ContainerName);
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Items")
+	bool TryMoveItemBetweenContainers(UInv_ItemInstance* Item, FName FromContainer, FName ToContainer, FIntPoint NewPosition, float NewRotation = 0.0f);
+
+	// ============================================
+	// QUERIES
+	// ============================================
+	
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Query")
+	bool CanPlaceItemInContainer(UInv_ItemInstance* ItemToAdd, FName ContainerName, FIntPoint GridPosition, float Rotation = 0.0f) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Query")
+	bool CanPlaceItemInAnyContainer(UInv_ItemInstance* ItemToAdd, FName& OutContainerName, FIntPoint& OutGridPosition, float Rotation = 0.0f) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Query")
+	bool DoesInventoryContainItem(UInv_ItemInstance* ItemToCheck) const;
 };

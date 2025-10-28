@@ -132,5 +132,4 @@ protected:
 	void UpdateGridOccupancy();
 	void MarkSlotsOccupied(const TArray<FIntPoint>& Slots, bool bOccupied);
 	bool ValidateItemShape(const UInv_ItemInstance* Item, const FIntPoint& Position, float Rotation) const;
-	TArray<FIntPoint> RotateShape(const TArray<FIntPoint>& OriginalShape, float Rotation) const;
 };

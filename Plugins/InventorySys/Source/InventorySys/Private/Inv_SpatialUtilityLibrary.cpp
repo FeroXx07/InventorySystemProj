@@ -488,11 +488,31 @@ TArray<FIntPoint> UInv_SpatialUtilityLibrary::RotateShape(const TArray<FIntPoint
 	{
 		for (FIntPoint& Point : RotatedShape)
 		{
-			// 90-degree rotation: (x, y) -> (-y, x)
+			// 90-degree clockwise rotation: (x, y) -> (-y, x)
 			int32 NewX = -Point.Y;
 			int32 NewY = Point.X;
 			Point.X = NewX;
 			Point.Y = NewY;
+		}
+	}
+	
+	// Normalize shape to start from (0, 0) - no negative coordinates
+	if (RotatedShape.Num() > 0)
+	{
+		int32 MinX = RotatedShape[0].X;
+		int32 MinY = RotatedShape[0].Y;
+		
+		for (const FIntPoint& Point : RotatedShape)
+		{
+			MinX = FMath::Min(MinX, Point.X);
+			MinY = FMath::Min(MinY, Point.Y);
+		}
+		
+		// Offset all points to make minimum (0, 0)
+		for (FIntPoint& Point : RotatedShape)
+		{
+			Point.X -= MinX;
+			Point.Y -= MinY;
 		}
 	}
 	
